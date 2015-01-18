@@ -1,4 +1,4 @@
-package hcomp.crowdpdf
+package ch.uzh.ifi.mamato.crowdPdf.hcomp.crowdpdf
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp.HCompQueryProperties
 import ch.uzh.ifi.pdeboer.pplib.hcomp.crowdflower.CFQuery

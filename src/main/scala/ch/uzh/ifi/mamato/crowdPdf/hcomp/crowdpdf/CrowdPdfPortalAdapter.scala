@@ -1,14 +1,6 @@
-package hcomp.crowdpdf
-
-import java.io.{BufferedReader, InputStreamReader}
+package ch.uzh.ifi.mamato.crowdPdf.hcomp.crowdpdf
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
-import ch.uzh.ifi.pdeboer.pplib.util.{POST, RESTClient}
-import com.typesafe.config.ConfigFactory
-import org.apache.http.client.methods.HttpRequestBase
-import org.apache.http.impl.client.HttpClientBuilder
-import util.control.Breaks._
-import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * Created by Mattia on 14.01.2015.

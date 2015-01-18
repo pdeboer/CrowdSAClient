@@ -1,4 +1,4 @@
-package hcomp
+package ch.uzh.ifi.mamato.crowdPdf.hcomp
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp.HCompQuery
 
