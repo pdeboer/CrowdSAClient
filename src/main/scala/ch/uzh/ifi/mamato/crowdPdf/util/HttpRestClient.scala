@@ -11,4 +11,12 @@ object HttpRestClient {
     val connManager = new PoolingHttpClientConnectionManager()
     HttpClients.custom().setConnectionManager(connManager).build()
   }
+
+  /*
+    val httpClient = HttpRestClient.httpClient
+    val config1 = RequestConfig.custom().setSocketTimeout(timeout.toMillis.toInt).build();
+    val httpPost = new HttpPost("")
+    httpPost.setConfig(config1);
+    val closeableHttp = httpClient.execute(httpPost)
+    */
 }

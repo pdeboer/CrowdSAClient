@@ -2,41 +2,60 @@ package ch.uzh.ifi.mamato.crowdPdf
 
 
 import ch.uzh.ifi.mamato.crowdPdf.hcomp.crowdpdf.CrowdPdfPortalAdapter
+import ch.uzh.ifi.mamato.crowdPdf.persistence.DBSettings
 import ch.uzh.ifi.mamato.crowdPdf.util.LazyLogger
-import ch.uzh.ifi.pdeboer.pplib.hcomp.HComp
+import ch.uzh.ifi.pdeboer.pplib.hcomp.{HCompQueryProperties, HCompQuery, HComp}
 
 
 /**
  * Created by Mattia on 18.12.2014.
  */
 
-object Main extends App with LazyLogger {
 
-  //def main(args: Array[String]) = {
-    logger.info("**** Mattia Amato CrowdPdf Client ****")
-    if(args.length != 3){
-      println("""
+
+object Main extends App with LazyLogger {
+  logger.info("**** Mattia Amato CrowdPdf Client ****")
+  logger.info("Initializing database...")
+
+  DBSettings.initialize()
+
+  if(args.length != 3){
+    println("""
         Usage: ./crowdPdf.sh paperPath paperTitle budget
 
         All the parameters are needed and have to be written
         in this specific order.
-      """)
-      System.exit(-1)
+            """)
+    System.exit(-1)
+  }
+
+  val crowdPdf = new CrowdPdfPortalAdapter()
+  HComp.addPortal(crowdPdf)
+
+  val query = new HCompQuery {
+    override def question: String = "Awesome Question question?"
+
+    override def title: String = "Awesome Question Title"
+
+    override def suggestedPaymentCents: Int = 1
+  }
+
+  val a = new Thread(new Runnable {
+    def run(): Unit = {
+      crowdPdf.processQuery(query, new HCompQueryProperties(10))
     }
-    val crowdPdf = new CrowdPdfPortalAdapter("MattiaTest", sandbox = false)
-    HComp.addPortal(crowdPdf)
-    //val pdfByteArray = pdfToByteArray(args(0))
+  })
 
-    val pManager = PapersManager.createPaperRequest(args(0), args(1), new Integer(args(2)))
+  val b = new Thread(new Runnable {
+    def run(): Unit = {
+      logger.debug("Try to cancel query")
+      crowdPdf.cancelQuery(query)
+    }
+  })
 
-  //}
+  a.start()
 
-  /*def pdfToByteArray(path: String): Array[Byte] ={
+  Thread.sleep(5000)
 
-    val p = Paths.get(path)
-    val data = Files.readAllBytes(p)
-
-    data
-  }*/
-
+  b.start()
 }

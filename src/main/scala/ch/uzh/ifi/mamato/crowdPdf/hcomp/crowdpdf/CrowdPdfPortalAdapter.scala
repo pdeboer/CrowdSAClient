@@ -1,60 +1,108 @@
 package ch.uzh.ifi.mamato.crowdPdf.hcomp.crowdpdf
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
+import ch.uzh.ifi.pdeboer.pplib.util.LazyLogger
+import org.joda.time.DateTime
+import ch.uzh.ifi.mamato.crowdPdf.util.CollectionUtils._
+
+import scala.collection.mutable
 
 /**
  * Created by Mattia on 14.01.2015.
  */
 
+//case class CrowdPDfQueryProperties(reward: Int = 0, questionType: String = "", paperId: Long = 0)
+
 @HCompPortal(builder = classOf[CrowdPdfPortalBuilder], autoInit = true)
-class CrowdPdfPortalAdapter(val applicationName: String, val apiKey: String, sandbox: Boolean = false) extends HCompPortalAdapter {
+class CrowdPdfPortalAdapter extends HCompPortalAdapter with LazyLogger {
 
-  def this(applicationName: String, sandbox: Boolean) =
-    this(applicationName,
-      "",
-      sandbox)
+  override def getDefaultPortalKey: String = "crowdPdf"
 
-  def this(applicationName: String) = this(applicationName, false)
+  val serviceURL = "http://localhost:9000"
 
-  override def getDefaultPortalKey: String = CrowdPdfPortalAdapter.PORTAL_KEY
+  var map = mutable.HashMap.empty[Int, CrowdPdfQueries]
 
+  val service = new CrowdPdfService(new Server(serviceURL))
+
+  //TODO: add parameters to set the questionType, the reward per answer and the paper_fk
   override def processQuery(query: HCompQuery, properties: HCompQueryProperties): Option[HCompAnswer] = {
     if (properties.qualifications.length > 0)
       logger.error("CrowdPDF implementation doesn't support Worker Qualifications yet. Executing query without them..")
 
+    val manager: CrowdPdfManager = new CrowdPdfManager(service, query, "Boolean", 2, 10, properties)
+    map += query.identifier -> map.getOrElse(query.identifier, new CrowdPdfQueries()).add(manager)
 
-    Option.empty[HCompAnswer]
+    val res = manager.createQuestion()
+    logger.debug("CreateQuestion returned id: " + res)
+    if(res > 0) {
+      return manager.waitForResponse()
+    } else {
+      logger.error("Error while creating the question.")
+      return null
+    }
   }
 
 
   override def cancelQuery(query: HCompQuery): Unit = {
-    println("Removing question:" + query.question)
+    // Remove a question from the server
+    val manager = map.get(query.identifier)
+    if(manager.isDefined) {
+      manager.get.list.mpar.foreach(q => try {
+        //naively cancel all previous queries just to make sure
+        q._2.cancelQuestion()
+      }
+      catch {
+        case e: Exception => {}
+      })
+      logger.info(s"cancelled '${query.title}'")
+    } else {
+      logger.info(s"could not find query with ID '${query.identifier}' when trying to cancel it")
+    }
   }
+
+  protected[CrowdPdfPortalAdapter] class CrowdPdfQueries() {
+    private var sent: List[(DateTime, CrowdPdfManager)] = Nil
+
+    def list = sent
+
+    def add(manager: CrowdPdfManager) = {
+      this.synchronized {
+        sent = (DateTime.now(), manager) :: sent
+      }
+      this
+    }
+  }
+
+  def findAllUnapprovedHitsAndApprove: Unit = {
+    ???
+  }
+
+  def expireAllHits: Unit = {
+    ???
+  }
+
 }
 
-object CrowdPdfPortalAdapter {
-  val CONFIG_API_KEY = "hcomp.crowdpdf.apikey"
-  val CONFIG_APPLICATION_NAME = "hcomp.crowdpdf.applicationName"
-  val CONFIG_SANDBOX = "hcomp.crowdpdf.sandbox"
+  object CrowdPdfPortalAdapter {
+    val CONFIG_ACCESS_ID_KEY = "hcomp.crowdpdf.accessKeyID"
+    val CONFIG_SECRET_ACCESS_KEY = "hcomp.crowdpdf.secretAccessKey"
+    val CONFIG_SANDBOX_KEY = "hcomp.crowdpdf.sandbox"
+    val PORTAL_KEY = "crowdPdf"
+  }
 
-  val PORTAL_KEY = "crowdPdf"
-}
+  class CrowdPdfPortalBuilder extends HCompPortalBuilder {
+    val ACCESS_ID_KEY: String = "accessIdKey"
+    val SECRET_ACCESS_KEY: String = "secretAccessKey"
+    val SANDBOX: String = "sandbox"
 
-class CrowdPdfPortalBuilder extends HCompPortalBuilder {
-  val API_KEY: String = "apiKey"
-  val APPLICATION_NAME: String = "appName"
-  val SANDBOX: String = "sandbox"
+    val parameterToConfigPath = Map(
+      ACCESS_ID_KEY -> CrowdPdfPortalAdapter.CONFIG_ACCESS_ID_KEY,
+      SECRET_ACCESS_KEY -> CrowdPdfPortalAdapter.CONFIG_SECRET_ACCESS_KEY,
+      SANDBOX -> CrowdPdfPortalAdapter.CONFIG_SANDBOX_KEY
+    )
 
-  val parameterToConfigPath = Map(
-    API_KEY -> CrowdPdfPortalAdapter.CONFIG_API_KEY,
-    APPLICATION_NAME -> CrowdPdfPortalAdapter.CONFIG_APPLICATION_NAME,
-    SANDBOX -> CrowdPdfPortalAdapter.CONFIG_SANDBOX
-  )
+    override def build: HCompPortalAdapter = new CrowdPdfPortalAdapter()
 
-  override def build: HCompPortalAdapter = new CrowdPdfPortalAdapter(
-    params.getOrElse(APPLICATION_NAME, "PPLib Application"),
-    params(API_KEY), params.getOrElse(SANDBOX, "false") == "true"
-  )
+    override def expectedParameters: List[String] = null
+  }
 
-  override def expectedParameters: List[String] = List(API_KEY)
-}
