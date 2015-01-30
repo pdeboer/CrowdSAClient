@@ -1,7 +1,8 @@
 package ch.uzh.ifi.mamato.crowdPdf
 
 
-import ch.uzh.ifi.mamato.crowdPdf.hcomp.crowdpdf.CrowdPdfPortalAdapter
+import ch.uzh.ifi.mamato.crowdPdf.hcomp.crowdpdf.{CrowdPdfQueryProperties, CrowdPdfPortalAdapter}
+import ch.uzh.ifi.mamato.crowdPdf.model.Highlight
 import ch.uzh.ifi.mamato.crowdPdf.persistence.DBSettings
 import ch.uzh.ifi.mamato.crowdPdf.util.LazyLogger
 import ch.uzh.ifi.pdeboer.pplib.hcomp.{HCompQueryProperties, HCompQuery, HComp}
@@ -42,7 +43,9 @@ object Main extends App with LazyLogger {
 
   val a = new Thread(new Runnable {
     def run(): Unit = {
-      crowdPdf.processQuery(query, new HCompQueryProperties(10))
+      val highlight = new Highlight("Normality", "ANOVA,MANOVA,on the")
+      val properties = new CrowdPdfQueryProperties(2, "Boolean", highlight, 10)
+      crowdPdf.processQuery(query, properties)
     }
   })
 
@@ -55,7 +58,7 @@ object Main extends App with LazyLogger {
 
   a.start()
 
-  Thread.sleep(5000)
+  //Thread.sleep(5000)
 
-  b.start()
+  //b.start()
 }

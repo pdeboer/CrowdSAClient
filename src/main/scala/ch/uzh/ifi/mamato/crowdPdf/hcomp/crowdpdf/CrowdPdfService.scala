@@ -104,17 +104,14 @@ private[crowdPdf]class CrowdPdfService (val server: Server) extends LazyLogger{
 
   def CreateQuestion(
                  Question: String,
-                 QuestionType: String,
-                 Reward: Int,
-                 CreatedAt: Long,
-                 Paper_fk: Long): Long = {
+                 properties: CrowdPdfQueryProperties): Long = {
 
                  //LifetimeInSeconds: Int,
                  //MaxAssignments: Int,
                  //RequesterAnnotation: Option[String] = None): Long = {
 
     //check if paper exists
-    val isUploaded = get("/checkPaper/"+Paper_fk).toBoolean
+    val isUploaded = get("/checkPaper/"+properties.paperId).toBoolean
 
     try {
       if(isUploaded) {
@@ -123,28 +120,38 @@ private[crowdPdf]class CrowdPdfService (val server: Server) extends LazyLogger{
         val date = (new Date()).getTime
         val params = new collection.mutable.MutableList[NameValuePair]
         params += new BasicNameValuePair("question", Question)
-        params += new BasicNameValuePair("questionType", QuestionType)
-        params += new BasicNameValuePair("reward", Reward.toString)
+        params += new BasicNameValuePair("questionType", properties.questionType)
+        params += new BasicNameValuePair("reward", properties.reward_cents.toString)
         params += new BasicNameValuePair("created", date.toString)
-        params += new BasicNameValuePair("paper_fk", Paper_fk.toString)
+        params += new BasicNameValuePair("paper_fk", properties.paperId.toString)
 
 
-        val question_id = post("/addQuestion", params.toList).toLong
-        logger.debug("Question posted with remote id: " + question_id)
+        val remoteQuestionId = post("/addQuestion", params.toList).toLong
+        logger.debug("Question posted with remote id: " + remoteQuestionId)
 
         //create question object and store it in the local DB
-        val qId = QuestionDAO.create(Question, QuestionType, Reward, date, Paper_fk, question_id)
+        val qId = QuestionDAO.create(Question, properties.questionType, properties.reward_cents, date, properties.paperId, remoteQuestionId)
 
         if(qId > 0) {
           logger.debug("Question stored in local DB with id: " + qId)
         } else {
           logger.error("Cannot store question in the local database.")
         }
+
+        //Create highlight entry for the question if properties.highlightedTerms is not empty
+        if(properties.highlight != null) {
+          val params = new collection.mutable.MutableList[NameValuePair]
+          params += new BasicNameValuePair("questionId", remoteQuestionId.toString)
+          params += new BasicNameValuePair("assumption", properties.highlight.assumption)
+          params += new BasicNameValuePair("terms", properties.highlight.terms)
+          logger.debug(post("/highlight", params.toList))
+        }
+
         //return the id of remote question
-        return question_id
+        return remoteQuestionId
       } else {
         //The paper doesn't exist in the server
-        logger.error("There is no paper with id: " + Paper_fk + " stored in the server")
+        logger.error("There is no paper with id: " + properties.paperId + " stored in the server")
         -1
       }
     } catch {

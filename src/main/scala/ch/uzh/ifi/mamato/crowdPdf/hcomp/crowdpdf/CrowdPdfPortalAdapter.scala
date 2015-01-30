@@ -24,12 +24,21 @@ class CrowdPdfPortalAdapter extends HCompPortalAdapter with LazyLogger {
 
   val service = new CrowdPdfService(new Server(serviceURL))
 
-  //TODO: add parameters to set the questionType, the reward per answer and the paper_fk
   override def processQuery(query: HCompQuery, properties: HCompQueryProperties): Option[HCompAnswer] = {
+    try {
+      return processQuery(query, properties.asInstanceOf[CrowdPdfQueryProperties])
+    } catch {
+      case e: Exception => e.printStackTrace()
+    }
+    return null
+  }
+
+  //TODO: add parameters to set the questionType, the reward per answer and the paper_fk
+  def processQuery(query: HCompQuery, properties: CrowdPdfQueryProperties): Option[HCompAnswer] = {
     if (properties.qualifications.length > 0)
       logger.error("CrowdPDF implementation doesn't support Worker Qualifications yet. Executing query without them..")
 
-    val manager: CrowdPdfManager = new CrowdPdfManager(service, query, "Boolean", 2, 10, properties)
+    val manager: CrowdPdfManager = new CrowdPdfManager(service, query, properties)
     map += query.identifier -> map.getOrElse(query.identifier, new CrowdPdfQueries()).add(manager)
 
     val res = manager.createQuestion()
@@ -80,7 +89,6 @@ class CrowdPdfPortalAdapter extends HCompPortalAdapter with LazyLogger {
   def expireAllHits: Unit = {
     ???
   }
-
 }
 
   object CrowdPdfPortalAdapter {

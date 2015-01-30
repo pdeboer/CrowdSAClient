@@ -24,7 +24,7 @@ import scala.concurrent.duration._
 /**
  * Created by Mattia on 20.01.2015.
  */
-class CrowdPdfManager(val service: CrowdPdfService, val query: HCompQuery, val questionType: String, val paperId: Long, val reward: Int, val properties: HCompQueryProperties) extends LazyLogger {
+class CrowdPdfManager(val service: CrowdPdfService, val qu: HCompQuery, val properties: CrowdPdfQueryProperties) extends LazyLogger {
 
   var questionId : Long= 0
   var cancelled: Boolean = false
@@ -56,7 +56,7 @@ class CrowdPdfManager(val service: CrowdPdfService, val query: HCompQuery, val q
    * @return HIT ID
    */
   def createQuestion() : Long = {
-    questionId = service.CreateQuestion(query.question, questionType, reward, (new Date()).getTime, paperId)
+    questionId = service.CreateQuestion(qu.question, properties)
     questionId
   }
 
@@ -77,10 +77,14 @@ class CrowdPdfManager(val service: CrowdPdfService, val query: HCompQuery, val q
   def handleAnswerResult(a: Answer): Option[HCompAnswer] = {
     logger.debug("Got an answer: " + a.answer)
     try {
-      //We approve all assignments by default. Don't like rejections
-      service.ApproveAnswer(a)
+      //We approve all NON EMPTY answers by default.
+      if(a.answer != null && a.answer!="") {
+        service.ApproveAnswer(a)
+      } else {
+        service.RejectAnswer(a)
+      }
       val answer = new HCompAnswer {
-        override def query: HCompQuery = query
+        override def query: HCompQuery = qu
       }
 
       //TODO: correct this
