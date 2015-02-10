@@ -1,6 +1,6 @@
-package ch.uzh.ifi.mamato.crowdPdf.persistence
+package ch.uzh.ifi.mamato.crowdSA.persistence
 
-import ch.uzh.ifi.mamato.crowdPdf.model.Paper
+import ch.uzh.ifi.mamato.crowdSA.model.Paper
 import scalikejdbc._
 
 /**
@@ -11,7 +11,7 @@ object PaperDAO extends SQLSyntaxSupport[Paper] {
   override val tableName = "papers"
 
   def apply(p: SyntaxProvider[Paper])(rs: WrappedResultSet): Paper = apply(p.resultName)(rs)
-  def apply(p: ResultName[Paper])(rs: WrappedResultSet): Paper = new Paper(rs.long(p.id), rs.long(p.paper_id))
+  def apply(p: ResultName[Paper])(rs: WrappedResultSet): Paper = new Paper(rs.long(p.id), rs.string(p.title), rs.int(p.budget), rs.long(p.remote_id))
 
   val p = PaperDAO.syntax("p")
 
@@ -40,10 +40,12 @@ object PaperDAO extends SQLSyntaxSupport[Paper] {
     select(sqls.count).from(PaperDAO as p).where.append(sqls"${where}")//.and.append(isNotDeleted)
   }.map(_.long(1)).single.apply().get
 
-  def create(paper_id: Long)(implicit session: DBSession = autoSession): Paper = {
+  def create(title: String, budget: Int, remote_id: Long)(implicit session: DBSession = autoSession): Paper = {
     val id = withSQL {
       insert.into(PaperDAO).namedValues(
-        column.paper_id -> paper_id)
+        column.title -> title,
+        column.budget -> budget,
+        column.remote_id -> remote_id)
     }.updateAndReturnGeneratedKey.apply()
     find(id).get
   }
@@ -51,7 +53,9 @@ object PaperDAO extends SQLSyntaxSupport[Paper] {
   def save(m: Paper)(implicit session: DBSession = autoSession): Paper = {
     withSQL {
       update(PaperDAO).set(
-        column.paper_id -> m.paper_id
+        column.title -> m.title,
+        column.budget -> m.budget,
+        column.remote_id -> m.remote_id
       ).where.eq(column.id, m.id)//.and.isNull(column.deletedAt)
     }.update.apply()
     m

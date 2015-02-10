@@ -1,10 +1,10 @@
-package ch.uzh.ifi.mamato.crowdPdf.persistence
+package ch.uzh.ifi.mamato.crowdSA.persistence
 
 /**
  * Created by Mattia on 19.01.2015.
  */
 
-import ch.uzh.ifi.mamato.crowdPdf.util.LazyLogger
+import ch.uzh.ifi.mamato.crowdSA.util.LazyLogger
 import scalikejdbc._
 
 object DBInitializer extends LazyLogger{

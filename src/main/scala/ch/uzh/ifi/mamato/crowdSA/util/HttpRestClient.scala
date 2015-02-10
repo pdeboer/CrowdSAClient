@@ -1,4 +1,4 @@
-package ch.uzh.ifi.mamato.crowdPdf.util
+package ch.uzh.ifi.mamato.crowdSA.util
 
 import org.apache.http.impl.client.{CloseableHttpClient, HttpClients}
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager

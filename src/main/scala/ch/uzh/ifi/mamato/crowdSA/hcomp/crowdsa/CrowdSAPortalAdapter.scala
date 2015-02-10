@@ -1,9 +1,9 @@
-package ch.uzh.ifi.mamato.crowdPdf.hcomp.crowdpdf
+package ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
 import ch.uzh.ifi.pdeboer.pplib.util.LazyLogger
 import org.joda.time.DateTime
-import ch.uzh.ifi.mamato.crowdPdf.util.CollectionUtils._
+import ch.uzh.ifi.mamato.crowdSA.util.CollectionUtils._
 
 import scala.collection.mutable
 
@@ -13,32 +13,38 @@ import scala.collection.mutable
 
 //case class CrowdPDfQueryProperties(reward: Int = 0, questionType: String = "", paperId: Long = 0)
 
-@HCompPortal(builder = classOf[CrowdPdfPortalBuilder], autoInit = true)
-class CrowdPdfPortalAdapter extends HCompPortalAdapter with LazyLogger {
+@HCompPortal(builder = classOf[CrowdSAPortalBuilder], autoInit = true)
+class CrowdSAPortalAdapter extends HCompPortalAdapter with LazyLogger {
 
-  override def getDefaultPortalKey: String = "crowdPdf"
+  override def getDefaultPortalKey: String = "crowdSA"
 
   val serviceURL = "http://localhost:9000"
 
   var map = mutable.HashMap.empty[Int, CrowdPdfQueries]
 
-  val service = new CrowdPdfService(new Server(serviceURL))
+  val service = new CrowdSAService(new Server(serviceURL))
 
+  /**
+   * Hack to solve the properties problem
+   * @param query
+   * @param properties
+   * @return
+   */
   override def processQuery(query: HCompQuery, properties: HCompQueryProperties): Option[HCompAnswer] = {
     try {
-      return processQuery(query, properties.asInstanceOf[CrowdPdfQueryProperties])
+      return processQuery(query, properties.asInstanceOf[CrowdSAQueryProperties])
     } catch {
       case e: Exception => e.printStackTrace()
     }
     return null
   }
 
-  //TODO: add parameters to set the questionType, the reward per answer and the paper_fk
-  def processQuery(query: HCompQuery, properties: CrowdPdfQueryProperties): Option[HCompAnswer] = {
+  //TODO: add parameters to set the question_type, the reward per answer and the remote paper_id
+  def processQuery(query: HCompQuery, properties: CrowdSAQueryProperties): Option[HCompAnswer] = {
     if (properties.qualifications.length > 0)
       logger.error("CrowdPDF implementation doesn't support Worker Qualifications yet. Executing query without them..")
 
-    val manager: CrowdPdfManager = new CrowdPdfManager(service, query, properties)
+    val manager: CrowdSAManager = new CrowdSAManager(service, query, properties)
     map += query.identifier -> map.getOrElse(query.identifier, new CrowdPdfQueries()).add(manager)
 
     val res = manager.createQuestion()
@@ -69,12 +75,12 @@ class CrowdPdfPortalAdapter extends HCompPortalAdapter with LazyLogger {
     }
   }
 
-  protected[CrowdPdfPortalAdapter] class CrowdPdfQueries() {
-    private var sent: List[(DateTime, CrowdPdfManager)] = Nil
+  protected[CrowdSAPortalAdapter] class CrowdPdfQueries() {
+    private var sent: List[(DateTime, CrowdSAManager)] = Nil
 
     def list = sent
 
-    def add(manager: CrowdPdfManager) = {
+    def add(manager: CrowdSAManager) = {
       this.synchronized {
         sent = (DateTime.now(), manager) :: sent
       }
@@ -91,25 +97,25 @@ class CrowdPdfPortalAdapter extends HCompPortalAdapter with LazyLogger {
   }
 }
 
-  object CrowdPdfPortalAdapter {
-    val CONFIG_ACCESS_ID_KEY = "hcomp.crowdpdf.accessKeyID"
-    val CONFIG_SECRET_ACCESS_KEY = "hcomp.crowdpdf.secretAccessKey"
-    val CONFIG_SANDBOX_KEY = "hcomp.crowdpdf.sandbox"
-    val PORTAL_KEY = "crowdPdf"
+  object CrowdSAPortalAdapter {
+    val CONFIG_ACCESS_ID_KEY = "hcomp.crowdsa.accessKeyID"
+    val CONFIG_SECRET_ACCESS_KEY = "hcomp.crowdsa.secretAccessKey"
+    val CONFIG_SANDBOX_KEY = "hcomp.crowdsa.sandbox"
+    val PORTAL_KEY = "crowdSA"
   }
 
-  class CrowdPdfPortalBuilder extends HCompPortalBuilder {
+  class CrowdSAPortalBuilder extends HCompPortalBuilder {
     val ACCESS_ID_KEY: String = "accessIdKey"
     val SECRET_ACCESS_KEY: String = "secretAccessKey"
     val SANDBOX: String = "sandbox"
 
     val parameterToConfigPath = Map(
-      ACCESS_ID_KEY -> CrowdPdfPortalAdapter.CONFIG_ACCESS_ID_KEY,
-      SECRET_ACCESS_KEY -> CrowdPdfPortalAdapter.CONFIG_SECRET_ACCESS_KEY,
-      SANDBOX -> CrowdPdfPortalAdapter.CONFIG_SANDBOX_KEY
+      ACCESS_ID_KEY -> CrowdSAPortalAdapter.CONFIG_ACCESS_ID_KEY,
+      SECRET_ACCESS_KEY -> CrowdSAPortalAdapter.CONFIG_SECRET_ACCESS_KEY,
+      SANDBOX -> CrowdSAPortalAdapter.CONFIG_SANDBOX_KEY
     )
 
-    override def build: HCompPortalAdapter = new CrowdPdfPortalAdapter()
+    override def build: HCompPortalAdapter = new CrowdSAPortalAdapter()
 
     override def expectedParameters: List[String] = null
   }

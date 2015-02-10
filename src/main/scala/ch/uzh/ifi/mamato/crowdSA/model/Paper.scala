@@ -1,6 +1,6 @@
-package ch.uzh.ifi.mamato.crowdPdf.model
+package ch.uzh.ifi.mamato.crowdSA.model
 
-import ch.uzh.ifi.mamato.crowdPdf.persistence.PaperDAO
+import ch.uzh.ifi.mamato.crowdSA.persistence.PaperDAO
 import scalikejdbc._
 import org.joda.time.DateTime
 
@@ -12,7 +12,9 @@ import org.joda.time.DateTime
  */
 case class Paper(
                   id: Long,
-                  paper_id: Long) {
+                  title: String,
+                  budget: Int,
+                  remote_id: Long) {
   def save()(implicit session: DBSession = PaperDAO.autoSession): Paper = PaperDAO.save(this)(session)
   //def destroy()(implicit session: DBSession = Paper.autoSession): Unit = Paper.destroy(id)(session)
 }

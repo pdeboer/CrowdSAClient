@@ -1,6 +1,6 @@
-package ch.uzh.ifi.mamato.crowdPdf.persistence
+package ch.uzh.ifi.mamato.crowdSA.persistence
 
-import ch.uzh.ifi.mamato.crowdPdf.model.Question
+import ch.uzh.ifi.mamato.crowdSA.model.Question
 import scalikejdbc._
 
 /**
@@ -12,7 +12,9 @@ object QuestionDAO extends SQLSyntaxSupport[Question] {
 
   def apply(q: SyntaxProvider[Question])(rs: WrappedResultSet): Question = apply(q.resultName)(rs)
   def apply(q: ResultName[Question])(rs: WrappedResultSet): Question =
-    new Question(rs.long(q.id), rs.string(q.question), rs.string(q.questiontype), rs.int(q.reward), rs.long(q.created), rs.long(q.paper_fk), rs.long(q.question_id))
+    new Question(rs.long(q.id), rs.string(q.question), rs.string(q.question_type), rs.int(q.reward_cts),
+      rs.long(q.created_at), rs.long(q.remote_paper_id), rs.long(q.remote_question_id), rs.boolean(q.disabled),
+      rs.int(q.maximal_assignments), rs.long(q.expiration_time_sec))
 
   val q = QuestionDAO.syntax("q")
 
@@ -24,6 +26,11 @@ object QuestionDAO extends SQLSyntaxSupport[Question] {
     select.from(QuestionDAO as q)
       //.where.append(isNotDeleted)
       .orderBy(q.id)
+  }.map(QuestionDAO(q)).list.apply()
+
+  def findAllEnabled()(implicit session: DBSession = autoSession): Iterable[Question] = withSQL {
+    select.from(QuestionDAO as q)
+    .where.eq(q.disabled, false)
   }.map(QuestionDAO(q)).list.apply()
 
   def countAll()(implicit session: DBSession = autoSession): Long = withSQL {
@@ -41,16 +48,21 @@ object QuestionDAO extends SQLSyntaxSupport[Question] {
   }.map(_.long(1)).single.apply().get
 
 
-  def create(question: String, questiontype: String, reward: Int, created: Long, paper_fk: Long, question_id: Long)(implicit session: DBSession = autoSession): Long = {
+  def create(question: String, question_type: String, reward_cts: Int, created_at: Long, remote_paper_id: Long,
+             remote_question_id: Long, maximal_assignments: Int, expiration_time_sec: Long)
+            (implicit session: DBSession = autoSession): Long = {
     try {
       val id = withSQL {
         insert.into(QuestionDAO).namedValues(
           column.question -> question,
-          column.questiontype -> questiontype,
-          column.reward -> reward,
-          column.created -> created,
-          column.paper_fk -> paper_fk,
-          column.question_id -> question_id
+          column.question_type -> question_type,
+          column.reward_cts -> reward_cts,
+          column.created_at -> created_at,
+          column.remote_paper_id -> remote_paper_id,
+          column.remote_question_id -> remote_question_id,
+          column.maximal_assignments -> maximal_assignments,
+          column.expiration_time_sec -> expiration_time_sec,
+          column.disabled -> false
         )
       }.updateAndReturnGeneratedKey.apply()
       return id
@@ -60,17 +72,14 @@ object QuestionDAO extends SQLSyntaxSupport[Question] {
     -1
   }
 
-  def save(m: Question)(implicit session: DBSession = autoSession): Question = {
+  def save(question_id: Long, disabled: Boolean, expiration_time_sec: Long, maximal_assignments: Int)
+          (implicit session: DBSession = autoSession) = {
     withSQL {
       update(QuestionDAO).set(
-        column.question -> m.question, column.questiontype -> m.questiontype, column.reward -> m.reward, column.created -> m.created, column.paper_fk -> m.paper_fk, column.question_id -> m.question_id
-      ).where.eq(column.id, m.id)//.and.isNull(column.deletedAt)
+        column.disabled -> disabled, column.expiration_time_sec -> expiration_time_sec
+        , column.maximal_assignments -> maximal_assignments
+      ).where.eq(column.id, question_id)
     }.update.apply()
-    m
   }
 
-  /*def destroy(id: Long)(implicit session: DBSession = autoSession): Unit = withSQL {
-    update(Question).set(column.deletedAt -> DateTime.now).where.eq(column.id, id)
-  }.update.apply()
-*/
 }

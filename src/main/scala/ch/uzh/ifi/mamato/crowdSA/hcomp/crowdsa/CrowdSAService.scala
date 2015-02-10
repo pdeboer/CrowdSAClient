@@ -1,0 +1,343 @@
+package ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa
+
+import java.io.File
+import java.util.Date
+
+import ch.uzh.ifi.mamato.crowdSA.model.{Answer, Assignment, Question}
+import ch.uzh.ifi.mamato.crowdSA.persistence.{PaperDAO, QuestionDAO}
+import ch.uzh.ifi.mamato.crowdSA.util.{HttpRestClient, LazyLogger}
+import com.fasterxml.jackson.core.`type`.TypeReference
+import com.fasterxml.jackson.databind.ObjectMapper
+import org.apache.http.client.config.RequestConfig
+import org.apache.http.client.protocol.HttpClientContext
+import org.apache.http.entity.ContentType
+import org.apache.http.util.EntityUtils
+import org.apache.http.{HttpEntity, NameValuePair}
+import org.apache.http.client.methods.{CloseableHttpResponse, HttpPost, HttpGet}
+import org.apache.http.entity.mime.MultipartEntityBuilder
+import org.apache.http.entity.mime.content.{FileBody, StringBody}
+import org.apache.http.message.BasicNameValuePair
+import play.api.libs.json.{JsError, JsSuccess, JsValue, Json}
+import scalikejdbc._
+
+import scala.util.parsing.json.JSON
+
+/**
+ * Created by Mattia on 20.01.2015.
+ */
+private[crowdSA] class Server(val url: String)
+
+private[crowdSA] case object CrowdSAServer extends Server("http://localhost:9000")
+
+private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
+
+  val httpClient = HttpRestClient.httpClient
+  val config1 = RequestConfig.custom().setSocketTimeout((30*1000).toInt).build();
+
+  /**
+   * Get REST method in the server
+   * @param path
+   * @return
+   */
+  def get(path: String): String = {
+    val httpGet = new HttpGet(server.url + path)
+    httpGet.setConfig(config1)
+    val closeableHttp = httpClient.execute(httpGet)
+    val res = getResultFromEntity(closeableHttp.getEntity)
+    if(closeableHttp != null) closeableHttp.close()
+    res
+  }
+
+  /**
+   * Post to a REST method in the server some parameters
+   * @param path
+   * @param params
+   * @return
+   */
+  def post(path: String, params: List[NameValuePair]): String = {
+
+    val httpPost = new HttpPost(server.url + path)
+    httpPost.setConfig(config1);
+
+    val reqEntity = MultipartEntityBuilder.create()
+    for(n <- params){
+      reqEntity.addPart(n.getName, new StringBody(n.getValue, ContentType.TEXT_PLAIN))
+    }
+
+    httpPost.setEntity(reqEntity.build())
+    val ctx = HttpClientContext.create()
+    val closeableHttp = httpClient.execute(httpPost, ctx)
+
+    val res = getResultFromEntity(closeableHttp.getEntity)
+    if(closeableHttp != null) closeableHttp.close()
+    res
+  }
+
+  def getResultFromEntity(entity: HttpEntity): String = {
+    val result = EntityUtils.toString(entity)
+    result
+  }
+
+  /**
+   * Upload a paper to the server
+   *
+   * @param pdf_path
+   * @param pdf_title
+   * @param budget_cts
+   * @param highlight_enabled
+   */
+  def uploadPaper(pdf_path: String, pdf_title: String, budget_cts:Int, highlight_enabled: Boolean) : Long= {
+    logger.info("Uploading paper: " + pdf_title)
+    val uri = "http://localhost:9000/paper"
+    val httpClient = HttpRestClient.httpClient
+    try {
+      // Create the entity
+      val reqEntity = MultipartEntityBuilder.create()
+
+      // Attach the file
+      reqEntity.addPart("source", new FileBody(new File(pdf_path)))
+
+      // Attach the pdfTitle and budget as plain text
+      val tokenBody = new StringBody(pdf_title, ContentType.TEXT_PLAIN)
+      reqEntity.addPart("pdf_title", tokenBody)
+      reqEntity.addPart("highlight_enabled", new StringBody(String.valueOf(highlight_enabled), ContentType.TEXT_PLAIN))
+
+      // Create POST request
+      logger.debug("Create http post request")
+      val httpPost = new HttpPost(uri)
+      httpPost.setEntity(reqEntity.build())
+
+      // Execute the request in a new HttpContext
+      val ctx = HttpClientContext.create()
+      logger.debug("Sending request...")
+      val response: CloseableHttpResponse = httpClient.execute(httpPost, ctx)
+      // Read the response
+      val entity = response.getEntity
+      val result = EntityUtils.toString(entity)
+      // Close the response
+      if(response != null) response.close()
+      logger.debug(s"Request sent with response: $result")
+
+      val id = PaperDAO.create(pdf_title, budget_cts,result.toLong)
+      logger.debug(s"Paper stored in DB with id: $id")
+
+      return result.toLong
+    } catch {
+      case e: Exception => {
+        logger.error(e.getMessage)
+        return -1
+      }
+    }
+  }
+
+  def RegisterQuestionType(
+                       Title: String,
+                       Description: String,
+                       Reward: Int,
+                       AssignmentDurationInSeconds: Int,
+                       Keywords: Seq[String],
+                       AutoApprovalDelayInSeconds: Int,
+                       QualificationRequirements: Seq[QualificationRequirement]): String = {
+
+    ???
+  }
+
+  def GetAnswersForQuestion(question_id: Long) : Iterable[Answer] = {
+    try {
+
+      val jsonAnswer: JsValue = Json.parse(get("/answers/"+question_id))
+
+      val a = jsonAnswer.validate[List[Answer]]
+      return a.get.toIterable
+    } catch {
+      case e: Exception =>
+        //If no answer is present we land always here
+    }
+    return None
+  }
+
+  def CreateQuestion(
+                 Question: String,
+                 properties: CrowdSAQueryProperties): Long = {
+
+                 //LifetimeInSeconds: Int,
+                 //MaxAssignments: Int,
+                 //RequesterAnnotation: Option[String] = None): Long = {
+
+    //check if paper exists
+    val isUploaded = get("/checkPaper/"+properties.paper_id).toBoolean
+
+    try {
+      if(isUploaded) {
+        // The paper exists
+        //post the question and get remote id
+        val date = (new Date()).getTime/1000
+        val params = new collection.mutable.MutableList[NameValuePair]
+        params += new BasicNameValuePair("question", Question)
+        params += new BasicNameValuePair("question_type", properties.question_type)
+        params += new BasicNameValuePair("reward_cts", properties.reward_cts.toString)
+        params += new BasicNameValuePair("created_at", date.toString)
+        params += new BasicNameValuePair("papers_id", properties.paper_id.toString)
+
+
+        val remote_question_id = post("/addQuestion", params.toList).toLong
+        logger.debug("Question posted with remote id: " + remote_question_id)
+
+        //create question object and store it in the local DB
+        val qId = QuestionDAO.create(Question, properties.question_type, properties.reward_cts, date,
+          properties.paper_id, remote_question_id, properties.maximal_assignments, properties.expiration_time_sec)
+
+        if(qId > 0) {
+          logger.debug("Question stored in local DB with id: " + qId)
+        } else {
+          logger.error("Cannot store question in the local database.")
+        }
+
+        //Create highlight entry for the question if properties.highlightedTerms is not empty
+        if(properties.highlight != null) {
+          val params = new collection.mutable.MutableList[NameValuePair]
+          params += new BasicNameValuePair("questionId", remote_question_id.toString)
+          params += new BasicNameValuePair("assumption", properties.highlight.assumption)
+          params += new BasicNameValuePair("terms", properties.highlight.terms)
+          logger.debug(post("/highlight", params.toList))
+        }
+
+        //return the id of remote question
+        return remote_question_id
+      } else {
+        //The paper doesn't exist in the server
+        logger.error("There is no paper with id: " + properties.paper_id + " stored in the server")
+        -1
+      }
+    } catch {
+      case e: Exception => {
+        logger.error("An error occurred while creating new question: " + Question)
+        -1
+      }
+    }
+  }
+
+  /**
+   * Disable a question
+   * @param qId id of the question in the local db
+   */
+  def DisableQuestion(qId: Long): Unit = {
+    try {
+      val remote_question_id = QuestionDAO.find(qId).get.remote_question_id
+      val params = new collection.mutable.MutableList[NameValuePair]
+      params += new BasicNameValuePair("question_id", remote_question_id.toString)
+      val resp = post("/disablequestion", params.toList)
+      if(resp.startsWith("Error")){
+        logger.error(resp)
+      }else {
+        val question = QuestionDAO.find(qId).get
+        QuestionDAO.save(qId, true, question.expiration_time_sec,
+          question.maximal_assignments)
+        logger.debug(resp)
+      }
+    } catch {
+      case e: Exception => e.printStackTrace()
+    }
+  }
+
+  def SearchQuestions(): Iterable[Question] = {
+    QuestionDAO.findAllEnabled()
+  }
+
+  def GetAssignmentsForQuestion(question_id: Long): Iterable[Assignment] = {
+    try {
+
+      val jsonAssignment: JsValue = Json.parse(get("/assignments/"+question_id))
+
+      val a = jsonAssignment.validate[List[Assignment]]
+      return a.get.toIterable
+    } catch {
+      case e: Exception =>
+      //If no assignment is present we land always here
+    }
+    return None
+  }
+
+  def ApproveAnswer(a: Answer): Unit = {
+    try {
+      val params = new collection.mutable.MutableList[NameValuePair]
+      params += new BasicNameValuePair("answerId", a.id.toString)
+      params += new BasicNameValuePair("accepted", "true")
+      params += new BasicNameValuePair("bonus", "false")
+      logger.debug(post("/evaluateanswer", params.toList))
+    } catch {
+      case e: Exception => e.printStackTrace()
+    }
+  }
+
+  def RejectAnswer(a: Answer): Unit = {
+    try {
+      val params = new collection.mutable.MutableList[NameValuePair]
+      params += new BasicNameValuePair("answerId", a.id.toString)
+      params += new BasicNameValuePair("accepted", "false")
+      params += new BasicNameValuePair("bonus", "false")
+      logger.debug(post("/evaluateanswer", params.toList))
+    } catch {
+      case e: Exception => e.printStackTrace()
+    }
+  }
+
+  def BlockTurker(turker_id: String, reason: String): Unit = {
+    ???
+  }
+
+  /**
+   * Extend question's maximal assignments.
+   * @param question_id the remote id of the question
+   * @param MaxAssignmentsIncrement the increment of the maximal assignments limit
+   */
+  def ExtendQuestionMaxAssignments(question_id: Long, MaxAssignmentsIncrement: Int): Unit = {
+    try {
+      val params = new collection.mutable.MutableList[NameValuePair]
+      params += new BasicNameValuePair("question_id", question_id.toString)
+      params += new BasicNameValuePair("maximal_assignments", MaxAssignmentsIncrement.toString)
+
+      val resp = post("/extendmaxassignments", params.toList)
+      if(resp.startsWith("Error")){
+        logger.error(resp)
+      }else {
+        val question = QuestionDAO.find(question_id).get
+        QuestionDAO.save(question_id, true, question.expiration_time_sec,
+          question.maximal_assignments+MaxAssignmentsIncrement)
+        logger.debug(resp)
+      }
+    } catch {
+      case e: Exception => e.printStackTrace()
+    }
+  }
+
+
+  def ExtendQuestionExpiration(question_id: Long, ExpirationIncrementInSeconds: Int): Unit = {
+    try {
+      val params = new collection.mutable.MutableList[NameValuePair]
+      params += new BasicNameValuePair("question_id", question_id.toString)
+      params += new BasicNameValuePair("expiration_increment_sec", ExpirationIncrementInSeconds.toString)
+      val resp = post("/extendexpiration", params.toList)
+      if(resp.startsWith("Error")){
+        logger.error(resp)
+      }else {
+        val question = QuestionDAO.find(question_id).get
+        QuestionDAO.save(question_id, true, question.expiration_time_sec+ExpirationIncrementInSeconds,
+          question.maximal_assignments)
+        logger.debug(resp)
+      }
+    } catch {
+      case e: Exception => e.printStackTrace()
+    }
+  }
+
+}
+
+private[crowdSA] case class QualificationRequirement(
+                                                    QualificationTypeId: String,
+                                                    Comparator: String,
+                                                    RequiredToPreview: Boolean = false,
+                                                    extraParameters: Seq[(String, String)] = Seq.empty) {
+  ???
+                                                    }
+

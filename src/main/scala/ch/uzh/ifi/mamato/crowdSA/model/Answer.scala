@@ -1,15 +1,15 @@
-package ch.uzh.ifi.mamato.crowdPdf.model
+package ch.uzh.ifi.mamato.crowdSA.model
 
 import play.api.libs.json._
-import play.api.libs.json.Reads._ // Custom validation helpers
-import play.api.libs.functional.syntax._ // Combinator syntax
+import play.api.libs.json.Reads._
+import play.api.libs.functional.syntax._
 
 /**
  * Created by Mattia on 04.01.2015.
  */
 
 
-private[crowdPdf] case class Answer(id: Long, answer: String, completedTime: Long, accepted: Option[Boolean], acceptedAndBonus: Option[Boolean], rejected: Option[Boolean], assignment_fk: Long) extends Serializable
+private[crowdSA] case class Answer(id: Long, answer: String, completedTime: Long, accepted: Option[Boolean], acceptedAndBonus: Option[Boolean], rejected: Option[Boolean], assignment_fk: Long) extends Serializable
 
 object Answer {
   implicit val answerWrites = new Writes[Answer] {

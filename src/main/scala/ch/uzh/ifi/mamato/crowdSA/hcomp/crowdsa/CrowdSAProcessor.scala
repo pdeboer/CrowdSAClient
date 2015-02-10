@@ -1,8 +1,8 @@
-package ch.uzh.ifi.mamato.crowdPdf.hcomp.crowdpdf
+package ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa
 
-import ch.uzh.ifi.mamato.crowdPdf.model.{Answer, Question}
-import ch.uzh.ifi.mamato.crowdPdf.persistence.QuestionDAO
-import ch.uzh.ifi.mamato.crowdPdf.util.{HttpRestClient, LazyLogger}
+import ch.uzh.ifi.mamato.crowdSA.model.{Answer, Question}
+import ch.uzh.ifi.mamato.crowdSA.persistence.QuestionDAO
+import ch.uzh.ifi.mamato.crowdSA.util.{HttpRestClient, LazyLogger}
 import java.util.Date
 import ch.uzh.ifi.pdeboer.pplib.hcomp.{HCompAnswer, HCompQueryProperties, HCompQuery}
 import ch.uzh.ifi.pdeboer.pplib.util.GrowingTimer
@@ -24,7 +24,7 @@ import scala.concurrent.duration._
 /**
  * Created by Mattia on 20.01.2015.
  */
-class CrowdPdfManager(val service: CrowdPdfService, val qu: HCompQuery, val properties: CrowdPdfQueryProperties) extends LazyLogger {
+class CrowdSAManager(val service: CrowdSAService, val qu: HCompQuery, val properties: CrowdSAQueryProperties) extends LazyLogger {
 
   var questionId : Long= 0
   var cancelled: Boolean = false
@@ -52,8 +52,8 @@ class CrowdPdfManager(val service: CrowdPdfService, val qu: HCompQuery, val prop
     answer
   }
 
-  /**
-   * @return HIT ID
+  /**POST a question to the server
+   * @return question id
    */
   def createQuestion() : Long = {
     questionId = service.CreateQuestion(qu.question, properties)

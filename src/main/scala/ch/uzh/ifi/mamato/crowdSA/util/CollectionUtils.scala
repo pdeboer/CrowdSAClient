@@ -1,4 +1,4 @@
-package ch.uzh.ifi.mamato.crowdPdf.util
+package ch.uzh.ifi.mamato.crowdSA.util
 
 import scala.collection.parallel.{ForkJoinTaskSupport, ParSeq}
 import scala.concurrent.forkjoin.ForkJoinPool
