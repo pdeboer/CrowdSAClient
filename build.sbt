@@ -2,7 +2,7 @@ name := "bachelorClient"
 
 version := "1.0"
 
-scalaVersion := "2.11.4"
+scalaVersion := "2.11.5"
 
 libraryDependencies += "pdeboer" % "pplib_2.11" % "0.1-SNAPSHOT"
 

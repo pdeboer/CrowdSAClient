@@ -4,8 +4,7 @@ import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAQueryProperties, CrowdSAP
 import ch.uzh.ifi.mamato.crowdSA.model.Highlight
 import ch.uzh.ifi.mamato.crowdSA.persistence.DBSettings
 import ch.uzh.ifi.mamato.crowdSA.util.LazyLogger
-import ch.uzh.ifi.pdeboer.pplib.hcomp.{HCompQueryProperties, HCompQuery, HComp}
-import java.util.Date
+import ch.uzh.ifi.pdeboer.pplib.hcomp.{HCompQuery, HComp}
 
 
 /**

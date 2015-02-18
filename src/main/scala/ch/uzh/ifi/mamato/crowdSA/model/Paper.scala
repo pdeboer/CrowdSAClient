@@ -13,7 +13,7 @@ import org.joda.time.DateTime
 case class Paper(
                   id: Long,
                   title: String,
-                  budget: Int,
+                  budget_cts: Int,
                   remote_id: Long) {
   def save()(implicit session: DBSession = PaperDAO.autoSession): Paper = PaperDAO.save(this)(session)
   //def destroy()(implicit session: DBSession = Paper.autoSession): Unit = Paper.destroy(id)(session)

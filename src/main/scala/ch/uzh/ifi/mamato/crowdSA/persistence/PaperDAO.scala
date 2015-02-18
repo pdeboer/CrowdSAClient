@@ -11,13 +11,19 @@ object PaperDAO extends SQLSyntaxSupport[Paper] {
   override val tableName = "papers"
 
   def apply(p: SyntaxProvider[Paper])(rs: WrappedResultSet): Paper = apply(p.resultName)(rs)
-  def apply(p: ResultName[Paper])(rs: WrappedResultSet): Paper = new Paper(rs.long(p.id), rs.string(p.title), rs.int(p.budget), rs.long(p.remote_id))
+  def apply(p: ResultName[Paper])(rs: WrappedResultSet): Paper = new Paper(rs.long(p.id), rs.string(p.title), rs.int(p.budget_cts), rs.long(p.remote_id))
 
   val p = PaperDAO.syntax("p")
 
 
   def find(id: Long)(implicit session: DBSession = autoSession): Option[Paper] = withSQL {
     select.from(PaperDAO as p).where.eq(p.id, id)//.and.append(isNotDeleted)
+  }.map(PaperDAO(p)).single.apply()
+
+  def findByTitle(title: String)(implicit session: DBSession = autoSession): Option[Paper] = withSQL {
+    select.from(PaperDAO as p)
+      .where.eq(p.title, title)
+      .orderBy(p.id)
   }.map(PaperDAO(p)).single.apply()
 
   def findAll()(implicit session: DBSession = autoSession): List[Paper] = withSQL {
@@ -40,11 +46,11 @@ object PaperDAO extends SQLSyntaxSupport[Paper] {
     select(sqls.count).from(PaperDAO as p).where.append(sqls"${where}")//.and.append(isNotDeleted)
   }.map(_.long(1)).single.apply().get
 
-  def create(title: String, budget: Int, remote_id: Long)(implicit session: DBSession = autoSession): Paper = {
+  def create(title: String, budget_cts: Int, remote_id: Long)(implicit session: DBSession = autoSession): Paper = {
     val id = withSQL {
       insert.into(PaperDAO).namedValues(
         column.title -> title,
-        column.budget -> budget,
+        column.budget_cts -> budget_cts,
         column.remote_id -> remote_id)
     }.updateAndReturnGeneratedKey.apply()
     find(id).get
@@ -54,7 +60,7 @@ object PaperDAO extends SQLSyntaxSupport[Paper] {
     withSQL {
       update(PaperDAO).set(
         column.title -> m.title,
-        column.budget -> m.budget,
+        column.budget_cts -> m.budget_cts,
         column.remote_id -> m.remote_id
       ).where.eq(column.id, m.id)//.and.isNull(column.deletedAt)
     }.update.apply()

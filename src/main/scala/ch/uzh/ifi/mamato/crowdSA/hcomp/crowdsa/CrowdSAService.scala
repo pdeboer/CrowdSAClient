@@ -20,6 +20,7 @@ import org.apache.http.message.BasicNameValuePair
 import play.api.libs.json.{JsError, JsSuccess, JsValue, Json}
 import scalikejdbc._
 
+import scala.collection.mutable
 import scala.util.parsing.json.JSON
 
 /**
@@ -40,6 +41,7 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
    * @return
    */
   def get(path: String): String = {
+    logger.debug("GET: " + path)
     val httpGet = new HttpGet(server.url + path)
     httpGet.setConfig(config1)
     val closeableHttp = httpClient.execute(httpGet)
@@ -55,6 +57,8 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
    * @return
    */
   def post(path: String, params: List[NameValuePair]): String = {
+
+    logger.debug("POST: " + path + " with parameters: " + params.toString())
 
     val httpPost = new HttpPost(server.url + path)
     httpPost.setConfig(config1);
@@ -87,45 +91,54 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
    * @param highlight_enabled
    */
   def uploadPaper(pdf_path: String, pdf_title: String, budget_cts:Int, highlight_enabled: Boolean) : Long= {
-    logger.info("Uploading paper: " + pdf_title)
-    val uri = "http://localhost:9000/paper"
-    val httpClient = HttpRestClient.httpClient
-    try {
-      // Create the entity
-      val reqEntity = MultipartEntityBuilder.create()
 
-      // Attach the file
-      reqEntity.addPart("source", new FileBody(new File(pdf_path)))
+    val paper = PaperDAO.findByTitle(pdf_title).getOrElse(null)
+    if(paper != null && get("/checkPaper/"+paper.remote_id).toBoolean) {
+      paper.remote_id
+    }
+    //Upload paper only if it is not already uploaded
+    else {
 
-      // Attach the pdfTitle and budget as plain text
-      val tokenBody = new StringBody(pdf_title, ContentType.TEXT_PLAIN)
-      reqEntity.addPart("pdf_title", tokenBody)
-      reqEntity.addPart("highlight_enabled", new StringBody(String.valueOf(highlight_enabled), ContentType.TEXT_PLAIN))
+      logger.info("Uploading paper: " + pdf_title)
+      val uri = "http://localhost:9000/paper"
+      val httpClient = HttpRestClient.httpClient
+      try {
+        // Create the entity
+        val reqEntity = MultipartEntityBuilder.create()
 
-      // Create POST request
-      logger.debug("Create http post request")
-      val httpPost = new HttpPost(uri)
-      httpPost.setEntity(reqEntity.build())
+        // Attach the file
+        reqEntity.addPart("source", new FileBody(new File(pdf_path)))
 
-      // Execute the request in a new HttpContext
-      val ctx = HttpClientContext.create()
-      logger.debug("Sending request...")
-      val response: CloseableHttpResponse = httpClient.execute(httpPost, ctx)
-      // Read the response
-      val entity = response.getEntity
-      val result = EntityUtils.toString(entity)
-      // Close the response
-      if(response != null) response.close()
-      logger.debug(s"Request sent with response: $result")
+        // Attach the pdfTitle and budget as plain text
+        val tokenBody = new StringBody(pdf_title, ContentType.TEXT_PLAIN)
+        reqEntity.addPart("pdf_title", tokenBody)
+        reqEntity.addPart("highlight_enabled", new StringBody(String.valueOf(highlight_enabled), ContentType.TEXT_PLAIN))
 
-      val id = PaperDAO.create(pdf_title, budget_cts,result.toLong)
-      logger.debug(s"Paper stored in DB with id: $id")
+        // Create POST request
+        logger.debug("Create http post request")
+        val httpPost = new HttpPost(uri)
+        httpPost.setEntity(reqEntity.build())
 
-      return result.toLong
-    } catch {
-      case e: Exception => {
-        logger.error(e.getMessage)
-        return -1
+        // Execute the request in a new HttpContext
+        val ctx = HttpClientContext.create()
+        logger.debug("Sending request...")
+        val response: CloseableHttpResponse = httpClient.execute(httpPost, ctx)
+        // Read the response
+        val entity = response.getEntity
+        val result = EntityUtils.toString(entity)
+        // Close the response
+        if(response != null) response.close()
+        logger.debug(s"Request sent with response: $result")
+
+        val id = PaperDAO.create(pdf_title, budget_cts,result.toLong)
+        logger.debug(s"Paper stored in DB with id: $id")
+
+        return result.toLong
+      } catch {
+        case e: Exception => {
+          logger.error(e.getMessage)
+          return -1
+        }
       }
     }
   }
@@ -151,7 +164,7 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
       return a.get.toIterable
     } catch {
       case e: Exception =>
-        //If no answer is present we land always here
+        logger.debug("No answer given yet")
     }
     return None
   }
@@ -178,32 +191,40 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
         params += new BasicNameValuePair("reward_cts", properties.reward_cts.toString)
         params += new BasicNameValuePair("created_at", date.toString)
         params += new BasicNameValuePair("papers_id", properties.paper_id.toString)
+        params += new BasicNameValuePair("expiration_time_sec", properties.expiration_time_sec.toString)
+        params += new BasicNameValuePair("maximal_assignments", properties.maximal_assignments.toString)
 
 
-        val remote_question_id = post("/addQuestion", params.toList).toLong
-        logger.debug("Question posted with remote id: " + remote_question_id)
-
-        //create question object and store it in the local DB
-        val qId = QuestionDAO.create(Question, properties.question_type, properties.reward_cts, date,
-          properties.paper_id, remote_question_id, properties.maximal_assignments, properties.expiration_time_sec)
-
-        if(qId > 0) {
-          logger.debug("Question stored in local DB with id: " + qId)
+        val resp = post("/addQuestion", params.toList)
+        if(resp.startsWith("Error")){
+          logger.error(resp)
+          -1
         } else {
-          logger.error("Cannot store question in the local database.")
+          val remote_question_id = resp.toLong
+          logger.debug("Question posted with remote id: " + remote_question_id)
+
+          //create question object and store it in the local DB
+          val qId = QuestionDAO.create(Question, properties.question_type, properties.reward_cts, date,
+            properties.paper_id, remote_question_id, properties.maximal_assignments, properties.expiration_time_sec)
+
+          if(qId > 0) {
+            logger.debug("Question stored in local DB with id: " + qId)
+          } else {
+            logger.error("Cannot store question in the local database.")
+          }
+          //Create highlight entry for the question if properties.highlightedTerms is not empty
+          if(properties.highlight != null) {
+            val params = new collection.mutable.MutableList[NameValuePair]
+            params += new BasicNameValuePair("questionId", remote_question_id.toString)
+            params += new BasicNameValuePair("assumption", properties.highlight.assumption)
+            params += new BasicNameValuePair("terms", properties.highlight.terms)
+            logger.debug("Adding highlight returned: " + post("/highlight", params.toList))
+          }
+
+          //return the id of remote question
+          remote_question_id
         }
 
-        //Create highlight entry for the question if properties.highlightedTerms is not empty
-        if(properties.highlight != null) {
-          val params = new collection.mutable.MutableList[NameValuePair]
-          params += new BasicNameValuePair("questionId", remote_question_id.toString)
-          params += new BasicNameValuePair("assumption", properties.highlight.assumption)
-          params += new BasicNameValuePair("terms", properties.highlight.terms)
-          logger.debug(post("/highlight", params.toList))
-        }
-
-        //return the id of remote question
-        return remote_question_id
       } else {
         //The paper doesn't exist in the server
         logger.error("There is no paper with id: " + properties.paper_id + " stored in the server")
@@ -212,6 +233,7 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
     } catch {
       case e: Exception => {
         logger.error("An error occurred while creating new question: " + Question)
+        e.printStackTrace()
         -1
       }
     }
@@ -261,9 +283,9 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
   def ApproveAnswer(a: Answer): Unit = {
     try {
       val params = new collection.mutable.MutableList[NameValuePair]
-      params += new BasicNameValuePair("answerId", a.id.toString)
+      params += new BasicNameValuePair("answer_id", a.id.toString)
       params += new BasicNameValuePair("accepted", "true")
-      params += new BasicNameValuePair("bonus", "false")
+      params += new BasicNameValuePair("bonus_cts", "0")
       logger.debug(post("/evaluateanswer", params.toList))
     } catch {
       case e: Exception => e.printStackTrace()
@@ -273,9 +295,9 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
   def RejectAnswer(a: Answer): Unit = {
     try {
       val params = new collection.mutable.MutableList[NameValuePair]
-      params += new BasicNameValuePair("answerId", a.id.toString)
+      params += new BasicNameValuePair("answer_id", a.id.toString)
       params += new BasicNameValuePair("accepted", "false")
-      params += new BasicNameValuePair("bonus", "false")
+      params += new BasicNameValuePair("bonus_cts", "0")
       logger.debug(post("/evaluateanswer", params.toList))
     } catch {
       case e: Exception => e.printStackTrace()
@@ -328,6 +350,26 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
       }
     } catch {
       case e: Exception => e.printStackTrace()
+    }
+  }
+
+  def getAssignmentForAnswerId(answerId: Long) : Assignment = {
+    try {
+      val resp = get("/assignmentbyanswerid/"+answerId.toString)
+      if(resp.startsWith("Error")){
+        logger.error(resp)
+        null
+      }else {
+        val jsonAssignment: JsValue = Json.parse(resp)
+        val assignment = jsonAssignment.validate[Assignment]
+        logger.debug(resp)
+        assignment.get
+      }
+    } catch {
+      case e: Exception => {
+        e.printStackTrace()
+        null
+      }
     }
   }
 

@@ -87,10 +87,10 @@ class CrowdSAManager(val service: CrowdSAService, val qu: HCompQuery, val proper
         override def query: HCompQuery = qu
       }
 
-      //TODO: correct this
-      answer.acceptTime = Option(new DateTime(new Date(a.completedTime)))
-      answer.submitTime = Option(new DateTime(new Date(a.completedTime)))
-      return Option(answer)
+      answer.acceptTime = Option(new DateTime(new Date(service.getAssignmentForAnswerId(a.id).created_at)))
+      answer.submitTime = Option(new DateTime(new Date(a.created_at)))
+
+      return Some(answer)
     }
     catch {
       case e: Exception => logger.error("could not approve assignment", e)

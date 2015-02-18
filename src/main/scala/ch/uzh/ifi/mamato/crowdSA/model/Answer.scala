@@ -9,7 +9,9 @@ import play.api.libs.functional.syntax._
  */
 
 
-private[crowdSA] case class Answer(id: Long, answer: String, completedTime: Long, accepted: Option[Boolean], acceptedAndBonus: Option[Boolean], rejected: Option[Boolean], assignment_fk: Long) extends Serializable
+private[crowdSA] case class Answer(id: Long, answer: String, created_at: Long,
+                                   accepted: Option[Boolean], bonus_cts: Option[Int],
+                                   rejected: Option[Boolean], assignments_id: Long) extends Serializable
 
 object Answer {
   implicit val answerWrites = new Writes[Answer] {
@@ -17,24 +19,36 @@ object Answer {
       Json.obj(
         "id" -> a.id,
         "answer" -> a.answer,
-        "completedTime" -> a.completedTime,
+        "created_at" -> a.created_at,
         "accepted" -> a.accepted,
-        "acceptedAndBonus" -> a.acceptedAndBonus,
+        "bonus_cts" -> a.bonus_cts,
         "rejected" -> a.rejected,
-        "assignment_fk" -> a.assignment_fk
+        "assignments_id" -> a.assignments_id
       )
     }
   }
 
+ /* implicit val answerRead : Reads[Answer] =  (
+    (JsPath \ "id").read[Long] and
+      (JsPath \ "answer").read[String] and
+      (JsPath \ "created_at").read[Long] and
+      (JsPath \ "accepted").read[Option[Boolean]] and
+      (JsPath \ "bonus_cts").read[Option[Int]] and
+      (JsPath \ "rejected").read[Option[Boolean]] and
+      (JsPath \ "assignments_id").read[Long]
+
+    )(Answer.apply _)*/
+
   val answerReadsBuilder =
     (JsPath \ "id").read[Long] and
       (JsPath \ "answer").read[String] and
-      (JsPath \ "completedTime").read[Long] and
+      (JsPath \ "created_at").read[Long] and
       (JsPath \ "accepted").read[Option[Boolean]] and
-      (JsPath \ "acceptedAndBonus").read[Option[Boolean]] and
+      (JsPath \ "bonus_cts").read[Option[Int]] and
       (JsPath \ "rejected").read[Option[Boolean]] and
-      (JsPath \ "assignment_fk").read[Long]
+      (JsPath \ "assignments_id").read[Long]
 
   implicit val answerReads = answerReadsBuilder.apply(Answer.apply _)
+
 
 }

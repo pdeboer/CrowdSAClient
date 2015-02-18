@@ -27,9 +27,9 @@ object Assignment {
     (JsPath \ "id").read[Long] and
       (JsPath \ "created_at").read[Long] and
       (JsPath \ "expiration_time").read[Long] and
-      (JsPath \ "is_cancelled").read[Option[Boolean]] and
-      (JsPath \ "questions_id").read[Option[Long]] and
-      (JsPath \ "teams_id").read[Option[Long]]
+      (JsPath \ "is_cancelled").read[Boolean] and
+      (JsPath \ "questions_id").read[Long] and
+      (JsPath \ "teams_id").read[Long]
 
   implicit val assignmentReads = assignmentReadsBuilder.apply(Assignment.apply _)
 
