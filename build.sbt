@@ -18,6 +18,8 @@ libraryDependencies += "mysql" % "mysql-connector-java" % "5.1.34"
 
 libraryDependencies += "com.typesafe" % "config" % "1.2.0"
 
+libraryDependencies += "org.apache.pdfbox" % "pdfbox" % "1.8.8"
+
 // Scala 2.10, 2.11
 libraryDependencies ++= Seq(
   "org.scalikejdbc" %% "scalikejdbc"       % "2.2.2",
