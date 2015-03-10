@@ -1,6 +1,7 @@
 package ch.uzh.ifi.mamato.crowdSA.model
 
 import ch.uzh.ifi.mamato.crowdSA.persistence.QuestionDAO
+import ch.uzh.ifi.pdeboer.pplib.hcomp.{FreetextQuery, HCompQuery}
 import scalikejdbc.DBSession
 
 /**

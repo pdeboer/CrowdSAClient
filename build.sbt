@@ -20,6 +20,8 @@ libraryDependencies += "com.typesafe" % "config" % "1.2.0"
 
 libraryDependencies += "org.apache.pdfbox" % "pdfbox" % "1.8.8"
 
+libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.0-SNAP4"
+
 // Scala 2.10, 2.11
 libraryDependencies ++= Seq(
   "org.scalikejdbc" %% "scalikejdbc"       % "2.2.2",

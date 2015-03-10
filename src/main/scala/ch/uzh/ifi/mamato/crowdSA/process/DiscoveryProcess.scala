@@ -1,0 +1,31 @@
+package ch.uzh.ifi.mamato.crowdSA.process
+
+import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAQuery, CrowdSAQueryProperties}
+import ch.uzh.ifi.mamato.crowdSA.model.Answer
+import ch.uzh.ifi.pdeboer.pplib.hcomp.HCompQuery
+import ch.uzh.ifi.pdeboer.pplib.process.{CreateProcess, PPLibProcess}
+import ch.uzh.ifi.pdeboer.pplib.process.parameter._
+
+/**
+ * Created by mattia on 06.03.15.
+ */
+
+@PPLibProcess
+class DiscoveryProcess(_params: Map[String, Any] = Map.empty)
+  extends CreateProcess[CrowdSAQuery, Answer](_params) {
+
+  override protected def run(data: CrowdSAQuery): Answer = {
+    val processType = DiscoveryProcess.DISCOVERY_PROCESS.get
+
+    val lowerPriorityParams = params
+
+    val process = processType.create(lowerPriorityParams)
+    process.process(data)
+  }
+
+  override def expectedParametersBeforeRun: List[ProcessParameter[_]] = List(DiscoveryProcess.DISCOVERY_PROCESS)
+}
+
+object DiscoveryProcess {
+  val DISCOVERY_PROCESS = new ProcessParameter[PassableProcessParam[CrowdSAQuery, Answer]]("discoveryProcess", None)
+}

@@ -24,7 +24,7 @@ import scala.concurrent.duration._
 /**
  * Created by Mattia on 20.01.2015.
  */
-class CrowdSAManager(val service: CrowdSAService, val qu: HCompQuery, val properties: CrowdSAQueryProperties) extends LazyLogger {
+class CrowdSAManager(val service: CrowdSAService, val qu: CrowdSAQuery) extends LazyLogger {
 
   var questionId : Long= 0
   var cancelled: Boolean = false
@@ -56,7 +56,7 @@ class CrowdSAManager(val service: CrowdSAService, val qu: HCompQuery, val proper
    * @return question id
    */
   def createQuestion() : Long = {
-    questionId = service.CreateQuestion(qu.question, properties)
+    questionId = service.CreateQuestion(qu)
     questionId
   }
 
@@ -66,7 +66,6 @@ class CrowdSAManager(val service: CrowdSAService, val qu: HCompQuery, val proper
   }
 
   def poll(): Option[HCompAnswer] = {
-    logger.debug("checking answer for questionId: " + questionId+ "..")
 		val answers = service.GetAnswersForQuestion(questionId)
 		answers.headOption match {
       case None => None
@@ -84,7 +83,7 @@ class CrowdSAManager(val service: CrowdSAService, val qu: HCompQuery, val proper
         service.RejectAnswer(a)
       }
       val answer = new HCompAnswer {
-        override def query: HCompQuery = qu
+        override def query: HCompQuery = qu.getQuery()
       }
 
       answer.acceptTime = Option(new DateTime(new Date(service.getAssignmentForAnswerId(a.id).created_at)))

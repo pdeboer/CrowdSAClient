@@ -133,11 +133,11 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
         val id = PaperDAO.create(pdf_title, budget_cts,result.toLong)
         logger.debug(s"Paper stored in DB with id: $id")
 
-        return result.toLong
+        result.toLong
       } catch {
         case e: Exception => {
           logger.error(e.getMessage)
-          return -1
+          -1
         }
       }
     }
@@ -157,22 +157,19 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
 
   def GetAnswersForQuestion(question_id: Long) : Iterable[Answer] = {
     try {
-
       val jsonAnswer: JsValue = Json.parse(get("/answers/"+question_id))
-
       val a = jsonAnswer.validate[List[Answer]]
-      return a.get.toIterable
+      a.get.toIterable
     } catch {
       case e: Exception =>
         logger.debug("No answer given yet")
+        None
     }
-    return None
   }
 
-  def CreateQuestion(
-                 Question: String,
-                 properties: CrowdSAQueryProperties): Long = {
+  def CreateQuestion(query: CrowdSAQuery): Long = {
 
+    val properties = query.getProperties();
                  //LifetimeInSeconds: Int,
                  //MaxAssignments: Int,
                  //RequesterAnnotation: Option[String] = None): Long = {
@@ -186,7 +183,7 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
         //post the question and get remote id
         val date = (new Date()).getTime/1000
         val params = new collection.mutable.MutableList[NameValuePair]
-        params += new BasicNameValuePair("question", Question)
+        params += new BasicNameValuePair("question", query.getQuery().question)
         params += new BasicNameValuePair("question_type", properties.question_type)
         params += new BasicNameValuePair("reward_cts", properties.reward_cts.toString)
         params += new BasicNameValuePair("created_at", date.toString)
@@ -204,7 +201,7 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
           logger.debug("Question posted with remote id: " + remote_question_id)
 
           //create question object and store it in the local DB
-          val qId = QuestionDAO.create(Question, properties.question_type, properties.reward_cts, date,
+          val qId = QuestionDAO.create(query.getQuery().question, properties.question_type, properties.reward_cts, date,
             properties.paper_id, remote_question_id, properties.maximal_assignments, properties.expiration_time_sec)
 
           if(qId > 0) {
@@ -272,12 +269,12 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
       val jsonAssignment: JsValue = Json.parse(get("/assignments/"+question_id))
 
       val a = jsonAssignment.validate[List[Assignment]]
-      return a.get.toIterable
+      a.get.toIterable
     } catch {
       case e: Exception =>
       //If no assignment is present we land always here
+      None
     }
-    return None
   }
 
   def ApproveAnswer(a: Answer): Unit = {
