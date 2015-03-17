@@ -1,12 +1,12 @@
 package ch.uzh.ifi.mamato.crowdSA.process.stdlib
 
 import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAQuery, CrowdSAQueryProperties}
-import ch.uzh.ifi.pdeboer.pplib.hcomp.{HCompAnswer, HCompQuery}
+import ch.uzh.ifi.mamato.crowdSA.model.Answer
 import ch.uzh.ifi.pdeboer.pplib.process.{NoProcessMemoizer, ProcessMemoizer, CreateProcess, PPLibProcess}
 import ch.uzh.ifi.pdeboer.pplib.process.parameter.{ProcessParameter, PassableProcessParam}
 
 @PPLibProcess
-class CrowdSACollectDecideProcess(_params: Map[String, Any] = Map.empty) extends CreateProcess[CrowdSAQuery, HCompAnswer](_params) {
+class CrowdSACollectDecideProcess(_params: Map[String, Any] = Map.empty) extends CreateProcess[CrowdSAQuery, Answer](_params) {
 
   import ch.uzh.ifi.pdeboer.pplib.process.stdlib.CollectDecideProcess._
 
@@ -14,11 +14,11 @@ class CrowdSACollectDecideProcess(_params: Map[String, Any] = Map.empty) extends
     List(CrowdSACollectDecideProcess.COLLECT, CrowdSACollectDecideProcess.DECIDE).asInstanceOf[List[ProcessParameter[_]]]
 
 
-  override protected def run(data: CrowdSAQuery): HCompAnswer = {
+  override protected def run(data: CrowdSAQuery): Answer = {
     val memoizer: ProcessMemoizer = getProcessMemoizer(data.hashCode() + "").getOrElse(new NoProcessMemoizer())
 
     logger.info("Running collect-phase for patch")
-    val collection: List[HCompAnswer] = memoizer.mem("collectProcess")(CrowdSACollectDecideProcess.COLLECT.get.create(if (CrowdSACollectDecideProcess.FORWARD_PARAMS_TO_COLLECT.get) params else Map.empty).process(data))
+    val collection: List[Answer] = memoizer.mem("collectProcess")(CrowdSACollectDecideProcess.COLLECT.get.create(if (CrowdSACollectDecideProcess.FORWARD_PARAMS_TO_COLLECT.get) params else Map.empty).process(data))
     val collectionDistinct = collection.distinct
     logger.info(s"got ${collection.length} results. ${collectionDistinct.length} after pruning. Running decide")
     if (CrowdSACollectDecideProcess.FORWARD_ANSWER_TO_DECIDE_PARAMETER.get.isDefined)
@@ -38,8 +38,8 @@ class CrowdSACollectDecideProcess(_params: Map[String, Any] = Map.empty) extends
 object CrowdSACollectDecideProcess {
   val FORWARD_PARAMS_TO_COLLECT = new ProcessParameter[Boolean]("forwardParamsToCollect", Some(List(true)))
   val FORWARD_PARAMS_TO_DECIDE = new ProcessParameter[Boolean]("forwardParamsToDecide", Some(List(true)))
-  val COLLECT = new ProcessParameter[PassableProcessParam[CrowdSAQuery, List[HCompAnswer]]]("collect", None)
-  val DECIDE = new ProcessParameter[PassableProcessParam[List[HCompAnswer], HCompAnswer]]("decide", None)
+  val COLLECT = new ProcessParameter[PassableProcessParam[CrowdSAQuery, List[Answer]]]("collect", None)
+  val DECIDE = new ProcessParameter[PassableProcessParam[List[Answer], Answer]]("decide", None)
   val FORWARD_ANSWER_TO_DECIDE_PARAMETER = new ProcessParameter[Option[ProcessParameter[String]]]("forwardAnswerToDecideParameter", Some(List(None)))
   val FORWARD_ANSWER_TO_DECIDE_MESSAGE = new ProcessParameter[String]("forwardAnswerToDecideMessage", Some(List("Is the dataset identified correct?")))
 }

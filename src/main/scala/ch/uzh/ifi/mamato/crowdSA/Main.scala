@@ -44,14 +44,20 @@ object Main extends App with LazyLogger {
   var mutableMatch = new mutable.MutableList[(String, String)]
   try {
     val text = PdfUtils.getTextFromPdf(pathPdf).get
-    // get statistical methods that correspond to the ones present in the database
-    toMatch.foreach {
-      sm =>
-        val mapp = PdfUtils.findContextMatch(text.toUpperCase(), sm.stat_method.toUpperCase())
-        mapp.foreach {
-          p =>
-          mutableMatch.+=:(sm.stat_method, p)
-        }
+
+    //TODO: remove me
+    val maxMatches = 1
+
+      // get statistical methods that correspond to the ones present in the database
+      toMatch.foreach {
+        sm =>
+          val mapp = PdfUtils.findContextMatch(text.toUpperCase(), sm.stat_method.toUpperCase())
+          mapp.foreach {
+            p =>
+              if(mutableMatch.length < maxMatches) {
+                mutableMatch.+=:(sm.stat_method, p)
+              }
+          }
     }
   } catch {
     case e: Exception => e.printStackTrace()
@@ -65,23 +71,23 @@ object Main extends App with LazyLogger {
 
     val discoveryQuestions = new mutable.MutableList[CrowdSAQuery]
 
-
     // create DISCOVERY questions for each statistical method that matched
-    mutableMatch.foreach{
-      m =>
-        logger.debug("Creating DISCOVERY question for match: " + m._1)
-        val query = new HCompQuery {
-          override def question: String = "Identify the dataset of the statistical method: " + m._1 + " highlighted in the paper"
 
-          override def title: String = "Dataset " + m._2
+        mutableMatch.foreach {
+          m =>
+            logger.debug("Creating DISCOVERY question for match: " + m._1)
+            val query = new HCompQuery {
+              override def question: String = "Identify the dataset of the statistical method: " + m._1 + " highlighted in the paper"
 
-          override def suggestedPaymentCents: Int = 10
+              override def title: String = m._2
+
+              override def suggestedPaymentCents: Int = 10
+            }
+
+            val highlight = new Highlight("Normality", m._2)
+            val properties = new CrowdSAQueryProperties(remote_id, "Discovery", highlight, 10, 60 * 60 * 24 * 365, 5)
+            discoveryQuestions += new CrowdSAQuery(query, properties)
         }
-
-        val highlight = new Highlight("Normality", m._2)
-        val properties = new CrowdSAQueryProperties(remote_id, "Discovery", highlight, 10, 60*60*24*365, 5)
-        discoveryQuestions += new CrowdSAQuery(query, properties)
-    }
 
     def getXML(r: RecombinationVariant) = new SimpleRecombinationVariantXMLExporter(r).xml.toString
 

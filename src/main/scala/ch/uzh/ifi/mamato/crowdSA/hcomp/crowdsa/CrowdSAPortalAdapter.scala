@@ -1,6 +1,8 @@
 package ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa
 
 
+import ch.uzh.ifi.mamato.crowdSA.model.Answer
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
 import ch.uzh.ifi.pdeboer.pplib.util.LazyLogger
@@ -34,7 +36,7 @@ class CrowdSAPortalAdapter extends HCompPortalAdapter with LazyLogger {
    * @param properties
    * @return
    */
-  override def processQuery(query: HCompQuery, properties: HCompQueryProperties): Option[HCompAnswer] = {
+  override def processQuery(query: HCompQuery, properties: HCompQueryProperties): Option[Answer] = {
     try {
       val queryCrowdSA= new CrowdSAQuery(query, properties.asInstanceOf[CrowdSAQueryProperties])
       processCrowdSAQuery(queryCrowdSA)
@@ -47,7 +49,7 @@ class CrowdSAPortalAdapter extends HCompPortalAdapter with LazyLogger {
   }
 
   //TODO: add parameters to set the question_type, the reward per answer and the remote paper_id
-  def processCrowdSAQuery(query: CrowdSAQuery): Option[HCompAnswer] = {
+  def processCrowdSAQuery(query: CrowdSAQuery): Option[Answer] = {
     if (query.getProperties().qualifications.length > 0)
       logger.error("CrowdPDF implementation doesn't support Worker Qualifications yet. Executing query without them..")
 

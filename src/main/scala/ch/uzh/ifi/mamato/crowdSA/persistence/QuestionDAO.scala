@@ -14,7 +14,7 @@ object QuestionDAO extends SQLSyntaxSupport[Question] {
   def apply(q: ResultName[Question])(rs: WrappedResultSet): Question =
     new Question(rs.long(q.id), rs.string(q.question), rs.string(q.question_type), rs.int(q.reward_cts),
       rs.long(q.created_at), rs.long(q.remote_paper_id), rs.long(q.remote_question_id), rs.boolean(q.disabled),
-      rs.int(q.maximal_assignments), rs.long(q.expiration_time_sec))
+      rs.int(q.maximal_assignments), rs.long(q.expiration_time_sec), rs.stringOpt(q.possible_answers))
 
   val q = QuestionDAO.syntax("q")
 
@@ -49,7 +49,7 @@ object QuestionDAO extends SQLSyntaxSupport[Question] {
 
 
   def create(question: String, question_type: String, reward_cts: Int, created_at: Long, remote_paper_id: Long,
-             remote_question_id: Long, maximal_assignments: Int, expiration_time_sec: Long)
+             remote_question_id: Long, maximal_assignments: Int, expiration_time_sec: Long, possible_answers: Option[String])
             (implicit session: DBSession = autoSession): Long = {
     try {
       val id = withSQL {
@@ -62,6 +62,7 @@ object QuestionDAO extends SQLSyntaxSupport[Question] {
           column.remote_question_id -> remote_question_id,
           column.maximal_assignments -> maximal_assignments,
           column.expiration_time_sec -> expiration_time_sec,
+          column.possible_answers -> possible_answers,
           column.disabled -> false
         )
       }.updateAndReturnGeneratedKey.apply()

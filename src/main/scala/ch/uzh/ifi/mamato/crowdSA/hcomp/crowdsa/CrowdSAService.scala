@@ -169,7 +169,7 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
 
   def CreateQuestion(query: CrowdSAQuery): Long = {
 
-    val properties = query.getProperties();
+    val properties = query.getProperties()
                  //LifetimeInSeconds: Int,
                  //MaxAssignments: Int,
                  //RequesterAnnotation: Option[String] = None): Long = {
@@ -190,7 +190,7 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
         params += new BasicNameValuePair("papers_id", properties.paper_id.toString)
         params += new BasicNameValuePair("expiration_time_sec", properties.expiration_time_sec.toString)
         params += new BasicNameValuePair("maximal_assignments", properties.maximal_assignments.toString)
-
+        params += new BasicNameValuePair("possible_answers", properties.possible_answers.getOrElse("").toString)
 
         val resp = post("/addQuestion", params.toList)
         if(resp.startsWith("Error")){
@@ -202,7 +202,7 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
 
           //create question object and store it in the local DB
           val qId = QuestionDAO.create(query.getQuery().question, properties.question_type, properties.reward_cts, date,
-            properties.paper_id, remote_question_id, properties.maximal_assignments, properties.expiration_time_sec)
+            properties.paper_id, remote_question_id, properties.maximal_assignments, properties.expiration_time_sec, null)
 
           if(qId > 0) {
             logger.debug("Question stored in local DB with id: " + qId)
@@ -366,6 +366,24 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
       case e: Exception => {
         e.printStackTrace()
         null
+      }
+    }
+  }
+
+  def getPaperIdFromAnswerId(answerId: Long): Long = {
+    try {
+      val resp = get("/paper/"+answerId.toString)
+      if(resp.toLong == -1){
+        logger.error(resp)
+        -1
+      }else {
+        logger.debug("Answer " + answerId + " corresponds to paper with id: "+resp)
+        resp.toLong
+      }
+    } catch {
+      case e: Exception => {
+        e.printStackTrace()
+        -1
       }
     }
   }

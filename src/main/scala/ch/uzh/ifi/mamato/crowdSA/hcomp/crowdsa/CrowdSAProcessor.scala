@@ -29,14 +29,14 @@ class CrowdSAManager(val service: CrowdSAService, val qu: CrowdSAQuery) extends 
   var questionId : Long= 0
   var cancelled: Boolean = false
 
-  def waitForResponse() : Option[HCompAnswer] = {
+  def waitForResponse() : Option[Answer] = {
     def durationIn(unit: TimeUnit): FiniteDuration = {
       durationIn(SECONDS)
     }
 
     val timer = new GrowingTimer(1 second, 1.0001, 20 seconds)
     //very very ugly, but we dont have a break statement in scala..
-    var answer: Option[HCompAnswer] = None
+    var answer: Option[Answer] = None
     try {
       (1 to 100000).view.foreach(i => {
         answer = poll()
@@ -65,7 +65,7 @@ class CrowdSAManager(val service: CrowdSAService, val qu: CrowdSAQuery) extends 
     cancelled = true
   }
 
-  def poll(): Option[HCompAnswer] = {
+  def poll(): Option[Answer] = {
 		val answers = service.GetAnswersForQuestion(questionId)
 		answers.headOption match {
       case None => None
@@ -73,7 +73,7 @@ class CrowdSAManager(val service: CrowdSAService, val qu: CrowdSAQuery) extends 
 		}
 	}
 
-  def handleAnswerResult(a: Answer): Option[HCompAnswer] = {
+  def handleAnswerResult(a: Answer): Option[Answer] = {
     logger.debug("Got an answer: " + a.answer)
     try {
       //We approve all NON EMPTY answers by default.
@@ -82,19 +82,18 @@ class CrowdSAManager(val service: CrowdSAService, val qu: CrowdSAQuery) extends 
       } else {
         service.RejectAnswer(a)
       }
-      val answer = new HCompAnswer {
-        override def query: HCompQuery = qu.getQuery()
-      }
 
-      answer.acceptTime = Option(new DateTime(new Date(service.getAssignmentForAnswerId(a.id).created_at)))
-      answer.submitTime = Option(new DateTime(new Date(a.created_at)))
+      a.acceptTime = Option(new DateTime(new Date(service.getAssignmentForAnswerId(a.id).created_at)))
+      a.submitTime = Option(new DateTime(new Date(a.created_at)))
 
-      return Some(answer)
+      Some(a)
     }
     catch {
-      case e: Exception => logger.error("could not approve assignment", e)
+      case e: Exception => {
+        logger.error("could not approve assignment", e)
+        None
+      }
     }
-    return null
   }
 
 }

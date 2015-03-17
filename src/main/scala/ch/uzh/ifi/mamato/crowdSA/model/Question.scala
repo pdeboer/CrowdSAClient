@@ -10,4 +10,4 @@ import scalikejdbc.DBSession
 
 case class Question(id: Long, question: String, question_type: String, reward_cts: Int, created_at: Long,
                     remote_paper_id: Long, remote_question_id: Long, disabled: Boolean, maximal_assignments: Int,
-                     expiration_time_sec: Long)
+                     expiration_time_sec: Long, possible_answers: Option[String])

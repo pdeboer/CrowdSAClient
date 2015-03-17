@@ -10,8 +10,8 @@ import play.api.libs.functional.syntax._
  */
 
 case class Answer(id: Long, answer: String, created_at: Long,
-                                   accepted: Option[Boolean], bonus_cts: Option[Int],
-                                   rejected: Option[Boolean], assignments_id: Long) extends HCompAnswer with Serializable {
+                  accepted: Option[Boolean], bonus_cts: Option[Int],
+                  rejected: Option[Boolean], assignments_id: Long) extends HCompAnswer with Serializable {
   override def toString() = answer
 
   override def query: HCompQuery = null
@@ -42,7 +42,6 @@ object Answer {
       (JsPath \ "bonus_cts").read[Option[Int]] and
       (JsPath \ "rejected").read[Option[Boolean]] and
       (JsPath \ "assignments_id").read[Long]
-
 
   implicit val answerReads = answerReadsBuilder.apply(Answer.apply _)
 

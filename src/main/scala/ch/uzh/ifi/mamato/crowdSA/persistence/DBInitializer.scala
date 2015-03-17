@@ -44,8 +44,8 @@ object DBInitializer extends LazyLogger{
       } catch {
         case e: java.sql.SQLException =>
           DB autoCommit { implicit s =>
-            sql"CREATE TABLE questions (id BIGINT NOT NULL AUTO_INCREMENT,question VARCHAR(255) NOT NULL,question_type VARCHAR(255) NOT NULL,reward_cts INT NOT NULL,created_at BIGINT NOT NULL,remote_paper_id BIGINT NOT NULL,remote_question_id BIGINT NOT NULL, disabled BIT NOT NULL, maximal_assignments INT NULL, expiration_time_sec BIGINT NULL,PRIMARY KEY(id));".execute().apply()
-            sql"INSERT INTO questions(question, question_type, reward_cts, created_at, remote_paper_id, remote_question_id, disabled, maximal_assignments, expiration_time_sec) values ('Test question','Boolean',10,123123123,1,1, false, NULL, NULL);".execute.apply()
+            sql"CREATE TABLE questions (id BIGINT NOT NULL AUTO_INCREMENT,question VARCHAR(255) NOT NULL,question_type VARCHAR(255) NOT NULL,reward_cts INT NOT NULL,created_at BIGINT NOT NULL,remote_paper_id BIGINT NOT NULL,remote_question_id BIGINT NOT NULL, disabled BIT NOT NULL, maximal_assignments INT NULL, expiration_time_sec BIGINT NULL, possible_answers VARCHAR(2000) NULL, PRIMARY KEY(id));".execute().apply()
+            sql"INSERT INTO questions(question, question_type, reward_cts, created_at, remote_paper_id, remote_question_id, disabled, maximal_assignments, expiration_time_sec, possible_answers) values ('Test question','Boolean',10,123123123,1,1, false, NULL, NULL, NULL);".execute.apply()
           }
           logger.debug("Table Questions created!")
       }
