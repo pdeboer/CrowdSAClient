@@ -31,8 +31,12 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
         val res2 = v.createProcess[CrowdSAQuery, Answer]("discoveryProcess").process(d)
 
 
-        println("***** result")
-        res2
+        println("***** result Discovery process")
+        //Create the dataset!
+        crowdSA.service.createDataset(res2.id)
+
+        //Start the second phase of the process
+
     }
     "End recombination variant"
   }

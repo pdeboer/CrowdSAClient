@@ -388,6 +388,24 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
     }
   }
 
+  def createDataset(answerId: Long) = {
+    try{
+      val params = new collection.mutable.MutableList[NameValuePair]
+      params += new BasicNameValuePair("answer_id", answerId.toString)
+      val resp = post("/dataset", params.toList)
+      if(resp.toLong >= 1){
+        logger.debug("Successfully created new dataset with id: " + resp)
+      }
+      else {
+        logger.error("Cannot create new dataset")
+      }
+    } catch {
+      case e: Exception => {
+        e.printStackTrace()
+      }
+    }
+  }
+
 }
 
 private[crowdSA] case class QualificationRequirement(

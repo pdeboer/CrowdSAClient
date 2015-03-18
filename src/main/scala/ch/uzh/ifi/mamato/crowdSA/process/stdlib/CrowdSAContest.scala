@@ -7,6 +7,7 @@ import ch.uzh.ifi.pdeboer.pplib.process.parameter.{ProcessParameter, Patch}
 import ch.uzh.ifi.pdeboer.pplib.process._
 import ch.uzh.ifi.pdeboer.pplib.util.U
 
+import scala.collection.mutable
 import scala.util.Random
 
 /**
@@ -21,11 +22,21 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
       if (alternatives.size == 0) null
       else if (alternatives.size == 1) alternatives(0)
       else {
+        val memoizer: ProcessMemoizer = getProcessMemoizer(alternatives.hashCode() + "").getOrElse(new NoProcessMemoizer())
+
         val crowdSA = HComp.apply("crowdSA")
         val service = crowdSA.asInstanceOf[CrowdSAPortalAdapter].service
         val paperId = service.getPaperIdFromAnswerId(alternatives(0).id)
 
-        val memoizer: ProcessMemoizer = getProcessMemoizer(alternatives.hashCode() + "").getOrElse(new NoProcessMemoizer())
+        var ans = new mutable.MutableList[String]
+        alternatives.foreach(a => {
+          if(!ans.contains(a.answer)){
+            ans += a.answer
+          }
+        })
+
+        val termsHighlight = new mutable.MutableList[String]
+        ans.foreach(a => termsHighlight += a.replace("#", ","))
 
         val query = new CrowdSAQuery(
           new HCompQuery {
@@ -35,23 +46,27 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
 
             override def suggestedPaymentCents: Int = 10
           },
-         new CrowdSAQueryProperties(paperId, "Voting",new Highlight("Dataset", alternatives.distinct.mkString(",")), 10, 1000*60*60*24*365, 5, Some(alternatives.distinct.mkString("#")))
+          new CrowdSAQueryProperties(paperId, "Voting",new Highlight("Dataset", termsHighlight.mkString(",")), 10, 1000*60*60*24*365, 5, Some(ans.mkString("$$")))
         )
 
-        val answers = getCrowdWorkers(WORKER_COUNT.get).map(w =>
+        val answers = new mutable.MutableList[String]
+        getCrowdWorkers(WORKER_COUNT.get).map(w =>
           memoizer.mem("it" + w)(
             U.retry(2) { //createMultipleChoiceQuestion(alternatives.map(a => a.answer).distinct),
               portal.sendQueryAndAwaitResult(query.getQuery(),
                 query.getProperties()
               ) match {
-                case Some(a: Answer) => a.answer
+                case Some(a: Answer) => {
+                  a.answer.split("$$").foreach(b => answers += b)
+                  a.answer
+                }
                 case _ => {
                   logger.info(s"${getClass.getSimpleName} didn't get answer for query. retrying..")
                   throw new IllegalStateException("didnt get any response")
                 }
               }
             }
-          )).toList
+          ))
 
         val valueOfAnswer: String = answers.groupBy(s => s).maxBy(s => s._2.size)._1
         logger.info("got answer " + valueOfAnswer)

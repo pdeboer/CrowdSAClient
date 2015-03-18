@@ -8,6 +8,7 @@ import ch.uzh.ifi.pdeboer.pplib.process._
 import ch.uzh.ifi.pdeboer.pplib.process.parameter.ProcessParameter
 import ch.uzh.ifi.pdeboer.pplib.util.{U, MonteCarlo}
 
+import scala.collection.mutable
 import scala.util.Random
 
 
@@ -30,15 +31,20 @@ class CrowdSAContestWithStatisticalReductionProcess(params: Map[String, Any] = M
     else {
       //All the answers of the same question asked
       val stringData = data.map(_.is[Answer].answer)
+      val answers = new mutable.MutableList[String]
+      data.foreach(a => {
+        answers += a.is[Answer].answer
+      })
+
       val memoizer: ProcessMemoizer = getProcessMemoizer(data.hashCode() + "").getOrElse(new NoProcessMemoizer())
       var iteration: Int = 0
       //Init votes to 0 for all answers
-      data.foreach(d => votesCast += (d.is[Answer].answer -> 0))
+      data.foreach(d => votesCast += (d.answer -> 0))
 
       do {
         iteration += 1
-        val choice: String = memoizer.mem("it" + iteration)(castVote(stringData.distinct, iteration, data(0).id))
-        choice.split("#").foreach(c => {
+        val choices: List[String] = memoizer.mem("it" + iteration)(castVote(answers.toList, iteration, data(0).id))
+        choices.foreach(c => {
           votesCast += c -> (votesCast.getOrElse(c, 0) + 1)
         })
       } while (minVotesForAgreement(stringData).getOrElse(Integer.MAX_VALUE) > itemWithMostVotes._2 && votesCast.values.sum < MAX_ITERATIONS.get)
@@ -57,8 +63,17 @@ class CrowdSAContestWithStatisticalReductionProcess(params: Map[String, Any] = M
     MonteCarlo.minAgreementRequired(data.size, votesCast.values.sum, confidence, MONTECARLO_ITERATIONS)
   }
 
-  def castVote(choices: List[String], iteration: Int, answerId: Long): String = {
-    val alternatives = if (SHUFFLE_CHOICES.get) Random.shuffle(choices) else choices
+  def castVote(choices: List[String], iteration: Int, answerId: Long): List[String] = {
+
+    var ans = new mutable.MutableList[String]
+    choices.foreach(a => {
+      if(!ans.contains(a)){
+        ans += a
+      }
+    })
+
+    val alternatives = if (SHUFFLE_CHOICES.get) Random.shuffle(ans.toList) else ans.toList
+
     val crowdSA = HComp.apply("crowdSA")
     val service = crowdSA.asInstanceOf[CrowdSAPortalAdapter].service
     val paperId = service.getPaperIdFromAnswerId(answerId)
@@ -70,7 +85,9 @@ class CrowdSAContestWithStatisticalReductionProcess(params: Map[String, Any] = M
 
         override def suggestedPaymentCents: Int = 10
       },
-      new CrowdSAQueryProperties(paperId, "Voting",new Highlight("Dataset", alternatives.distinct.mkString(",")), 10, 1000*60*60*24*365, 5, Some(alternatives.distinct.mkString("#")))
+      new CrowdSAQueryProperties(paperId, "Voting",
+        new Highlight("Dataset", alternatives.mkString(",").replace("#", ",")),
+        10, 1000*60*60*24*365, 5, Some(alternatives.mkString("$$")))
     )
 
     U.retry(3) {
@@ -78,7 +95,9 @@ class CrowdSAContestWithStatisticalReductionProcess(params: Map[String, Any] = M
         query.getProperties()
       )
       match {
-        case Some(a: Answer) => a.answer
+        case Some(a: Answer) => {
+          a.answer.split("$$").toList
+        }
         case _ => {
           logger.info(getClass.getSimpleName + " didnt get a vote when asked for it.")
           throw new IllegalStateException("didnt get any response")
