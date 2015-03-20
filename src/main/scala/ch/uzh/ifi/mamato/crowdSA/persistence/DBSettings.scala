@@ -19,7 +19,7 @@ object DBSettings {
     if (isInitialized) return
     DBs.setupAll()
 
-    GlobalSettings.loggingSQLErrors = false
+    GlobalSettings.loggingSQLErrors = true
     //GlobalSettings.sqlFormatter = SQLFormatterSettings("devteam.misc.HibernateSQLFormatter")
     DBInitializer.run()
     isInitialized = true

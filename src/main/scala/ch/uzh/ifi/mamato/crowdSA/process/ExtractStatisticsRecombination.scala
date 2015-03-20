@@ -14,11 +14,11 @@ import ch.uzh.ifi.pdeboer.pplib.process.stdlib.{ContestWithBeatByKVotingProcess,
 object ExtractStatisticsRecombination {
 
   def createVotingProcesses(): List[PassableProcessParam[_, _]] = new TypedParameterVariantGenerator[CrowdSAContest]()
-    .generatePassableProcesses[List[Answer], Answer] :::
+    .generatePassableProcesses[List[Answer], Answer] /* :::
     new TypedParameterVariantGenerator[CrowdSAContestWithStatisticalReductionProcess]()
       .addVariation(CrowdSAContestWithStatisticalReductionProcess.CONFIDENCE_PARAMETER, List(0.9d))
       //.addVariation(DefaultParameters.SHUFFLE_CHOICES, List(false))
-      .generatePassableProcesses[List[Answer], Answer]
+      .generatePassableProcesses[List[Answer], Answer]*/
 
   def createCollectionProcesses(question: HCompInstructionsWithTuple, title: String, payment: Int = 10) = new TypedParameterVariantGenerator[CrowdSACollection]()
     .addVariation(DefaultParameters.WORKER_COUNT, List(2))
@@ -36,10 +36,20 @@ object ExtractStatisticsRecombination {
       .addVariation(CrowdSACollectDecideProcess.DECIDE, createVotingProcesses())
       .generatePassableProcesses[CrowdSAQuery, Answer]
 
+    val collect: List[PassableProcessParam[_, _]] = new TypedParameterVariantGenerator[CrowdSACollection]()
+      .addVariation(DefaultParameters.WORKER_COUNT, List(2))
+      .addVariation(DefaultParameters.INSTRUCTIONS, List(new InstructionData()))
+      .addVariation(DefaultParameters.QUESTION_PRICE, List(HCompQueryProperties(10)))
+      .generatePassableProcesses[CrowdSAQuery, List[Answer]]
+
     val candidateProcessParameters = Map(
       "discoveryProcess" -> List(
         new TypedParameterVariantGenerator[DiscoveryProcess]()
           .addVariation(DiscoveryProcess.DISCOVERY_PROCESS, collectDecide)
+      ),
+      "assessmentProcess" -> List(
+        new TypedParameterVariantGenerator[AssessmentProcess]()
+        .addVariation(AssessmentProcess.ASSESSMENT_PROCESS, collect)
       )
     )
 

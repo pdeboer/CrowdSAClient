@@ -84,7 +84,7 @@ object Main extends App with LazyLogger {
               override def suggestedPaymentCents: Int = 10
             }
 
-            val highlight = new Highlight("Normality", m._2)
+            val highlight = new Highlight("Discovery", m._2)
             val properties = new CrowdSAQueryProperties(remote_id, "Discovery", highlight, 10, 60 * 60 * 24 * 365, 5)
             discoveryQuestions += new CrowdSAQuery(query, properties)
         }
@@ -100,7 +100,7 @@ object Main extends App with LazyLogger {
     }
 
     //Create the process of extraction of statistical means
-    val discoveryProcess = new ExtractStatisticsProcess(crowdSA, discoveryQuestions.toList)
+    val extractStatisticsProcess = new ExtractStatisticsProcess(crowdSA, discoveryQuestions.toList)
 
     //For each candidate process execute the process with the same input
     while (nextCandidate.isDefined) {
@@ -118,7 +118,7 @@ object Main extends App with LazyLogger {
           logger.debug("Setting budget...")
           crowdSA.setBudget(Some(DEFAULT_BUDGET))
 
-          val res = discoveryProcess.runRecombinedVariant(recombinations(c.id-1))
+          val res = extractStatisticsProcess.runRecombinedVariant(recombinations(c.id-1))
           c.result = Some(res)
           c.cost = Some(DEFAULT_BUDGET - crowdSA.budget.get)
         }
@@ -144,7 +144,7 @@ object Main extends App with LazyLogger {
         val targetIndex = (c.length * Random.nextDouble()).toInt
         Some(c(targetIndex))
       } else {
-        logger.error("No more candidate to execute..")
+        logger.info("No more candidate to execute..")
         None
       }
     }

@@ -5,6 +5,8 @@ import ch.uzh.ifi.mamato.crowdSA.model.Answer
 import ch.uzh.ifi.pdeboer.pplib.process.{NoProcessMemoizer, ProcessMemoizer, CreateProcess, PPLibProcess}
 import ch.uzh.ifi.pdeboer.pplib.process.parameter.{ProcessParameter, PassableProcessParam}
 
+import scala.collection.mutable
+
 @PPLibProcess
 class CrowdSACollectDecideProcess(_params: Map[String, Any] = Map.empty) extends CreateProcess[CrowdSAQuery, Answer](_params) {
 
@@ -17,17 +19,24 @@ class CrowdSACollectDecideProcess(_params: Map[String, Any] = Map.empty) extends
   override protected def run(data: CrowdSAQuery): Answer = {
     val memoizer: ProcessMemoizer = getProcessMemoizer(data.hashCode() + "").getOrElse(new NoProcessMemoizer())
 
-    logger.info("Running collect-phase for patch")
+    logger.info("Running collect-phase for query: " + data)
     val collection: List[Answer] = memoizer.mem("collectProcess")(CrowdSACollectDecideProcess.COLLECT.get.create(if (CrowdSACollectDecideProcess.FORWARD_PARAMS_TO_COLLECT.get) params else Map.empty).process(data))
-    val collectionDistinct = collection.distinct
-    logger.info(s"got ${collection.length} results. ${collectionDistinct.length} after pruning. Running decide")
+    val collectionTmpDistinct = new mutable.MutableList[String]
+    val collectionDistinct = new mutable.MutableList[Answer]
+    collection.foreach(f => {
+      if(!collectionTmpDistinct.contains(f.answer)){
+        collectionTmpDistinct += f.answer
+        collectionDistinct += f
+      }
+    })
+    logger.info(s"got ${collection.length} results. ${collectionDistinct.length} after pruning. Running decide process")
     if (CrowdSACollectDecideProcess.FORWARD_ANSWER_TO_DECIDE_PARAMETER.get.isDefined)
       DECIDE.get.setParams(Map(
         CrowdSACollectDecideProcess.FORWARD_ANSWER_TO_DECIDE_PARAMETER.get.get.key
           -> CrowdSACollectDecideProcess.FORWARD_ANSWER_TO_DECIDE_MESSAGE.get), replace = true)
 
 
-    val res = memoizer.mem(getClass.getSimpleName + "decideProcess")(CrowdSACollectDecideProcess.DECIDE.get.create(if (CrowdSACollectDecideProcess.FORWARD_PARAMS_TO_DECIDE.get) params else Map.empty).process(collectionDistinct))
+    val res = memoizer.mem(getClass.getSimpleName + "decideProcess")(CrowdSACollectDecideProcess.DECIDE.get.create(if (CrowdSACollectDecideProcess.FORWARD_PARAMS_TO_DECIDE.get) params else Map.empty).process(collectionDistinct.toList))
     logger.info(s"Collect/decide for $res has finished with Patch $res")
     res
   }

@@ -48,7 +48,6 @@ class CrowdSAPortalAdapter extends HCompPortalAdapter with LazyLogger {
     }
   }
 
-  //TODO: add parameters to set the question_type, the reward per answer and the remote paper_id
   def processCrowdSAQuery(query: CrowdSAQuery): Option[Answer] = {
     if (query.getProperties().qualifications.length > 0)
       logger.error("CrowdPDF implementation doesn't support Worker Qualifications yet. Executing query without them..")

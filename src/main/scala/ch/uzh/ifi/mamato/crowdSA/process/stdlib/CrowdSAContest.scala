@@ -28,6 +28,7 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
         val service = crowdSA.asInstanceOf[CrowdSAPortalAdapter].service
         val paperId = service.getPaperIdFromAnswerId(alternatives(0).id)
 
+        //TODO: useless?
         var ans = new mutable.MutableList[String]
         alternatives.foreach(a => {
           if(!ans.contains(a.answer)){
@@ -52,10 +53,10 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
         val answers = new mutable.MutableList[String]
         getCrowdWorkers(WORKER_COUNT.get).map(w =>
           memoizer.mem("it" + w)(
-            U.retry(2) { //createMultipleChoiceQuestion(alternatives.map(a => a.answer).distinct),
+            //U.retry(2) {
               portal.sendQueryAndAwaitResult(query.getQuery(),
-                query.getProperties()
-              ) match {
+                query.getProperties())
+              match {
                 case Some(a: Answer) => {
                   a.answer.split("$$").foreach(b => answers += b)
                   a.answer
@@ -65,7 +66,7 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
                   throw new IllegalStateException("didnt get any response")
                 }
               }
-            }
+            //}
           ))
 
         val valueOfAnswer: String = answers.groupBy(s => s).maxBy(s => s._2.size)._1

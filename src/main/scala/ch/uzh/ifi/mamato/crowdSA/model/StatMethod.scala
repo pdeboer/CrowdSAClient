@@ -9,5 +9,4 @@ import scalikejdbc._
 case class StatMethod(
                   id: Long,
                   stat_method: String) {
-  def save()(implicit session: DBSession = StatMethodsDAO.autoSession): StatMethod = StatMethodsDAO.save(this)(session)
 }

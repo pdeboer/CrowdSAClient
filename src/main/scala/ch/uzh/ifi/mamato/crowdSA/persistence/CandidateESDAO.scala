@@ -14,7 +14,7 @@ object CandidateESDAO {
 
 
   def candidates: List[ProcessCandidate] = DB readOnly { implicit session =>
-    sql"select id, description, start_time, end_time, result, error, cost from shortn".map(rs => {
+    sql"select id, description, start_time, end_time, result, error, cost from discovery".map(rs => {
       val pc = ProcessCandidate(rs.long("id").toInt, rs.string("description"))
       pc.startTime = rs.jodaDateTimeOpt("start_time")
       pc.endTime = rs.jodaDateTimeOpt("end_time")
@@ -26,11 +26,11 @@ object CandidateESDAO {
   }
 
   def insertProcessCandidate(c: ProcessCandidate): Unit = DB localTx { implicit session =>
-    sql"INSERT INTO shortn (description) VALUES(${c.description})".update.apply()
+    sql"INSERT INTO discovery (description) VALUES(${c.description})".update.apply()
   }
 
   def updateProcessCandidateTimes(c: ProcessCandidate): Unit = DB localTx { implicit session =>
-    sql"""UPDATE shortn
+    sql"""UPDATE discovery
 			 SET start_time = ${c.startTime}, end_time = ${c.endTime},
 	 				result = ${c.result}, error = ${c.error}, cost = ${c.cost}
 			 WHERE id = ${c.id}""".update.apply()
