@@ -30,7 +30,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
         val res2 = v.createProcess[CrowdSAQuery, Answer]("discoveryProcess").process(d)
         println("***** result DISCOVERY STEP")
         //Create the dataset!
-        crowdSA.service.createDataset(res2.id)
+        CrowdSAPortalAdapter.service.createDataset(res2.id)
         // Start the second phase of the process
         // Once we have defined a dataset we can start to ask the questions for the assumptions.
 

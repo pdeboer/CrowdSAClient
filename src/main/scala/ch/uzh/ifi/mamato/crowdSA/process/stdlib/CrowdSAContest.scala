@@ -25,8 +25,7 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
         val memoizer: ProcessMemoizer = getProcessMemoizer(alternatives.hashCode() + "").getOrElse(new NoProcessMemoizer())
 
         val crowdSA = HComp.apply("crowdSA")
-        val service = crowdSA.asInstanceOf[CrowdSAPortalAdapter].service
-        val paperId = service.getPaperIdFromAnswerId(alternatives(0).id)
+        val paperId = CrowdSAPortalAdapter.service.getPaperIdFromAnswerId(alternatives(0).id)
 
         //TODO: useless?
         var ans = new mutable.MutableList[String]
@@ -41,7 +40,7 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
 
         val query = new CrowdSAQuery(
           new HCompQuery {
-            override def question: String = "Please select the answers that best represent the dataset"
+            override def question: String = "Please select the best answer"
 
             override def title: String = "Voting"
 
@@ -50,26 +49,34 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
           new CrowdSAQueryProperties(paperId, "Voting",new Highlight("Dataset", termsHighlight.mkString(",")), 10, 1000*60*60*24*365, 5, Some(ans.mkString("$$")))
         )
 
-        val answers = new mutable.MutableList[String]
-        getCrowdWorkers(WORKER_COUNT.get).map(w =>
-          memoizer.mem("it" + w)(
-            //U.retry(2) {
-              portal.sendQueryAndAwaitResult(query.getQuery(),
-                query.getProperties())
-              match {
-                case Some(a: Answer) => {
-                  a.answer.split("$$").foreach(b => answers += b)
-                  a.answer
-                }
-                case _ => {
-                  logger.info(s"${getClass.getSimpleName} didn't get answer for query. retrying..")
-                  throw new IllegalStateException("didnt get any response")
-                }
-              }
-            //}
-          ))
+        val tmpAnswers = new mutable.MutableList[String]
+        val tmpAnswers2 = new mutable.MutableList[Answer]
 
-        val valueOfAnswer: String = answers.groupBy(s => s).maxBy(s => s._2.size)._1
+        val answers: List[Answer] = memoizer.mem("voting_"+tmpAnswers2.hashCode()) {
+
+          val firstAnswer = portal.sendQueryAndAwaitResult(query.getQuery(), query.getProperties()).get.is[Answer]
+          tmpAnswers2 += firstAnswer
+          firstAnswer.answer.split("$$").foreach(b => tmpAnswers += b)
+
+          val question_id = CrowdSAPortalAdapter.service.getAssignmentForAnswerId(firstAnswer.id).remote_question_id
+
+          while (WORKER_COUNT.get > tmpAnswers2.length) {
+            println("Needed answers: " + WORKER_COUNT.get + " - Got so far: " + tmpAnswers.length)
+            Thread.sleep(5000)
+            val answerzz = CrowdSAPortalAdapter.service.GetAnswersForQuestion(question_id)
+            answerzz.foreach(e => {
+              if (tmpAnswers2.filter(_.id == e.id).length == 0 && WORKER_COUNT.get >= tmpAnswers.length+1) {
+                println("Adding answer: " + e)
+                tmpAnswers2 += e
+                e.answer.split("$$").foreach(b => tmpAnswers += b)
+              }
+            })
+          }
+
+          tmpAnswers2.toList
+        }
+
+        val valueOfAnswer: String = tmpAnswers.groupBy(s => s).maxBy(s => s._2.size)._1
         logger.info("got answer " + valueOfAnswer)
         alternatives.find(_.answer == valueOfAnswer).get
       }

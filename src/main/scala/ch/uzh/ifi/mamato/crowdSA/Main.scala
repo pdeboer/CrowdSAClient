@@ -64,7 +64,7 @@ object Main extends App with LazyLogger {
   }
 
   // upload paper
-  val remote_id = crowdSA.service.uploadPaper(pathPdf, titlePdf, 15000, true)
+  val remote_id = CrowdSAPortalAdapter.service.uploadPaper(pathPdf, titlePdf, 15000, true)
   if(remote_id < 0){
     logger.error("Error while uploading the paper")
   } else {

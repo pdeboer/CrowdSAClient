@@ -75,18 +75,18 @@ class CrowdSAContestWithStatisticalReductionProcess(params: Map[String, Any] = M
     val alternatives = if (SHUFFLE_CHOICES.get) Random.shuffle(ans.toList) else ans.toList
 
     val crowdSA = HComp.apply("crowdSA")
-    val service = crowdSA.asInstanceOf[CrowdSAPortalAdapter].service
+    val service = CrowdSAPortalAdapter.service
     val paperId = service.getPaperIdFromAnswerId(answerId)
     val query = new CrowdSAQuery(
       new HCompQuery {
-        override def question: String = "Please select the answers that best represent the dataset"
+        override def question: String = "Please select the best answer"
 
         override def title: String = "Voting"
 
         override def suggestedPaymentCents: Int = 10
       },
       new CrowdSAQueryProperties(paperId, "Voting",
-        new Highlight("Dataset", alternatives.mkString(",").replace("#", ",")),
+        null,
         10, 1000*60*60*24*365, 5, Some(alternatives.mkString("$$")))
     )
 

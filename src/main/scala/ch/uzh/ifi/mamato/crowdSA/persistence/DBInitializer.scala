@@ -284,16 +284,16 @@ object DBInitializer extends LazyLogger {
           DB autoCommit { implicit s =>
             sql"CREATE TABLE assumption2questions (id BIGINT NOT NULL AUTO_INCREMENT, assumption_id BIGINT NOT NULL, question VARCHAR(1000) NOT NULL, PRIMARY KEY(id), FOREIGN KEY(assumption_id) REFERENCES assumptions(id));".execute().apply()
 
-            sql"INSERT INTO assumption2questions(assumption_id, question) values (1, 'Is the De Agostinos K-squared test used to test the normality assumption?');".execute.apply()
+            sql"INSERT INTO assumption2questions(assumption_id, question) values (1, 'Is the De Agostino K-squared test used to test the normality assumption?');".execute.apply()
             sql"INSERT INTO assumption2questions(assumption_id, question) values (1, 'Is the Jarque–Bera test used to test the normality?');".execute.apply()
             sql"INSERT INTO assumption2questions(assumption_id, question) values (1, 'Is the Anderson–Darling test used to test the normality?');".execute.apply()
-            sql"INSERT INTO assumption2questions(assumption_id, question) values (1, 'Is the Cramér–von Mises criterion used to test the normality?');".execute.apply()
+            sql"INSERT INTO assumption2questions(assumption_id, question) values (1, 'Is the Cramér-von Mises criterion used to test the normality?');".execute.apply()
             sql"INSERT INTO assumption2questions(assumption_id, question) values (1, 'Is the Lilliefors test used to test the normality?');".execute.apply()
             sql"INSERT INTO assumption2questions(assumption_id, question) values (1, 'Is the Kolmogorov–Smirnov test used to test the normality?');".execute.apply()
             sql"INSERT INTO assumption2questions(assumption_id, question) values (1, 'Is the Shapiro–Wilk test used to test the normality?');".execute.apply()
             sql"INSERT INTO assumption2questions(assumption_id, question) values (1, 'Is the Pearsons chi-squared test used to test the normality?');".execute.apply()
             sql"INSERT INTO assumption2questions(assumption_id, question) values (1, 'Is the Shapiro–Francia test used to test the normality?');".execute.apply()
-            sql"INSERT INTO assumption2questions(assumption_id, question) values (1, 'Did they plot a histogram/graph and it looked normal? ');".execute.apply()
+            sql"INSERT INTO assumption2questions(assumption_id, question) values (1, 'Did they plot a histogram/graph and it looked normal distributed?');".execute.apply()
 
             sql"INSERT INTO assumption2questions(assumption_id, question) values (2, 'Is the correlation test used to test the linearity?');".execute.apply()
             sql"INSERT INTO assumption2questions(assumption_id, question) values (2, 'Did they mentioned that the relationships are linear?');".execute.apply()

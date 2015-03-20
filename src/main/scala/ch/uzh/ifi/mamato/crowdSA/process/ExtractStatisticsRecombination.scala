@@ -14,33 +14,27 @@ import ch.uzh.ifi.pdeboer.pplib.process.stdlib.{ContestWithBeatByKVotingProcess,
 object ExtractStatisticsRecombination {
 
   def createVotingProcesses(): List[PassableProcessParam[_, _]] = new TypedParameterVariantGenerator[CrowdSAContest]()
-    .generatePassableProcesses[List[Answer], Answer] /* :::
-    new TypedParameterVariantGenerator[CrowdSAContestWithStatisticalReductionProcess]()
-      .addVariation(CrowdSAContestWithStatisticalReductionProcess.CONFIDENCE_PARAMETER, List(0.9d))
-      //.addVariation(DefaultParameters.SHUFFLE_CHOICES, List(false))
-      .generatePassableProcesses[List[Answer], Answer]*/
+    .addVariation(DefaultParameters.WORKER_COUNT, List(2))
+    .generatePassableProcesses[List[Answer], Answer]
 
-  def createCollectionProcesses(question: HCompInstructionsWithTuple, title: String, payment: Int = 10) = new TypedParameterVariantGenerator[CrowdSACollection]()
+  def createCollectionProcesses(payment: Int = 10) = new TypedParameterVariantGenerator[CrowdSACollection]()
     .addVariation(DefaultParameters.WORKER_COUNT, List(2))
     .addVariation(DefaultParameters.INSTRUCTIONS, List(new InstructionData()))
     .addVariation(DefaultParameters.QUESTION_PRICE, List(HCompQueryProperties(payment)))
     .generatePassableProcesses[CrowdSAQuery, List[Answer]]
 
+  def createStatReductionProcesses(): List[PassableProcessParam[_, _]] = new TypedParameterVariantGenerator[CrowdSAContestWithStatisticalReductionProcess]()
+    .addVariation(CrowdSAContestWithStatisticalReductionProcess.CONFIDENCE_PARAMETER, List(0.9d))
+    .generatePassableProcesses[List[Answer], Answer]
 
   def recombinations = {
     val collectDecide: List[PassableProcessParam[_, _]] = new TypedParameterVariantGenerator[CrowdSACollectDecideProcess]()
       .addVariation(CrowdSACollectDecideProcess.FORWARD_PARAMS_TO_COLLECT, List(false))
       .addVariation(CrowdSACollectDecideProcess.FORWARD_PARAMS_TO_DECIDE, List(false))
       .addVariation(CrowdSACollectDecideProcess.FORWARD_ANSWER_TO_DECIDE_PARAMETER, List(None))
-      .addVariation(CrowdSACollectDecideProcess.COLLECT, createCollectionProcesses(HCompInstructionsWithTupleStringified("Please identify the dataset of the statistical method highlighted in the paper.", questionAfterTuples = ""), "Discovery Question"))
+      .addVariation(CrowdSACollectDecideProcess.COLLECT, createCollectionProcesses())
       .addVariation(CrowdSACollectDecideProcess.DECIDE, createVotingProcesses())
       .generatePassableProcesses[CrowdSAQuery, Answer]
-
-    val collect: List[PassableProcessParam[_, _]] = new TypedParameterVariantGenerator[CrowdSACollection]()
-      .addVariation(DefaultParameters.WORKER_COUNT, List(2))
-      .addVariation(DefaultParameters.INSTRUCTIONS, List(new InstructionData()))
-      .addVariation(DefaultParameters.QUESTION_PRICE, List(HCompQueryProperties(10)))
-      .generatePassableProcesses[CrowdSAQuery, List[Answer]]
 
     val candidateProcessParameters = Map(
       "discoveryProcess" -> List(
@@ -49,7 +43,7 @@ object ExtractStatisticsRecombination {
       ),
       "assessmentProcess" -> List(
         new TypedParameterVariantGenerator[AssessmentProcess]()
-        .addVariation(AssessmentProcess.ASSESSMENT_PROCESS, collect)
+        .addVariation(AssessmentProcess.ASSESSMENT_PROCESS, createCollectionProcesses())
       )
     )
 

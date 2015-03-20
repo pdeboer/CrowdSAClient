@@ -20,7 +20,9 @@ class CrowdSACollectDecideProcess(_params: Map[String, Any] = Map.empty) extends
     val memoizer: ProcessMemoizer = getProcessMemoizer(data.hashCode() + "").getOrElse(new NoProcessMemoizer())
 
     logger.info("Running collect-phase for query: " + data)
+    //Collection step
     val collection: List[Answer] = memoizer.mem("collectProcess")(CrowdSACollectDecideProcess.COLLECT.get.create(if (CrowdSACollectDecideProcess.FORWARD_PARAMS_TO_COLLECT.get) params else Map.empty).process(data))
+
     val collectionTmpDistinct = new mutable.MutableList[String]
     val collectionDistinct = new mutable.MutableList[Answer]
     collection.foreach(f => {
@@ -35,8 +37,8 @@ class CrowdSACollectDecideProcess(_params: Map[String, Any] = Map.empty) extends
         CrowdSACollectDecideProcess.FORWARD_ANSWER_TO_DECIDE_PARAMETER.get.get.key
           -> CrowdSACollectDecideProcess.FORWARD_ANSWER_TO_DECIDE_MESSAGE.get), replace = true)
 
-
-    val res = memoizer.mem(getClass.getSimpleName + "decideProcess")(CrowdSACollectDecideProcess.DECIDE.get.create(if (CrowdSACollectDecideProcess.FORWARD_PARAMS_TO_DECIDE.get) params else Map.empty).process(collectionDistinct.toList))
+    //Decide step
+    val res: Answer = memoizer.mem(getClass.getSimpleName + "decideProcess")(CrowdSACollectDecideProcess.DECIDE.get.create(if (CrowdSACollectDecideProcess.FORWARD_PARAMS_TO_DECIDE.get) params else Map.empty).process(collectionDistinct.toList))
     logger.info(s"Collect/decide for $res has finished with Patch $res")
     res
   }
