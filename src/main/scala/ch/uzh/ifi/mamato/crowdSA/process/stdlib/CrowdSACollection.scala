@@ -12,6 +12,7 @@ import ch.uzh.ifi.pdeboer.pplib.process.PPLibProcess
 import ch.uzh.ifi.pdeboer.pplib.process.ProcessMemoizer
 import ch.uzh.ifi.pdeboer.pplib.process.parameter.{Patch, ProcessParameter}
 import ch.uzh.ifi.pdeboer.pplib.process.stdlib.CollectionWithSigmaPruning._
+import org.joda.time.DateTime
 
 import scala.collection.mutable
 import scala.util.Random
@@ -29,6 +30,8 @@ class CrowdSACollection(params: Map[String, Any] = Map.empty) extends CreateProc
 
     val answers: List[Answer] = memoizer.mem("answer_line_" + query) {
       val firstAnswer = portal.sendQueryAndAwaitResult(query.getQuery(), query.getProperties()).get.is[Answer]
+      firstAnswer.receivedTime = new DateTime()
+
       val question_id = CrowdSAPortalAdapter.service.getAssignmentForAnswerId(firstAnswer.id).remote_question_id
       tmpAnswers += firstAnswer
 
@@ -39,6 +42,7 @@ class CrowdSACollection(params: Map[String, Any] = Map.empty) extends CreateProc
         answerzz.foreach(e => {
           if(tmpAnswers.filter(_.id == e.id).length == 0 && WORKER_COUNT.get >= tmpAnswers.length+1){
             println("Adding answer: " + e)
+            e.receivedTime = new DateTime()
             tmpAnswers += e
           }
         })

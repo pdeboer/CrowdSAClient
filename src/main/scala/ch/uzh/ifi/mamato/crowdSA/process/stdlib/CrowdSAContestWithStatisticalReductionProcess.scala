@@ -7,6 +7,7 @@ import ch.uzh.ifi.pdeboer.pplib.hcomp._
 import ch.uzh.ifi.pdeboer.pplib.process._
 import ch.uzh.ifi.pdeboer.pplib.process.parameter.ProcessParameter
 import ch.uzh.ifi.pdeboer.pplib.util.{U, MonteCarlo}
+import org.joda.time.DateTime
 
 import scala.collection.mutable
 import scala.util.Random
@@ -41,13 +42,8 @@ class CrowdSAContestWithStatisticalReductionProcess(params: Map[String, Any] = M
       //Init votes to 0 for all answers
       data.foreach(d => votesCast += (d.answer -> 0))
 
-      do {
         iteration += 1
-        val choices: List[String] = memoizer.mem("it" + iteration)(castVote(answers.toList, iteration, data(0).id))
-        choices.foreach(c => {
-          votesCast += c -> (votesCast.getOrElse(c, 0) + 1)
-        })
-      } while (minVotesForAgreement(stringData).getOrElse(Integer.MAX_VALUE) > itemWithMostVotes._2 && votesCast.values.sum < MAX_ITERATIONS.get)
+        val choices: List[Answer] = memoizer.mem("it" + iteration)(castVote(answers.toList, iteration, data(0).id))
 
       val winner = itemWithMostVotes._1
       logger.info(s"contest with statistical reduction finished after $iteration rounds. Winner: $winner")
@@ -63,18 +59,17 @@ class CrowdSAContestWithStatisticalReductionProcess(params: Map[String, Any] = M
     MonteCarlo.minAgreementRequired(data.size, votesCast.values.sum, confidence, MONTECARLO_ITERATIONS)
   }
 
-  def castVote(choices: List[String], iteration: Int, answerId: Long): List[String] = {
+  def castVote(choices: List[String], iteration: Int, answerId: Long): List[Answer] = {
 
     var ans = new mutable.MutableList[String]
     choices.foreach(a => {
-      if(!ans.contains(a)){
+      if (!ans.contains(a)) {
         ans += a
       }
     })
 
     val alternatives = if (SHUFFLE_CHOICES.get) Random.shuffle(ans.toList) else ans.toList
 
-    val crowdSA = HComp.apply("crowdSA")
     val service = CrowdSAPortalAdapter.service
     val paperId = service.getPaperIdFromAnswerId(answerId)
     val query = new CrowdSAQuery(
@@ -87,23 +82,48 @@ class CrowdSAContestWithStatisticalReductionProcess(params: Map[String, Any] = M
       },
       new CrowdSAQueryProperties(paperId, "Voting",
         null,
-        10, 1000*60*60*24*365, 5, Some(alternatives.mkString("$$")))
+        10, 1000 * 60 * 60 * 24 * 365, 5, Some(alternatives.mkString("$$")))
     )
 
-    U.retry(3) {
-      portal.sendQueryAndAwaitResult(query.getQuery(),
-        query.getProperties()
-      )
-      match {
-        case Some(a: Answer) => {
-          a.answer.split("$$").toList
+    val tmpAnswers = new mutable.MutableList[String]
+    val tmpAnswers2 = new mutable.MutableList[Answer]
+    var globalIteration: Int = 0
+
+    val memoizer: ProcessMemoizer = getProcessMemoizer(choices.hashCode() + "").getOrElse(new NoProcessMemoizer())
+
+    val answers: List[Answer] = memoizer.mem("voting_" + tmpAnswers2.hashCode()) {
+
+      logger.info("started first iteration ")
+      val firstAnswer = portal.sendQueryAndAwaitResult(query.getQuery(), query.getProperties()).get.is[Answer]
+      firstAnswer.receivedTime = new DateTime()
+      tmpAnswers2 += firstAnswer
+      firstAnswer.answer.split("$$").foreach(b => {
+        votesCast += b -> (votesCast.getOrElse(b, 0) + 1)
+        tmpAnswers += b
+      })
+      val question_id = CrowdSAPortalAdapter.service.getAssignmentForAnswerId(firstAnswer.id).remote_question_id
+
+
+        while (minVotesForAgreement(choices).getOrElse(Integer.MAX_VALUE) > itemWithMostVotes._2 && votesCast.values.sum < MAX_ITERATIONS.get) {
+          logger.info("started iteration " + globalIteration)
+          Thread.sleep(5000)
+          val answerzz = CrowdSAPortalAdapter.service.GetAnswersForQuestion(question_id)
+          answerzz.foreach(e => {
+            if (tmpAnswers2.filter(_.id == e.id).length == 0) {
+              println("Adding answer: " + e)
+              e.receivedTime = new DateTime()
+              tmpAnswers2 += e
+              e.answer.split("$$").foreach(b => {
+                tmpAnswers += b
+                votesCast += b -> (votesCast.getOrElse(b, 0) + 1)
+              })
+            }
+          })
+          globalIteration += 1
         }
-        case _ => {
-          logger.info(getClass.getSimpleName + " didnt get a vote when asked for it.")
-          throw new IllegalStateException("didnt get any response")
-        }
-     }
+      tmpAnswers2.toList
     }
+    tmpAnswers2.toList
   }
 
   protected def confidence = CrowdSAContestWithStatisticalReductionProcess.CONFIDENCE_PARAMETER.get
@@ -119,4 +139,5 @@ class CrowdSAContestWithStatisticalReductionProcess(params: Map[String, Any] = M
 
 object CrowdSAContestWithStatisticalReductionProcess {
   val CONFIDENCE_PARAMETER = new ProcessParameter[Double]("confidence", Some(List(0.9d, 0.95d, 0.99d)))
+  val WORKER_COUNT = new ProcessParameter[List[Int]]("worker", Some(Iterable(List(3, 5))))
 }

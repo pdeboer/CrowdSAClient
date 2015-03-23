@@ -6,6 +6,7 @@ import ch.uzh.ifi.pdeboer.pplib.hcomp.{HComp, HCompQuery, MultipleChoiceQuery, M
 import ch.uzh.ifi.pdeboer.pplib.process.parameter.{ProcessParameter, Patch}
 import ch.uzh.ifi.pdeboer.pplib.process._
 import ch.uzh.ifi.pdeboer.pplib.util.U
+import org.joda.time.DateTime
 
 import scala.collection.mutable
 import scala.util.Random
@@ -16,15 +17,12 @@ import scala.util.Random
 @PPLibProcess
 class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends DecideProcess[List[Answer], Answer](params) with HCompPortalAccess with InstructionHandler {
 
-    import ch.uzh.ifi.pdeboer.pplib.process.parameter.DefaultParameters._
-
     override def run(alternatives: List[Answer]): Answer = {
       if (alternatives.size == 0) null
       else if (alternatives.size == 1) alternatives(0)
       else {
         val memoizer: ProcessMemoizer = getProcessMemoizer(alternatives.hashCode() + "").getOrElse(new NoProcessMemoizer())
 
-        val crowdSA = HComp.apply("crowdSA")
         val paperId = CrowdSAPortalAdapter.service.getPaperIdFromAnswerId(alternatives(0).id)
 
         //TODO: useless?
@@ -60,18 +58,21 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
 
           val question_id = CrowdSAPortalAdapter.service.getAssignmentForAnswerId(firstAnswer.id).remote_question_id
 
-          while (WORKER_COUNT.get > tmpAnswers2.length) {
-            println("Needed answers: " + WORKER_COUNT.get + " - Got so far: " + tmpAnswers.length)
-            Thread.sleep(5000)
-            val answerzz = CrowdSAPortalAdapter.service.GetAnswersForQuestion(question_id)
-            answerzz.foreach(e => {
-              if (tmpAnswers2.filter(_.id == e.id).length == 0 && WORKER_COUNT.get >= tmpAnswers.length+1) {
-                println("Adding answer: " + e)
-                tmpAnswers2 += e
-                e.answer.split("$$").foreach(b => tmpAnswers += b)
-              }
-            })
-          }
+          CrowdSAContest.WORKER_COUNT.get.foreach( w =>
+            while (w > tmpAnswers2.length) {
+              println("Needed answers: " + w + " - Got so far: " + tmpAnswers.length)
+              Thread.sleep(5000)
+              val answerzz = CrowdSAPortalAdapter.service.GetAnswersForQuestion(question_id)
+              answerzz.foreach(e => {
+                if (tmpAnswers2.filter(_.id == e.id).length == 0 && w >= tmpAnswers.length+1) {
+                  println("Adding answer: " + e)
+                  e.receivedTime = new DateTime()
+                  tmpAnswers2 += e
+                  e.answer.split("$$").foreach(b => tmpAnswers += b)
+                }
+              })
+            }
+          )
 
           tmpAnswers2.toList
         }
@@ -84,5 +85,9 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
     }
 
     override def optionalParameters: List[ProcessParameter[_]] =
-      List(WORKER_COUNT) ::: super.optionalParameters
+      List(CrowdSAContest.WORKER_COUNT) ::: super.optionalParameters
   }
+
+object CrowdSAContest {
+  val WORKER_COUNT = new ProcessParameter[List[Int]]("worker_count", Some(Iterable(List(3, 5))))
+}

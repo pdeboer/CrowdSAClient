@@ -114,7 +114,7 @@ object Main extends App with LazyLogger {
 
         try {
         //Execute the recombination variant
-          val DEFAULT_BUDGET: Int = 1500
+          val DEFAULT_BUDGET: Int = 15000
           logger.debug("Setting budget...")
           crowdSA.setBudget(Some(DEFAULT_BUDGET))
 

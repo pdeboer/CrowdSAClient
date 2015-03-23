@@ -1,6 +1,8 @@
 package ch.uzh.ifi.mamato.crowdSA.model
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp.{HCompQuery, HCompAnswer}
+import ch.uzh.ifi.pdeboer.pplib.patterns.pruners.Prunable
+import org.joda.time.DateTime
 import play.api.libs.json._
 import play.api.libs.json.Reads._
 import play.api.libs.functional.syntax._
@@ -11,10 +13,15 @@ import play.api.libs.functional.syntax._
 
 case class Answer(id: Long, answer: String, created_at: Long,
                   accepted: Option[Boolean], bonus_cts: Option[Int],
-                  rejected: Option[Boolean], assignments_id: Long) extends HCompAnswer with Serializable {
+                  rejected: Option[Boolean], assignments_id: Long) extends HCompAnswer with Serializable with Prunable {
   override def toString() = answer
 
   override def query: HCompQuery = null
+
+  override def processingTimeMillis: Long = submitTime.getOrElse(receivedTime).getMillis - acceptTime.getOrElse(new DateTime(created_at)).getMillis
+
+  override def prunableDouble = processingTimeMillis.toDouble
+
 }
 
 
