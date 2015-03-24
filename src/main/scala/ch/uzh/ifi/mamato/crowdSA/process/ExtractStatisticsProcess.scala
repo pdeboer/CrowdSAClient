@@ -1,7 +1,7 @@
 package ch.uzh.ifi.mamato.crowdSA.process
 
 import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAQuery, CrowdSAPortalAdapter, CrowdSAQueryProperties}
-import ch.uzh.ifi.mamato.crowdSA.model.{Answer, Dataset}
+import ch.uzh.ifi.mamato.crowdSA.model.{Highlight, Answer, Dataset}
 import ch.uzh.ifi.mamato.crowdSA.persistence.{StatMethod2AssumptionDAO, Assumption2QuestionsDAO, StatMethodsDAO, AssumptionsDAO}
 import ch.uzh.ifi.pdeboer.pplib.hcomp.{HCompAnswer, HCompQuery}
 import ch.uzh.ifi.pdeboer.pplib.process.ProcessStub
@@ -27,10 +27,10 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
     discoveryQuestion.foreach {
       d =>
         val paper_id = d.getProperties().paper_id
-        val res2 = v.createProcess[CrowdSAQuery, Answer]("discoveryProcess").process(d)
+        val convergedAnswer = v.createProcess[CrowdSAQuery, Answer]("discoveryProcess").process(d)
         println("***** result DISCOVERY STEP")
         //Create the dataset!
-        CrowdSAPortalAdapter.service.createDataset(res2.id)
+        CrowdSAPortalAdapter.service.createDataset(convergedAnswer.id)
         // Start the second phase of the process
         // Once we have defined a dataset we can start to ask the questions for the assumptions.
 
@@ -45,7 +45,8 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
               override def question: String = b.question
               override def title: String = b.id.toString
               override def suggestedPaymentCents: Int = 10
-            }, new CrowdSAQueryProperties(paper_id, "Boolean", null, 10, 365*24*60*60*1000, 3))
+            }, new CrowdSAQueryProperties(paper_id, "Boolean",
+              new Highlight("Dataset", convergedAnswer.answer.replaceAll("#", ",")), 10, 365*24*60*60*1000, 3))
 
             val res1 = v.createProcess[CrowdSAQuery, List[Answer]]("assessmentProcess").process(c)
             println("***** result ASSESSMENT STEP")
