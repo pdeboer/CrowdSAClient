@@ -28,7 +28,7 @@ import scala.util.parsing.json.JSON
  */
 private[crowdSA] class Server(val url: String)
 
-private[crowdSA] case object CrowdSAServer extends Server("http://localhost:9000")
+private[crowdSA] case object CrowdSAServer extends Server("http://andreas.ifi.uzh.ch:9000")
 
 private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
 
@@ -100,7 +100,7 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
     else {
 
       logger.info("Uploading paper: " + pdf_title)
-      val uri = "http://localhost:9000/paper"
+      val uri = "http://andreas.ifi.uzh.ch:9000/paper"
       val httpClient = HttpRestClient.httpClient
       try {
         // Create the entity

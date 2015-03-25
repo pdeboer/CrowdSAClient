@@ -39,6 +39,7 @@ class CrowdSAManager(val service: CrowdSAService, val qu: CrowdSAQuery) extends 
     var answer: Option[Answer] = None
     try {
       (1 to 100000).view.foreach(i => {
+        Thread.sleep(5000)
         answer = poll()
         if (cancelled || answer.isDefined) throw new Exception("I'm actually not an Exception")
         timer.waitTime

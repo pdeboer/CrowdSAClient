@@ -36,16 +36,19 @@ class CrowdSAContestWithBeatByKVotingProcess(params: Map[String, Any] = Map.empt
         paperId = CrowdSAPortalAdapter.service.getPaperIdFromAnswerId(data(1).id)
       }
 
-
-      data.foreach(d => votes += (d.answer -> 0))
-
       //TODO: useless?
       var ans = new mutable.MutableList[String]
       data.foreach(a => {
         if (!ans.contains(a.answer)) {
           ans += a.answer
+
+          //Init votes
+          votes += (a.answer -> 0)
         }
       })
+
+      //data.foreach(d => votes += (d.answer -> 0))
+
       val choices = if (SHUFFLE_CHOICES.get) Random.shuffle(ans) else ans
 
       val termsHighlight = new mutable.MutableList[String]
@@ -72,14 +75,17 @@ class CrowdSAContestWithBeatByKVotingProcess(params: Map[String, Any] = Map.empt
         val firstAnswer = portal.sendQueryAndAwaitResult(query.getQuery(), query.getProperties()).get.is[Answer]
         firstAnswer.receivedTime = new DateTime()
         tmpAnswers2 += firstAnswer
-        firstAnswer.answer.split("$$").foreach(b => tmpAnswers += b)
+        firstAnswer.answer.split("$$").foreach(b => {
+          tmpAnswers += b
+          votes += b -> votes.getOrElse(b, 0)
+        })
 
         val question_id = CrowdSAPortalAdapter.service.getAssignmentForAnswerId(firstAnswer.id).remote_question_id
 
         CrowdSAContestWithBeatByKVotingProcess.WORKER_COUNT.get.foreach( w =>
           while (shouldStartAnotherIteration) {
             logger.info("started iteration " + globalIteration)
-            println("Needed answers: " + w + " - Got so far: " + tmpAnswers.length)
+            logger.debug("Needed answers: " + w + " - Got so far: " + tmpAnswers.length)
             Thread.sleep(5000)
             val answerzz = CrowdSAPortalAdapter.service.GetAnswersForQuestion(question_id)
             answerzz.foreach(e => {
@@ -96,9 +102,11 @@ class CrowdSAContestWithBeatByKVotingProcess(params: Map[String, Any] = Map.empt
             globalIteration += 1
           }
         )
-
         tmpAnswers2.toList
       }
+
+      //Adding answers that had 0 votes
+      tmpAnswers2.foreach(d => votes += (d.answer -> 0))
 
       val winner = bestAndSecondBest._1._1
       logger.info(s"beat-by-k finished after $globalIteration rounds. Winner: " + winner)
@@ -107,7 +115,9 @@ class CrowdSAContestWithBeatByKVotingProcess(params: Map[String, Any] = Map.empt
   }
 
   def bestAndSecondBest = {
+    logger.info("Votes: " + votes)
     val sorted = votes.toList.sortBy(-_._2)
+    logger.info("Sorted: "+ sorted)
     (sorted(0), sorted(1))
   }
 

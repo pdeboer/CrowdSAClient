@@ -24,7 +24,7 @@ class CrowdSAPortalAdapter extends HCompPortalAdapter with LazyLogger {
 
   override def getDefaultPortalKey: String = CrowdSAPortalAdapter.PORTAL_KEY
 
-  val serviceURL = "http://localhost:9000"
+  val serviceURL = "http://andreas.ifi.uzh.ch:9000"
 
   var map = mutable.HashMap.empty[Int, CrowdSAQueries]
 

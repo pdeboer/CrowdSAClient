@@ -81,7 +81,7 @@ class CrowdSAContestWithStatisticalReductionProcess(params: Map[String, Any] = M
     val paperId = service.getPaperIdFromAnswerId(answerId)
     val query = new CrowdSAQuery(
       new HCompQuery {
-        override def question: String = "Please select the best answer"
+        override def question: String = "Please select the answer that best represent the dataset"
 
         override def title: String = "Voting"
 

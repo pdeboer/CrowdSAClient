@@ -55,17 +55,19 @@ trait CrowdSAIterativeRefinementDriver[Answer] {
   def selectBestRefinement(candidates: List[Answer]): Answer
 }
 
-class CrowdSAIRDefaultHCompDriver(portal: HCompPortalAdapter, paperId: Long, votingProcessParam: GenericPassableProcessParam[List[Answer], Answer, CreateProcess[List[Answer], Answer]], questionPricing: Int = 10, memoizerPrefix: String = "") extends CrowdSAIterativeRefinementDriver[Answer] {
+class CrowdSAIRDefaultHCompDriver(portal: HCompPortalAdapter, quest: String, stat_method: String, paperId: Long, votingProcessParam: GenericPassableProcessParam[List[Answer], Answer, CreateProcess[List[Answer], Answer]], questionPricing: Int = 10, memoizerPrefix: String = "") extends CrowdSAIterativeRefinementDriver[Answer] {
 
   override def refine(originalTextToRefine: Answer, currentRefinementState: Answer, iterationId: Int): Answer = {
 
-    val toHighlight = currentRefinementState.answer.replaceAll("#", ",")
+    var toHighlight = currentRefinementState.answer.replaceAll("#", ",")
+    toHighlight = toHighlight+","+stat_method
+
     val toRefine = currentRefinementState.answer
     val query = new CrowdSAQuery(
       new HCompQuery {
-        override def question: String = "Please refine the dataset below"
+        override def question: String = quest.replace("Identify", "Identify or refine")
 
-        override def title: String = "Discovery"
+        override def title: String = stat_method
 
         override def suggestedPaymentCents: Int = 10
       },
