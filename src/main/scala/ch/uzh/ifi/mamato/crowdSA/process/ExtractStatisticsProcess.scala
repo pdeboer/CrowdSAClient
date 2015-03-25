@@ -46,7 +46,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
               override def title: String = b.id.toString
               override def suggestedPaymentCents: Int = 10
             }, new CrowdSAQueryProperties(paper_id, "Boolean",
-              new Highlight("Dataset", convergedAnswer.answer.replaceAll("#", ",")), 10, 365*24*60*60*1000, 3))
+              new Highlight("Dataset", convergedAnswer.answer.replaceAll("#", ",")), 10, 365*24*60*60*1000, 100))
 
             val res1 = v.createProcess[CrowdSAQuery, List[Answer]]("assessmentProcess").process(c)
             println("***** result ASSESSMENT STEP")

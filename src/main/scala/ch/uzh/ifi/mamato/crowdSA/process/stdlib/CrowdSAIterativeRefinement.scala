@@ -2,12 +2,13 @@ package ch.uzh.ifi.mamato.crowdSA.process.stdlib
 
 import java.util.Date
 
-import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.CrowdSAQuery
+import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAPortalAdapter, CrowdSAQuery}
 import ch.uzh.ifi.mamato.crowdSA.model.Answer
 import ch.uzh.ifi.mamato.crowdSA.patterns.{CrowdSAIRDefaultHCompDriver, CrowdSAIterativeRefinementExecutor}
 import ch.uzh.ifi.pdeboer.pplib.patterns.{IterativeRefinementExecutor, IRDefaultHCompDriver}
 import ch.uzh.ifi.pdeboer.pplib.process._
 import ch.uzh.ifi.pdeboer.pplib.process.parameter.{GenericPassableProcessParam, ProcessParameter}
+import org.joda.time.DateTime
 
 /**
  * Created by mattia on 23.03.15.
@@ -25,9 +26,12 @@ class CrowdSAIterativeRefinementProcess(params: Map[String, Any] = Map.empty) ex
     VOTING_PROCESS_TYPE.get.setParams(params, replace = false)
 
     val driver = new CrowdSAIRDefaultHCompDriver(portal, query.getProperties().paper_id, CrowdSAIterativeRefinementProcess.VOTING_PROCESS_TYPE.get, 10, query.hashCode.toString)
-    val exec = new CrowdSAIterativeRefinementExecutor(
-      new Answer(-1, "", new Date().getTime, None, None, None, -1),
-      query, driver, 20, memoizer, query.hashCode.toString)
+
+    //TODO: Create a valid empty answer (will be used to get the paper Id)
+    val initAnswer = new Answer(-1, "", new Date().getTime, None, None, None, -1)
+    initAnswer.receivedTime = new DateTime()
+
+    val exec = new CrowdSAIterativeRefinementExecutor(initAnswer, query, driver, 20, memoizer, query.hashCode.toString)
 
     exec.refinedAnswer
   }

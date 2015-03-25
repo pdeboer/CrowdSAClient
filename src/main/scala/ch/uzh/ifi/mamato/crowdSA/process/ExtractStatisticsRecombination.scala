@@ -79,7 +79,7 @@ object ExtractStatisticsRecombination {
     val candidateProcessParameters = Map(
       "discoveryProcess" -> List(
         new TypedParameterVariantGenerator[DiscoveryProcess]()
-          .addVariation(DiscoveryProcess.DISCOVERY_PROCESS, collectDecide)
+          .addVariation(DiscoveryProcess.DISCOVERY_PROCESS, collectDecide ::: iterativeRefinement)
       ),
       "assessmentProcess" -> List(
         new TypedParameterVariantGenerator[AssessmentProcess]()

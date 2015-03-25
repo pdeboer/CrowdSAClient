@@ -23,7 +23,12 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
       else {
         val memoizer: ProcessMemoizer = getProcessMemoizer(alternatives.hashCode() + "").getOrElse(new NoProcessMemoizer())
 
-        val paperId = CrowdSAPortalAdapter.service.getPaperIdFromAnswerId(alternatives(0).id)
+        var paperId: Long = -1
+        if(alternatives.head.answer != ""){
+          paperId = CrowdSAPortalAdapter.service.getPaperIdFromAnswerId(alternatives.head.id)
+        } else {
+          paperId = CrowdSAPortalAdapter.service.getPaperIdFromAnswerId(alternatives(1).id)
+        }
 
         //TODO: useless?
         var ans = new mutable.MutableList[String]
@@ -44,7 +49,7 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
 
             override def suggestedPaymentCents: Int = 10
           },
-          new CrowdSAQueryProperties(paperId, "Voting",new Highlight("Dataset", termsHighlight.mkString(",")), 10, 1000*60*60*24*365, 5, Some(ans.mkString("$$")))
+          new CrowdSAQueryProperties(paperId, "Voting",new Highlight("Dataset", termsHighlight.mkString(",")), 10, 1000*60*60*24*365, 100, Some(ans.mkString("$$")))
         )
 
         val tmpAnswers = new mutable.MutableList[String]

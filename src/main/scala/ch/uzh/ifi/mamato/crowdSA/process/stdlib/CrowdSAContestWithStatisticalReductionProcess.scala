@@ -28,8 +28,16 @@ class CrowdSAContestWithStatisticalReductionProcess(params: Map[String, Any] = M
 
   override protected def run(data: List[Answer]): Answer = {
     if (data.size == 0) null
-    else if (data.size == 1) data(0)
+    else if (data.size == 1) data.head
     else {
+
+      var answerId: Long = -1
+      if(data.head.answer != ""){
+        answerId = data.head.id
+      } else {
+        answerId = data(1).id
+      }
+
       //All the answers of the same question asked
       val stringData = data.map(_.is[Answer].answer)
       val answers = new mutable.MutableList[String]
@@ -41,9 +49,8 @@ class CrowdSAContestWithStatisticalReductionProcess(params: Map[String, Any] = M
       var iteration: Int = 0
       //Init votes to 0 for all answers
       data.foreach(d => votesCast += (d.answer -> 0))
-
-        iteration += 1
-        val choices: List[Answer] = memoizer.mem("it" + iteration)(castVote(answers.toList, iteration, data(0).id))
+      iteration += 1
+      val choices: List[Answer] = memoizer.mem("it" + iteration)(castVote(answers.toList, iteration, answerId))
 
       val winner = itemWithMostVotes._1
       logger.info(s"contest with statistical reduction finished after $iteration rounds. Winner: $winner")
@@ -82,7 +89,7 @@ class CrowdSAContestWithStatisticalReductionProcess(params: Map[String, Any] = M
       },
       new CrowdSAQueryProperties(paperId, "Voting",
         null,
-        10, 1000 * 60 * 60 * 24 * 365, 5, Some(alternatives.mkString("$$")))
+        10, 1000 * 60 * 60 * 24 * 365, 1, Some(alternatives.mkString("$$")))
     )
 
     val tmpAnswers = new mutable.MutableList[String]

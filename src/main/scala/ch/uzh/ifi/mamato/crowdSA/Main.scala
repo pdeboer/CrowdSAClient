@@ -85,7 +85,7 @@ object Main extends App with LazyLogger {
             }
 
             val highlight = new Highlight("Discovery", m._2)
-            val properties = new CrowdSAQueryProperties(remote_id, "Discovery", highlight, 10, 60 * 60 * 24 * 365, 5)
+            val properties = new CrowdSAQueryProperties(remote_id, "Discovery", highlight, 10, 60 * 60 * 24 * 365, 100)
             discoveryQuestions += new CrowdSAQuery(query, properties)
         }
 

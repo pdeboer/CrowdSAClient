@@ -28,7 +28,14 @@ class CrowdSAContestWithBeatByKVotingProcess(params: Map[String, Any] = Map.empt
 
       val memoizer: ProcessMemoizer = getProcessMemoizer(data.hashCode() + "").getOrElse(new NoProcessMemoizer())
 
-      val paperId = CrowdSAPortalAdapter.service.getPaperIdFromAnswerId(data(0).id)
+      //TODO: Ugly to fix!!
+      var paperId: Long = -1
+      if(data.head.answer != "") {
+        paperId = CrowdSAPortalAdapter.service.getPaperIdFromAnswerId(data.head.id)
+      } else {
+        paperId = CrowdSAPortalAdapter.service.getPaperIdFromAnswerId(data(1).id)
+      }
+
 
       data.foreach(d => votes += (d.answer -> 0))
 
@@ -52,7 +59,7 @@ class CrowdSAContestWithBeatByKVotingProcess(params: Map[String, Any] = Map.empt
 
           override def suggestedPaymentCents: Int = 10
         },
-        new CrowdSAQueryProperties(paperId, "Voting", new Highlight("Dataset", termsHighlight.mkString(",")), 10, 1000 * 60 * 60 * 24 * 365, 5, Some(ans.mkString("$$")))
+        new CrowdSAQueryProperties(paperId, "Voting", new Highlight("Dataset", termsHighlight.mkString(",")), 10, 1000 * 60 * 60 * 24 * 365, 100, Some(ans.mkString("$$")))
       )
 
       val tmpAnswers = new mutable.MutableList[String]

@@ -56,20 +56,23 @@ trait CrowdSAIterativeRefinementDriver[Answer] {
 }
 
 class CrowdSAIRDefaultHCompDriver(portal: HCompPortalAdapter, paperId: Long, votingProcessParam: GenericPassableProcessParam[List[Answer], Answer, CreateProcess[List[Answer], Answer]], questionPricing: Int = 10, memoizerPrefix: String = "") extends CrowdSAIterativeRefinementDriver[Answer] {
+
   override def refine(originalTextToRefine: Answer, currentRefinementState: Answer, iterationId: Int): Answer = {
 
+    val toHighlight = currentRefinementState.answer.replaceAll("#", ",")
+    val toRefine = currentRefinementState.answer
     val query = new CrowdSAQuery(
       new HCompQuery {
-        override def question: String = "Please refine the following dataset"
+        override def question: String = "Please refine the dataset below"
 
         override def title: String = "Discovery"
 
         override def suggestedPaymentCents: Int = 10
       },
-      new CrowdSAQueryProperties(paperId, "Discovery", new Highlight("Dataset", currentRefinementState.answer.mkString(",")), 10, 1000*60*60*24*365, 5, Some(currentRefinementState.answer.mkString("$$")))
+      new CrowdSAQueryProperties(paperId, "Discovery", new Highlight("Dataset", toHighlight), 10, 1000*60*60*24*365, 100, Some(toRefine))
     )
 
-    val answer = portal.sendQueryAndAwaitResult(query.getQuery(), query.getProperties()).get.asInstanceOf[Answer]
+    val answer = portal.sendQueryAndAwaitResult(query.getQuery(), query.getProperties()).get.is[Answer]
     answer.receivedTime = new DateTime()
     answer
   }
