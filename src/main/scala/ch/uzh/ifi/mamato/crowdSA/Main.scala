@@ -41,6 +41,7 @@ object Main extends App with LazyLogger {
 
   // open pdf
   // convert it to text
+
   var mutableMatch = new mutable.MutableList[(String, String)]
   try {
     val text = PdfUtils.getTextFromPdf(pathPdf).get
@@ -52,13 +53,14 @@ object Main extends App with LazyLogger {
       toMatch.foreach {
         sm =>
           val mapp = PdfUtils.findContextMatch(text.toUpperCase(), sm.stat_method.toUpperCase())
-          //TODO: remove me
-          //mapp.foreach {
-            //p =>
+
+          mapp.foreach {
+            p =>
+              //TODO: remove me
               //if(mutableMatch.length < maxMatches) {
-              //  mutableMatch.+=:(sm.stat_method, p)
+                mutableMatch.+=:(sm.stat_method, p)
               //}
-          //}
+          }
     }
   } catch {
     case e: Exception => e.printStackTrace()

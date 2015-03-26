@@ -89,7 +89,7 @@ class CrowdSAContestWithStatisticalReductionProcess(params: Map[String, Any] = M
       },
       new CrowdSAQueryProperties(paperId, "Voting",
         null,
-        10, 1000 * 60 * 60 * 24 * 365, 1, Some(alternatives.mkString("$$")))
+        10, 1000 * 60 * 60 * 24 * 365, 100, Some(alternatives.mkString("$$")))
     )
 
     val tmpAnswers = new mutable.MutableList[String]
