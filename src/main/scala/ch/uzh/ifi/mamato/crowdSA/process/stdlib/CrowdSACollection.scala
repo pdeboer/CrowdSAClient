@@ -36,17 +36,19 @@ class CrowdSACollection(params: Map[String, Any] = Map.empty) extends CreateProc
       tmpAnswers += firstAnswer
 
       while (WORKER_COUNT.get > tmpAnswers.length){
-        println("Needed answers: " + WORKER_COUNT.get + " - Got so far: " + tmpAnswers.length)
+        logger.debug("Needed answers: " + WORKER_COUNT.get + " - Got so far: " + tmpAnswers.length)
         Thread.sleep(5000)
         val answerzz = CrowdSAPortalAdapter.service.GetAnswersForQuestion(question_id)
         answerzz.foreach(e => {
           if(tmpAnswers.filter(_.id == e.id).length == 0 && WORKER_COUNT.get >= tmpAnswers.length+1){
-            println("Adding answer: " + e)
+            logger.debug("Adding answer: " + e)
             e.receivedTime = new DateTime()
             tmpAnswers += e
           }
         })
       }
+      logger.debug("Disabling question because got enough answers")
+      CrowdSAPortalAdapter.service.DisableQuestion(question_id)
       tmpAnswers.toList
     }
     tmpAnswers.toList

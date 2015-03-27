@@ -2,6 +2,7 @@ package ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa
 
 
 import ch.uzh.ifi.mamato.crowdSA.model.Answer
+import com.typesafe.config.ConfigFactory
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
@@ -24,7 +25,7 @@ class CrowdSAPortalAdapter extends HCompPortalAdapter with LazyLogger {
 
   override def getDefaultPortalKey: String = CrowdSAPortalAdapter.PORTAL_KEY
 
-  val serviceURL = "http://andreas.ifi.uzh.ch:9000"
+  val serviceURL = ConfigFactory.load("application.conf").getString("crowdSAHost")
 
   var map = mutable.HashMap.empty[Int, CrowdSAQueries]
 
@@ -74,7 +75,9 @@ class CrowdSAPortalAdapter extends HCompPortalAdapter with LazyLogger {
         q._2.cancelQuestion()
       }
       catch {
-        case e: Exception => {}
+        case e: Exception => {
+          e.printStackTrace()
+        }
       })
       logger.info(s"cancelled '${query.title}'")
     } else {

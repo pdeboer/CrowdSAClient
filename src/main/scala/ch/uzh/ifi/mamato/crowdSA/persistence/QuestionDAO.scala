@@ -1,6 +1,7 @@
 package ch.uzh.ifi.mamato.crowdSA.persistence
 
-import ch.uzh.ifi.mamato.crowdSA.model.Question
+import ch.uzh.ifi.mamato.crowdSA.model.{Assumption, Question}
+import ch.uzh.ifi.mamato.crowdSA.persistence.AssumptionsDAO._
 import scalikejdbc._
 
 /**
@@ -42,6 +43,10 @@ object QuestionDAO extends SQLSyntaxSupport[Question] {
       //.where.append(isNotDeleted)
       .orderBy(q.id)
   }.map(QuestionDAO(q)).list.apply()
+
+  def findByRemoteId(remoteId: Long)(implicit session: DBSession = autoSession): Option[Question] = withSQL {
+    select.from(QuestionDAO as q).where.eq(q.remote_question_id, remoteId)//.and.append(isNotDeleted)
+  }.map(QuestionDAO(q)).single.apply()
 
   def countBy(where: SQLSyntax)(implicit session: DBSession = autoSession): Long = withSQL {
     select(sqls.count).from(QuestionDAO as q).where.append(sqls"${where}")//.and.append(isNotDeleted)

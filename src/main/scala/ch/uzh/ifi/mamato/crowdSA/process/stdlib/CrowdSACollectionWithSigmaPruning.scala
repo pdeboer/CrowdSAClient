@@ -72,5 +72,5 @@ class CrowdSACollectionWithSigmaPruning(params: Map[String, Any] = Map.empty) ex
 object CrowdSACollectionWithSigmaPruning {
   val NUM_SIGMAS = new ProcessParameter[Int]("numSigmas", Some(List(3)))
   val PRUNE_TEXT_LENGTH = new ProcessParameter[Boolean]("pruneByTextLength", Some(List(true)))
-  val WORKER_COUNT = new ProcessParameter[List[Int]]("worker_count", Some(Iterable(List(5,7))))
+  val WORKER_COUNT = new ProcessParameter[List[Int]]("worker_count", Some(Iterable(List(2))))
 }

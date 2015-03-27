@@ -8,6 +8,7 @@ import ch.uzh.ifi.mamato.crowdSA.persistence.{PaperDAO, QuestionDAO}
 import ch.uzh.ifi.mamato.crowdSA.util.{HttpRestClient, LazyLogger}
 import com.fasterxml.jackson.core.`type`.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.typesafe.config.ConfigFactory
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.protocol.HttpClientContext
 import org.apache.http.entity.ContentType
@@ -28,12 +29,12 @@ import scala.util.parsing.json.JSON
  */
 private[crowdSA] class Server(val url: String)
 
-private[crowdSA] case object CrowdSAServer extends Server("http://andreas.ifi.uzh.ch:9000")
+private[crowdSA] case object CrowdSAServer extends Server(ConfigFactory.load("application.conf").getString("crowdSAHost"))
 
 private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
 
   val httpClient = HttpRestClient.httpClient
-  val config1 = RequestConfig.custom().setSocketTimeout((30*1000).toInt).build();
+  val config1 = RequestConfig.custom().setSocketTimeout((30*1000).toInt).build()
 
   /**
    * Get REST method in the server
@@ -61,7 +62,7 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
     logger.debug("POST: " + path + " with parameters: " + params.toString())
 
     val httpPost = new HttpPost(server.url + path)
-    httpPost.setConfig(config1);
+    httpPost.setConfig(config1)
 
     val reqEntity = MultipartEntityBuilder.create()
     for(n <- params){
@@ -100,7 +101,7 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
     else {
 
       logger.info("Uploading paper: " + pdf_title)
-      val uri = "http://andreas.ifi.uzh.ch:9000/paper"
+      val uri = server.url + "/paper"
       val httpClient = HttpRestClient.httpClient
       try {
         // Create the entity
@@ -238,19 +239,18 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
 
   /**
    * Disable a question
-   * @param qId id of the question in the local db
+   * @param qId id of the remote question
    */
   def DisableQuestion(qId: Long): Unit = {
     try {
-      val remote_question_id = QuestionDAO.find(qId).get.remote_question_id
       val params = new collection.mutable.MutableList[NameValuePair]
-      params += new BasicNameValuePair("question_id", remote_question_id.toString)
+      params += new BasicNameValuePair("question_id", qId.toString)
       val resp = post("/disablequestion", params.toList)
       if(resp.startsWith("Error")){
         logger.error(resp)
       }else {
-        val question = QuestionDAO.find(qId).get
-        QuestionDAO.save(qId, true, question.expiration_time_sec,
+        val question = QuestionDAO.findByRemoteId(qId).get
+        QuestionDAO.save(question.id, true, question.expiration_time_sec,
           question.maximal_assignments)
         logger.debug(resp)
       }

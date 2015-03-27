@@ -132,6 +132,6 @@ class CrowdSAContestWithBeatByKVotingProcess(params: Map[String, Any] = Map.empt
 
 object CrowdSAContestWithBeatByKVotingProcess {
   val K = new ProcessParameter[Int]("k", Some(List(2)))
-  val WORKER_COUNT = new ProcessParameter[List[Int]]("worker_count", Some(Iterable(List(3, 5))))
+  val WORKER_COUNT = new ProcessParameter[List[Int]]("worker_count", Some(Iterable(List(2))))
 }
 

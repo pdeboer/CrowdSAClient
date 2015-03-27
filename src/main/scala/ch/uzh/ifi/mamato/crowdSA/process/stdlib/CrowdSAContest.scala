@@ -1,5 +1,7 @@
 package ch.uzh.ifi.mamato.crowdSA.process.stdlib
 
+import java.util.Date
+
 import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAPortalAdapter, CrowdSAQuery, CrowdSAQueryProperties}
 import ch.uzh.ifi.mamato.crowdSA.model.{Highlight, Answer}
 import ch.uzh.ifi.pdeboer.pplib.hcomp.{HComp, HCompQuery, MultipleChoiceQuery, MultipleChoiceAnswer}
@@ -49,7 +51,7 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
 
             override def suggestedPaymentCents: Int = 10
           },
-          new CrowdSAQueryProperties(paperId, "Voting",new Highlight("Dataset", termsHighlight.mkString(",")), 10, 1000*60*60*24*365, 100, Some(ans.mkString("$$")))
+          new CrowdSAQueryProperties(paperId, "Voting",new Highlight("Dataset", termsHighlight.mkString(",")), 10, ((new Date().getTime()/1000) + 60*60*24*365), 100, Some(ans.mkString("$$")))
         )
 
         val tmpAnswers = new mutable.MutableList[String]
@@ -63,27 +65,27 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
 
           val question_id = CrowdSAPortalAdapter.service.getAssignmentForAnswerId(firstAnswer.id).remote_question_id
 
-          CrowdSAContest.WORKER_COUNT.get.foreach( w =>
-            while (w > tmpAnswers2.length) {
-              println("Needed answers: " + w + " - Got so far: " + tmpAnswers.length)
-              Thread.sleep(5000)
-              val answerzz = CrowdSAPortalAdapter.service.GetAnswersForQuestion(question_id)
-              answerzz.foreach(e => {
-                if (tmpAnswers2.filter(_.id == e.id).length == 0 && w >= tmpAnswers.length+1) {
-                  println("Adding answer: " + e)
-                  e.receivedTime = new DateTime()
-                  tmpAnswers2 += e
-                  e.answer.split("$$").foreach(b => tmpAnswers += b)
-                }
-              })
-            }
-          )
+          while (CrowdSAContest.WORKER_COUNT.get > tmpAnswers2.length){
+            logger.debug("Needed answers: " + CrowdSAContest.WORKER_COUNT.get + " - Got so far: " + tmpAnswers.length)
+            Thread.sleep(5000)
+            val answerzz = CrowdSAPortalAdapter.service.GetAnswersForQuestion(question_id)
+            answerzz.foreach(e => {
+              if (tmpAnswers2.filter(_.id == e.id).length == 0 && CrowdSAContest.WORKER_COUNT.get >= tmpAnswers.length+1) {
+                logger.debug("Adding answer: " + e)
+                e.receivedTime = new DateTime()
+                tmpAnswers2 += e
+                e.answer.split("$$").foreach(b => tmpAnswers += b)
+              }
+            })
+          }
 
+          logger.debug("Disabling question because got enough answers")
+          CrowdSAPortalAdapter.service.DisableQuestion(question_id)
           tmpAnswers2.toList
         }
 
         val valueOfAnswer: String = tmpAnswers.groupBy(s => s).maxBy(s => s._2.size)._1
-        logger.info("got answer " + valueOfAnswer)
+        logger.info("***** WINNER CONTEST " + valueOfAnswer)
         alternatives.find(_.answer == valueOfAnswer).get
       }
 
@@ -94,5 +96,5 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
   }
 
 object CrowdSAContest {
-  val WORKER_COUNT = new ProcessParameter[List[Int]]("worker_count", Some(Iterable(List(3, 5))))
+  val WORKER_COUNT = new ProcessParameter[Int]("worker_count", Some(List(2)))
 }

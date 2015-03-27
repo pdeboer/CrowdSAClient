@@ -11,9 +11,9 @@ import ch.uzh.ifi.pdeboer.pplib.process.parameter._
 
 @PPLibProcess
 class AssessmentProcess(_params: Map[String, Any] = Map.empty)
-  extends CreateProcess[CrowdSAQuery, List[Answer]](_params) {
+  extends CreateProcess[CrowdSAQuery, Answer](_params) {
 
-  override protected def run(data: CrowdSAQuery): List[Answer] = {
+  override protected def run(data: CrowdSAQuery): Answer = {
     val processType = AssessmentProcess.ASSESSMENT_PROCESS.get
 
     val lowerPriorityParams = params
@@ -26,5 +26,5 @@ class AssessmentProcess(_params: Map[String, Any] = Map.empty)
 }
 
 object AssessmentProcess {
-  val ASSESSMENT_PROCESS = new ProcessParameter[PassableProcessParam[CrowdSAQuery, List[Answer]]]("assessmentProcess", None)
+  val ASSESSMENT_PROCESS = new ProcessParameter[PassableProcessParam[CrowdSAQuery, Answer]]("assessmentProcess", None)
 }

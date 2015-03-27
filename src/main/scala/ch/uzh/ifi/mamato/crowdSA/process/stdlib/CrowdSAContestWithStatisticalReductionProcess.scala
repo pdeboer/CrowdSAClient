@@ -146,5 +146,5 @@ class CrowdSAContestWithStatisticalReductionProcess(params: Map[String, Any] = M
 
 object CrowdSAContestWithStatisticalReductionProcess {
   val CONFIDENCE_PARAMETER = new ProcessParameter[Double]("confidence", Some(List(0.9d, 0.95d, 0.99d)))
-  val WORKER_COUNT = new ProcessParameter[List[Int]]("worker", Some(Iterable(List(3, 5))))
+  val WORKER_COUNT = new ProcessParameter[List[Int]]("worker", Some(Iterable(List(2))))
 }
