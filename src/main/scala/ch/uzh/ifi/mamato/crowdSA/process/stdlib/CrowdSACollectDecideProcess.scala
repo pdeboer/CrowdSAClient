@@ -39,7 +39,7 @@ class CrowdSACollectDecideProcess(_params: Map[String, Any] = Map.empty) extends
 
     //Decide step
     val res: Answer = memoizer.mem(getClass.getSimpleName + "decideProcess")(CrowdSACollectDecideProcess.DECIDE.get.create(if (CrowdSACollectDecideProcess.FORWARD_PARAMS_TO_DECIDE.get) params else Map.empty).process(collectionDistinct.toList))
-    logger.info(s"Collect/decide for $res has finished with Patch $res")
+    logger.info(s"Collect/decide for $res has finished with result $res")
     res
   }
 

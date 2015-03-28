@@ -29,11 +29,8 @@ class CrowdSACollection(params: Map[String, Any] = Map.empty) extends CreateProc
     val tmpAnswers = new mutable.MutableList[Answer]
 
     val answers: List[Answer] = memoizer.mem("answer_line_" + query) {
-      val firstAnswer = portal.sendQueryAndAwaitResult(query.getQuery(), query.getProperties()).get.is[Answer]
-      firstAnswer.receivedTime = new DateTime()
 
-      val question_id = CrowdSAPortalAdapter.service.getAssignmentForAnswerId(firstAnswer.id).remote_question_id
-      tmpAnswers += firstAnswer
+      val question_id = CrowdSAPortalAdapter.service.CreateQuestion(query)
 
       while (WORKER_COUNT.get > tmpAnswers.length){
         logger.debug("Needed answers: " + WORKER_COUNT.get + " - Got so far: " + tmpAnswers.length)

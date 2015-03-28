@@ -21,10 +21,11 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
 
     override def run(alternatives: List[Answer]): Answer = {
       if (alternatives.size == 0) null
-      else if (alternatives.size == 1) alternatives(0)
+      else if (alternatives.size == 1) alternatives.head
       else {
         val memoizer: ProcessMemoizer = getProcessMemoizer(alternatives.hashCode() + "").getOrElse(new NoProcessMemoizer())
 
+        //TODO: useless?
         var paperId: Long = -1
         if(alternatives.head.answer != ""){
           paperId = CrowdSAPortalAdapter.service.getPaperIdFromAnswerId(alternatives.head.id)
@@ -45,7 +46,8 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
 
         val query = new CrowdSAQuery(
           new HCompQuery {
-            override def question: String = "Please select the best answer"
+            //TODO: change the question: get the original question and add question to check the best response.
+            override def question: String = "Please select the answer you think is the best."
 
             override def title: String = "Voting"
 
