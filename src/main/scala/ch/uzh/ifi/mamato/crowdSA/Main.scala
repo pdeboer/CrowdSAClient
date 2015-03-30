@@ -42,26 +42,30 @@ object Main extends App with LazyLogger {
   // open pdf
   // convert it to text
 
-  var mutableMatch = new mutable.MutableList[(String, String)]
+  var statMethod2ContextStatMethod = new mutable.MutableList[(String, String)]
   try {
-    val text = PdfUtils.getTextFromPdf(pathPdf).get
+    val pdfToText = PdfUtils.getTextFromPdf(pathPdf).get
 
     //TODO: remove me
-    // maxMatches = 1
+    val maxMatches = 1
 
-      // get statistical methods that correspond to the ones present in the database
-      toMatch.foreach {
-        sm =>
-          val mapp = PdfUtils.findContextMatch(text.toUpperCase(), sm.stat_method.toUpperCase())
+    // get context of statistical methods that correspond to the ones present in the database
+    toMatch.foreach {
+      sm =>
+        val mapp = PdfUtils.findContextMatch(pdfToText.toUpperCase(), sm.stat_method.toUpperCase())
 
-          mapp.foreach {
-            p =>
-              //TODO: remove me
-              //if(mutableMatch.length < maxMatches) {
-                mutableMatch.+=:(sm.stat_method, p)
-              //}
-          }
+        mapp.foreach {
+          p =>
+            //TODO: remove me
+            if(statMethod2ContextStatMethod.length < maxMatches) {
+              statMethod2ContextStatMethod.+=:(sm.stat_method, p)
+            }
+        }
+
     }
+
+
+
   } catch {
     case e: Exception => e.printStackTrace()
   }
@@ -76,7 +80,7 @@ object Main extends App with LazyLogger {
 
     // create DISCOVERY questions for each statistical method that matched
 
-        mutableMatch.foreach {
+        statMethod2ContextStatMethod.foreach {
           m =>
             logger.debug("Creating DISCOVERY question for match: " + m._1)
             val query = new HCompQuery {

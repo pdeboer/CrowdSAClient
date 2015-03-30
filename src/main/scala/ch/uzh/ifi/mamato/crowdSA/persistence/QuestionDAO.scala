@@ -34,6 +34,11 @@ object QuestionDAO extends SQLSyntaxSupport[Question] {
     .where.eq(q.disabled, false)
   }.map(QuestionDAO(q)).list.apply()
 
+  def getByRemoteQuestionId(rId: Long)(implicit session: DBSession = autoSession): Option[Question] = withSQL {
+    select.from(QuestionDAO as q)
+      .where.eq(q.remote_question_id, rId)
+  }.map(QuestionDAO(q)).single.apply()
+
   def countAll()(implicit session: DBSession = autoSession): Long = withSQL {
     select(sqls.count).from(QuestionDAO as q)//.where.append(isNotDeleted)
   }.map(rs => rs.long(1)).single.apply().get

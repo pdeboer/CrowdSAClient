@@ -17,7 +17,7 @@ object ExtractStatisticsRecombination {
     .generatePassableProcesses[List[Answer], Answer] /* :::
     new TypedParameterVariantGenerator[CrowdSAContestWithBeatByKVotingProcess]()
       .generatePassableProcesses[List[Answer], Answer] :::
-    new TypedParameterVariantGenerator[CrowdSAContestWithStatisticalReductionProcess]()
+      new TypedParameterVariantGenerator[CrowdSAContestWithStatisticalReductionProcess]()
       .addVariation(DefaultParameters.SHUFFLE_CHOICES, List(false))
       .addVariation(CrowdSAContestWithStatisticalReductionProcess.CONFIDENCE_PARAMETER, List(0.85))
       .generatePassableProcesses[List[Answer], Answer]

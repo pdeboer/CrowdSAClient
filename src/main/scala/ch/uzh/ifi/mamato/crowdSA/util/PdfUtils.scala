@@ -28,26 +28,33 @@ object PdfUtils {
     }
   }
 
+  def findContextMatchMutipleMatches(source: String, toMatch: List[String]): List[String] = {
+    val res = new mutable.MutableList[String]
+
+    toMatch.foreach(
+      m => {
+        findContextMatch(source, m).foreach(
+          c => {
+            res += c
+          })
+      }
+    )
+    res.toList
+  }
+
   def findContextMatch(source: String, toMatch: String): List[String] = {
     val mut = new mutable.MutableList[String]
     try {
       for(m <- toMatch.r.findAllMatchIn(source)){
-
-
-        //val contextBefore = m.before.toString
         val contextAfter = m.after.toString
-
-        //val bLength = contextBefore.length
-        //val aLength = contextAfter.length
-
-
-        //println(contextBefore.substring(bLength-10, bLength)+toMatch+ contextAfter.substring(0, 10))
-        mut.+=:(toMatch+ contextAfter.substring(0, 20))
+        mut += toMatch+ contextAfter.substring(0, 20)
       }
       mut.toList
     }catch {
-      case e: Exception => e.getStackTrace
-        null
+      case e: Exception => {
+        e.getStackTrace
+        (new mutable.MutableList[String]).toList
+      }
     }
   }
 

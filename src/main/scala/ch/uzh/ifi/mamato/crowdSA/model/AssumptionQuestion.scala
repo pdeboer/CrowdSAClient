@@ -8,5 +8,7 @@ import scalikejdbc.DBSession
  */
 case class AssumptionQuestion(
                        id: Long,
-                       question: String) {
+                       assumption_id: Long,
+                       question: String,
+                       test_names: String) {
 }

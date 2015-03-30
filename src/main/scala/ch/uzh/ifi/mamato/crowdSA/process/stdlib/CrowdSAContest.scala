@@ -4,6 +4,7 @@ import java.util.Date
 
 import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAPortalAdapter, CrowdSAQuery, CrowdSAQueryProperties}
 import ch.uzh.ifi.mamato.crowdSA.model.{Highlight, Answer}
+import ch.uzh.ifi.mamato.crowdSA.persistence.QuestionDAO
 import ch.uzh.ifi.pdeboer.pplib.hcomp.{HComp, HCompQuery, MultipleChoiceQuery, MultipleChoiceAnswer}
 import ch.uzh.ifi.pdeboer.pplib.process.parameter.{ProcessParameter, Patch}
 import ch.uzh.ifi.pdeboer.pplib.process._
@@ -42,12 +43,20 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
         })
 
         val termsHighlight = new mutable.MutableList[String]
-        ans.foreach(a => termsHighlight += a.replace("#", ","))
+        ans.foreach(a => {
+          termsHighlight += a.replace("#", ",")
+        })
+
+        //1 get assignment
+        val assignment = CrowdSAPortalAdapter.service.getAssignmentForAnswerId(alternatives.head.id)
+        //2 retrieve question id
+        val quest_id = assignment.remote_question_id
+        //3 get question
+        val originalQuestion = QuestionDAO.getByRemoteQuestionId(quest_id)
 
         val query = new CrowdSAQuery(
           new HCompQuery {
-            //TODO: change the question: get the original question and add question to check the best response.
-            override def question: String = "Please select the answer you think is the best."
+            override def question: String = "Please select the answer that you think best answers the question: '"+originalQuestion.get.question+"'"
 
             override def title: String = "Voting"
 
@@ -61,11 +70,7 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
 
         val answers: List[Answer] = memoizer.mem("voting_"+tmpAnswers2.hashCode()) {
 
-          val firstAnswer = portal.sendQueryAndAwaitResult(query.getQuery(), query.getProperties()).get.is[Answer]
-          tmpAnswers2 += firstAnswer
-          firstAnswer.answer.split("$$").foreach(b => tmpAnswers += b)
-
-          val question_id = CrowdSAPortalAdapter.service.getAssignmentForAnswerId(firstAnswer.id).remote_question_id
+          val question_id = CrowdSAPortalAdapter.service.CreateQuestion(query)
 
           while (CrowdSAContest.WORKER_COUNT.get > tmpAnswers2.length){
             logger.debug("Needed answers: " + CrowdSAContest.WORKER_COUNT.get + " - Got so far: " + tmpAnswers.length)
@@ -76,7 +81,7 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
                 logger.debug("Adding answer: " + e)
                 e.receivedTime = new DateTime()
                 tmpAnswers2 += e
-                e.answer.split("$$").foreach(b => tmpAnswers += b)
+                tmpAnswers += e.answer
               }
             })
           }
