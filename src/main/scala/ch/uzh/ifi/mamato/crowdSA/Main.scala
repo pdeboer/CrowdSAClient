@@ -30,6 +30,7 @@ object Main extends App with LazyLogger {
       logger.error(e.getMessage)
       logger.info("Please use two arguments when starting the client." +
         "The first is the path to the PDF file, the second the title of the PDF.")
+      throw e
     }
   }
   logger.info("Initializing database...")
