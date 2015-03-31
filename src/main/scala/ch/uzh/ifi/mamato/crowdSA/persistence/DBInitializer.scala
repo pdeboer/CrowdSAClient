@@ -33,7 +33,7 @@ object DBInitializer extends LazyLogger {
       catch {
         case e: java.sql.SQLException =>
           DB autoCommit { implicit s =>
-            sql"CREATE TABLE discovery (id BIGINT NOT NULL AUTO_INCREMENT,description VARCHAR(10000) NULL, start_time varchar(255) NULL, end_time varchar(255) NULL, result VARCHAR(255) NULL, error VARCHAR(10000) NULL, cost INT NULL, PRIMARY KEY(id));".execute().apply()
+            sql"CREATE TABLE discovery (id BIGINT NOT NULL AUTO_INCREMENT,description VARCHAR(10000) NULL, start_time varchar(100) NULL, end_time varchar(100) NULL, result VARCHAR(8000) NULL, error VARCHAR(2000) NULL, cost INT NULL, PRIMARY KEY(id));".execute().apply()
             //sql"INSERT INTO discovery(description, budget_cts, remote_id) values ('Test paper', 1000, 1);".execute.apply()
           }
           logger.debug("Table Discovery created!")

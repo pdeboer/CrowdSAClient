@@ -61,11 +61,7 @@ object Main extends App with LazyLogger {
               statMethod2ContextStatMethod.+=:(sm.stat_method, p)
             }
         }
-
     }
-
-
-
   } catch {
     case e: Exception => e.printStackTrace()
   }

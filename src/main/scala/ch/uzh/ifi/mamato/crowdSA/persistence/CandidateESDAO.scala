@@ -1,6 +1,7 @@
 package ch.uzh.ifi.mamato.crowdSA.persistence
 
 import ch.uzh.ifi.mamato.crowdSA.model.Dataset
+import com.typesafe.config.ConfigFactory
 import org.joda.time.DateTime
 import scalikejdbc.{AutoSession, ConnectionPool, DB, _}
 
@@ -8,10 +9,11 @@ import scalikejdbc.{AutoSession, ConnectionPool, DB, _}
  * Created by mattia on 28.02.15.
  */
 object CandidateESDAO {
-  Class.forName("com.mysql.jdbc.Driver")
-  ConnectionPool.singleton("jdbc:mysql://localhost:3306/bachelorclient", "admin", "admin")
-  implicit val session = AutoSession
+  val conf = ConfigFactory.load("application.conf")
 
+  Class.forName(conf.getString("db.default.driver"))
+  ConnectionPool.singleton(conf.getString("db.default.url"), conf.getString("db.default.user"), conf.getString("db.default.password"))
+  implicit val session = AutoSession
 
   def candidates: List[ProcessCandidate] = DB readOnly { implicit session =>
     sql"select id, description, start_time, end_time, result, error, cost from discovery".map(rs => {
