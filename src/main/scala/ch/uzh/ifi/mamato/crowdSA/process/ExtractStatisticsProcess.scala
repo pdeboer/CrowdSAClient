@@ -38,93 +38,100 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
     discoveryQuestion.foreach(d => {
       val paper_id = d.getProperties().paper_id
       val convergedAnswer = v.createProcess[CrowdSAQuery, Answer]("discoveryProcess").process(d)
-      logger.debug(convergedAnswer.answer)
-      logger.debug("***** result DISCOVERY STEP")
-      //Create the dataset!
-      val datasetId = CrowdSAPortalAdapter.service.createDataset(convergedAnswer.id)
-
-      // **** Start the second phase of the process ****
-      // Once we have defined a dataset we can start to ask the questions for the assumptions.
-      // get the questions to be asked (assumption for each statistical method that has a match)
 
       // FIXME: ugly!
       val stat_method = d.query.question.substring(d.query.question.indexOf(": ") + 2, d.query.question.indexOf(" highlighted"))
       val statMethod = StatMethodsDAO.findByStatMethod(stat_method)
 
-      // Get text of pdf
-      val pdfToText = PdfUtils.getTextFromPdf(Main.pathPdf).get
+      if(convergedAnswer.answer != ""){
+        logger.debug(convergedAnswer.answer)
+        logger.debug("***** result DISCOVERY STEP")
+        //Create the dataset!
+        val datasetId = CrowdSAPortalAdapter.service.createDataset(convergedAnswer.id)
 
-      logger.debug("Getting assumptions for statistical method: " + statMethod.get.stat_method)
-      StatMethod2AssumptionDAO.findByStatMethodId(statMethod.get.id).par.foreach(e => {
+        // **** Start the second phase of the process ****
+        // Once we have defined a dataset we can start to ask the questions for the assumptions.
+        // get the questions to be asked (assumption for each statistical method that has a match)
 
-        // Check if the assumption test name is present in the pdf.
-        val assumption = AssumptionsDAO.find(e.assumption_id).get.assumption
+        // Get text of pdf
+        val pdfToText = PdfUtils.getTextFromPdf(Main.pathPdf).get
 
-        logger.debug("Analyzing paper for assumption: " + assumption)
-        // Find if in the text the assumption is present, otherwise ask only a single general question.
-        val found = new AtomicReference[Boolean]
-        found.set(false)
-        Assumption2QuestionsDAO.findByAssumptionId(e.assumption_id).par.foreach(b => {
-          // start the AssessmentProcess and wait for Answer for each question (this is also a collectDecide process)
-          logger.debug("Checking if there is a match for the assumption: " + assumption)
+        logger.debug("Getting assumptions for statistical method: " + statMethod.get.stat_method)
+        StatMethod2AssumptionDAO.findByStatMethodId(statMethod.get.id).par.foreach(e => {
 
-          if(PdfUtils.findContextMatchMutipleMatches(pdfToText.toUpperCase(), b.test_names.toUpperCase().split(",").toList).length >0) {
-            logger.debug("Match found for assumption: " + assumption)
+          // Check if the assumption test name is present in the pdf.
+          val assumption = AssumptionsDAO.find(e.assumption_id).get.assumption
 
-            found.set(true)
+          logger.debug("Analyzing paper for assumption: " + assumption)
+          // Find if in the text the assumption is present, otherwise ask only a single general question.
+          val found = new AtomicReference[Boolean]
+          found.set(false)
+          Assumption2QuestionsDAO.findByAssumptionId(e.assumption_id).par.foreach(b => {
+            // start the AssessmentProcess and wait for Answer for each question (this is also a collectDecide process)
+            logger.debug("Checking if there is a match for the assumption: " + assumption)
 
-            // If a match is found for the assumption ask the question!
+            if(PdfUtils.findContextMatchMutipleMatches(pdfToText.toUpperCase(), b.test_names.toUpperCase().split(",").toList).length >0) {
+              logger.debug("Match found for assumption: " + assumption)
+
+              found.set(true)
+
+              // If a match is found for the assumption ask the question!
+              val converged = v.createProcess[CrowdSAQuery, Answer]("assessmentProcess").process(
+                new CrowdSAQuery(new HCompQuery {
+                  override def question: String = b.question
+
+                  override def title: String = b.id.toString
+
+                  override def suggestedPaymentCents: Int = 10
+                }, new CrowdSAQueryProperties(paper_id, "Boolean",
+                  new Highlight("DatasetWithAssumptionTest", convergedAnswer.answer.replaceAll("#", ",") + "," + b.test_names), 10, ((new Date().getTime() / 1000) + 1000 * 60 * 60 * 24 * 365), 100)))
+
+              assumptionToTest.+=:(assumption, converged)
+
+              logger.debug("Assessment step for question: " + b.question + " converged to answer: " + converged.answer)
+            }
+          })
+
+          if(!found.get()) {
+            logger.debug("No match found for assumption: "+ assumption)
+
+            logger.debug("Asking general question for assumption: " + assumption)
             val converged = v.createProcess[CrowdSAQuery, Answer]("assessmentProcess").process(
               new CrowdSAQuery(new HCompQuery {
-                override def question: String = b.question
-
-                override def title: String = b.id.toString
-
+                override def question: String = "Is the dataset highlighted in the paper tested for " + assumption + "?"
+                override def title: String = assumption
                 override def suggestedPaymentCents: Int = 10
               }, new CrowdSAQueryProperties(paper_id, "Boolean",
-                new Highlight("DatasetWithAssumptionTest", convergedAnswer.answer.replaceAll("#", ",") + "," + b.test_names), 10, ((new Date().getTime() / 1000) + 1000 * 60 * 60 * 24 * 365), 100)))
+                new Highlight("DatasetWithGeneralAssumption", convergedAnswer.answer.replaceAll("#", ",")+assumption), 10, ((new Date().getTime()/1000) + 1000*60*60*24*365), 100)))
 
             assumptionToTest.+=:(assumption, converged)
+            logger.debug("Assessment step for general question about: " + assumption + " converged to answer: " + converged.answer)
 
-            logger.debug("Assessment step for question: " + b.question + " converged to answer: " + converged.answer)
           }
+
         })
 
-        if(!found.get()) {
-          logger.debug("No match found for assumption: "+ assumption)
-
-          logger.debug("Asking general question for assumption: " + assumption)
-          val converged = v.createProcess[CrowdSAQuery, Answer]("assessmentProcess").process(
-            new CrowdSAQuery(new HCompQuery {
-              override def question: String = "Is the dataset highlighted in the paper tested for " + assumption + "?"
-              override def title: String = assumption
-              override def suggestedPaymentCents: Int = 10
-            }, new CrowdSAQueryProperties(paper_id, "Boolean",
-              new Highlight("DatasetWithGeneralAssumption", convergedAnswer.answer.replaceAll("#", ",")+assumption), 10, ((new Date().getTime()/1000) + 1000*60*60*24*365), 100)))
-
-          assumptionToTest.+=:(assumption, converged)
-          logger.debug("Assessment step for general question about: " + assumption + " converged to answer: " + converged.answer)
-
-        }
-
-      })
-
-      logger.debug("Checking if paper is valid or not")
-      result += "Regarding dataset id: " + datasetId + " - "
-      assumptionToTest.groupBy(_._1).foreach( att => {
-        var valid = false
-        att._2.foreach(tc => {
-          if(tc._2.answer.equalsIgnoreCase("true")){
-            valid = true
+        logger.debug("Checking if paper is valid or not")
+        result += "Regarding dataset id: " + datasetId + " - "
+        assumptionToTest.groupBy(_._1).foreach( att => {
+          var valid = false
+          att._2.foreach(tc => {
+            if(tc._2.answer.equalsIgnoreCase("true")){
+              valid = true
+            }
+          })
+          if(valid){
+            result += "SUCCESS: Assumption " + att._1 + " is respected. "
+          }else {
+            result += "FAIL: Assumption " + att._1 + " is not respected. "
           }
-        })
-        if(valid){
-          result += "SUCCESS: Assumption " + att._1 + " is respected. "
-        }else {
-          result += "FAIL: Assumption " + att._1 + " is not respected. "
-        }
 
-     })
+        })
+
+      } else {
+        logger.debug("Skipping dataset because was a false match.")
+        result += "Dataset for statistical method: " + stat_method + " was a false positive"
+      }
 
     })
 
