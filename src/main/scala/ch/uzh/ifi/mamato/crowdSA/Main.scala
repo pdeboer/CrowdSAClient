@@ -23,7 +23,15 @@ import scala.util.Random
 
 object Main extends App with LazyLogger {
   logger.info("**** Mattia Amato CrowdSA Client ****")
-  assert(args.length==2)
+  try {
+    assert(args.length == 2)
+  } catch {
+    case e: AssertionError => {
+      logger.error(e.getMessage)
+      logger.info("Please use two arguments when starting the client." +
+        "The first is the path to the PDF file, the second the title of the PDF.")
+    }
+  }
   logger.info("Initializing database...")
 
   DBSettings.initialize()
@@ -59,8 +67,8 @@ object Main extends App with LazyLogger {
           p =>
             //TODO: remove me
             //if(statMethod2ContextStatMethod.length < maxMatches) {
-              statMethod2ContextStatMethod.+=:(sm.stat_method, p)
-            //}
+            statMethod2ContextStatMethod.+=:(sm.stat_method, p)
+          //}
         }
     }
   } catch {
@@ -77,21 +85,21 @@ object Main extends App with LazyLogger {
 
     // create DISCOVERY questions for each statistical method that matched
 
-        statMethod2ContextStatMethod.foreach {
-          m =>
-            logger.debug("Creating DISCOVERY question for match: " + m._1)
-            val query = new HCompQuery {
-              override def question: String = "Identify the dataset of the statistical method: " + m._1 + " highlighted in the paper"
+    statMethod2ContextStatMethod.foreach {
+      m =>
+        logger.debug("Creating DISCOVERY question for match: " + m._1)
+        val query = new HCompQuery {
+          override def question: String = "Identify the dataset of the statistical method: " + m._1 + " highlighted in the paper"
 
-              override def title: String = m._2
+          override def title: String = m._2
 
-              override def suggestedPaymentCents: Int = 10
-            }
-
-            val highlight = new Highlight("Discovery", m._2)
-            val properties = new CrowdSAQueryProperties(remote_id, "Discovery", highlight, 10, ((new Date().getTime()/1000) + 60*60*24*365), 100)
-            discoveryQuestions += new CrowdSAQuery(query, properties)
+          override def suggestedPaymentCents: Int = 10
         }
+
+        val highlight = new Highlight("Discovery", m._2)
+        val properties = new CrowdSAQueryProperties(remote_id, "Discovery", highlight, 10, ((new Date().getTime()/1000) + 60*60*24*365), 100)
+        discoveryQuestions += new CrowdSAQuery(query, properties)
+    }
 
     def getXML(r: RecombinationVariant) = new SimpleRecombinationVariantXMLExporter(r).xml.toString
 
@@ -117,7 +125,7 @@ object Main extends App with LazyLogger {
         CandidateESDAO.updateProcessCandidateTimes(c)
 
         try {
-        //Execute the recombination variant
+          //Execute the recombination variant
           val DEFAULT_BUDGET: Int = 15000
           logger.debug("Setting budget...")
           crowdSA.setBudget(Some(DEFAULT_BUDGET))
@@ -154,17 +162,4 @@ object Main extends App with LazyLogger {
     }
   }
 
-  //TODO: 5) create BOOLEAN questions
-
-
-  /*val cancelQuery = new Thread(new Runnable {
-    def run(): Unit = {
-      logger.debug("Try to cancel query")
-      crowdSA.cancelQuery(query)
-    }
-  })*/
-
-  //Thread.sleep(5000)
-
-  //b.start()
 }
