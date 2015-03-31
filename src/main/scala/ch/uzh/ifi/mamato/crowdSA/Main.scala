@@ -23,6 +23,7 @@ import scala.util.Random
 
 object Main extends App with LazyLogger {
   logger.info("**** Mattia Amato CrowdSA Client ****")
+  assert(args.length==2)
   logger.info("Initializing database...")
 
   DBSettings.initialize()
