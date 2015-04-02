@@ -40,7 +40,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
       val convergedAnswer = v.createProcess[CrowdSAQuery, Answer]("discoveryProcess").process(d)
 
       // FIXME: ugly!
-      val stat_method = d.query.question.substring(d.query.question.indexOf(": ") + 2, d.query.question.indexOf(" highlighted"))
+      val stat_method = d.query.question.substring(d.query.question.indexOf("<i> ") + 4, d.query.question.indexOf(" </i>"))
       val statMethod = StatMethodsDAO.findByStatMethod(stat_method)
 
       if(convergedAnswer.answer != ""){
@@ -84,7 +84,10 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
 
                   override def suggestedPaymentCents: Int = 10
                 }, new CrowdSAQueryProperties(paper_id, "Boolean",
-                  new Highlight("DatasetWithAssumptionTest", convergedAnswer.answer.replaceAll("#", ",") + "," + b.test_names), 10, ((new Date().getTime() / 1000) + 1000 * 60 * 60 * 24 * 365), 100)))
+                  new Highlight("DatasetWithAssumptionTest",
+                    convergedAnswer.answer.replaceAll("#", ",") + "," + b.test_names),
+                  10, ((new Date().getTime() / 1000) + 1000 * 60 * 60 * 24 * 365),
+                  100, Some(""), null)))
 
               assumptionToTest.+=:(assumption, converged)
 
@@ -98,11 +101,13 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
             logger.debug("Asking general question for assumption: " + assumption)
             val converged = v.createProcess[CrowdSAQuery, Answer]("assessmentProcess").process(
               new CrowdSAQuery(new HCompQuery {
-                override def question: String = "Is the dataset highlighted in the paper tested for " + assumption + "?"
+                override def question: String = "Is the dataset highlighted in the paper tested for <i>" + assumption + "</i>?"
                 override def title: String = assumption
                 override def suggestedPaymentCents: Int = 10
               }, new CrowdSAQueryProperties(paper_id, "Boolean",
-                new Highlight("DatasetWithGeneralAssumption", convergedAnswer.answer.replaceAll("#", ",")+assumption), 10, ((new Date().getTime()/1000) + 1000*60*60*24*365), 100)))
+                new Highlight("DatasetWithGeneralAssumption",
+                  convergedAnswer.answer.replaceAll("#", ",")+assumption), 10,
+                ((new Date().getTime()/1000) + 1000*60*60*24*365), 100, Some(""), null)))
 
             assumptionToTest.+=:(assumption, converged)
             logger.debug("Assessment step for general question about: " + assumption + " converged to answer: " + converged.answer)

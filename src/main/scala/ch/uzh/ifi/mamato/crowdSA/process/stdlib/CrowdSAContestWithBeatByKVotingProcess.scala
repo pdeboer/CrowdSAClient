@@ -62,7 +62,7 @@ class CrowdSAContestWithBeatByKVotingProcess(params: Map[String, Any] = Map.empt
 
           override def suggestedPaymentCents: Int = 10
         },
-        new CrowdSAQueryProperties(paperId, "Voting", new Highlight("Dataset", termsHighlight.mkString(",")), 10, 1000 * 60 * 60 * 24 * 365, 100, Some(ans.mkString("$$")))
+        new CrowdSAQueryProperties(paperId, "Voting", new Highlight("Dataset", termsHighlight.mkString(",")), 10, 1000 * 60 * 60 * 24 * 365, 100, Some(ans.mkString("$$")), null)
       )
 
       val tmpAnswers = new mutable.MutableList[String]

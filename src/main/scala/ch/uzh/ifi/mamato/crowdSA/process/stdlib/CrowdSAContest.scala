@@ -36,9 +36,11 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
 
         //TODO: useless?
         var ans = new mutable.MutableList[String]
+        val teams = new mutable.MutableList[Long]
         alternatives.foreach(a => {
           if(!ans.contains(a.answer)){
             ans += a.answer
+            teams += CrowdSAPortalAdapter.service.getAssignmentForAnswerId(a.id).remote_team_id
           }
         })
 
@@ -62,7 +64,10 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
 
             override def suggestedPaymentCents: Int = 10
           },
-          new CrowdSAQueryProperties(paperId, "Voting",new Highlight("Dataset", termsHighlight.mkString(",")), 10, ((new Date().getTime()/1000) + 60*60*24*365), 100, Some(ans.mkString("$$")))
+          new CrowdSAQueryProperties(paperId, "Voting",
+            new Highlight("Dataset", termsHighlight.mkString(",")),
+            10, ((new Date().getTime()/1000) + 60*60*24*365),
+            100, Some(ans.mkString("$$")), Some(teams.toList))
         )
 
         val tmpAnswers = new mutable.MutableList[String]

@@ -87,7 +87,7 @@ object Main extends App with LazyLogger {
         m =>
           logger.debug("Creating DISCOVERY question for match: " + m._1)
           val query = new HCompQuery {
-            override def question: String = "Identify the dataset of the statistical method: " + m._1 + " highlighted in the paper"
+            override def question: String = "Identify the dataset of the statistical method: <u><i> " + m._1 + " </i></u> highlighted in the paper"
 
             override def title: String = m._2
 
@@ -95,7 +95,9 @@ object Main extends App with LazyLogger {
           }
 
           val highlight = new Highlight("Discovery", m._2)
-          val properties = new CrowdSAQueryProperties(remote_id, "Discovery", highlight, 10, ((new Date().getTime() / 1000) + 60 * 60 * 24 * 365), 100)
+          val properties = new CrowdSAQueryProperties(remote_id, "Discovery", highlight, 10,
+            ((new Date().getTime() / 1000) + 60 * 60 * 24 * 365),
+            100, Some(""), null)
           discoveryQuestions += new CrowdSAQuery(query, properties)
       }
 

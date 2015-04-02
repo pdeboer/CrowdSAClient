@@ -8,6 +8,7 @@ import ch.uzh.ifi.pdeboer.pplib.hcomp.HCompQueryProperties
  */
 class CrowdSAQueryProperties(val paper_id: Long, val question_type: String,
                              val highlight: Highlight, val reward_cts: Int, val expiration_time_sec: Long,
-                             val maximal_assignments: Int, val possible_answers: Option[String] = Some("")) extends HCompQueryProperties {
+                             val maximal_assignments: Int, val possible_answers: Option[String] = Some(""),
+                             val deniedTurkers: Option[List[Long]] ) extends HCompQueryProperties {
     override val paymentCents = reward_cts
 }

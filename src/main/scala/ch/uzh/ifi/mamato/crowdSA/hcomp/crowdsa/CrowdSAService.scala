@@ -219,6 +219,13 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
             logger.debug("Adding highlight returned: " + post("/highlight", params.toList))
           }
 
+          if(properties.deniedTurkers != null){
+            val params = new collection.mutable.MutableList[NameValuePair]
+            params += new BasicNameValuePair("question_id", remote_question_id.toString)
+            params += new BasicNameValuePair("teams", properties.deniedTurkers.get.mkString(","))
+            logger.debug("Adding qualifications: " + post("/qualification", params.toList))
+          }
+
           //return the id of remote question
           remote_question_id
         }

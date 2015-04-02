@@ -71,7 +71,7 @@ class CrowdSAIRDefaultHCompDriver(portal: HCompPortalAdapter, quest: String, sta
 
         override def suggestedPaymentCents: Int = 10
       },
-      new CrowdSAQueryProperties(paperId, "Discovery", new Highlight("Dataset", toHighlight), 10, 1000*60*60*24*365, 100, Some(toRefine))
+      new CrowdSAQueryProperties(paperId, "Discovery", new Highlight("Dataset", toHighlight), 10, 1000*60*60*24*365, 100, Some(toRefine), null)
     )
 
     val answer = portal.sendQueryAndAwaitResult(query.getQuery(), query.getProperties()).get.is[Answer]
