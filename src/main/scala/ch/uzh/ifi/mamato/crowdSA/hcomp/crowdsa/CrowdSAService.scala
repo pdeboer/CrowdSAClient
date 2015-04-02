@@ -191,7 +191,7 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
         params += new BasicNameValuePair("papers_id", properties.paper_id.toString)
         params += new BasicNameValuePair("expiration_time_sec", properties.expiration_time_sec.toString)
         params += new BasicNameValuePair("maximal_assignments", properties.maximal_assignments.toString)
-        params += new BasicNameValuePair("possible_answers", properties.possible_answers.getOrElse("").toString)
+        params += new BasicNameValuePair("possible_answers", properties.possible_answers.getOrElse(""))
 
         val resp = post("/addQuestion", params.toList)
         if(resp.startsWith("Error")){

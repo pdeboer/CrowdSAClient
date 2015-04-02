@@ -24,7 +24,7 @@ object PaperDAO extends SQLSyntaxSupport[Paper] {
     select.from(PaperDAO as p)
       .where.eq(p.title, title)
       .orderBy(p.id)
-  }.map(PaperDAO(p)).single.apply()
+  }.map(PaperDAO(p)).list.headOption().apply()
 
   def findAll()(implicit session: DBSession = autoSession): List[Paper] = withSQL {
     select.from(PaperDAO as p)
