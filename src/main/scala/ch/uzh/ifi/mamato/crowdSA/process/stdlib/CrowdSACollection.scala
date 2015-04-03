@@ -31,6 +31,7 @@ class CrowdSACollection(params: Map[String, Any] = Map.empty) extends CreateProc
     val answers: List[Answer] = memoizer.mem("answer_line_" + query) {
 
       val question_id = CrowdSAPortalAdapter.service.CreateQuestion(query)
+      val postTime = new DateTime()
 
       while (WORKER_COUNT.get > tmpAnswers.length){
         logger.debug("Needed answers: " + WORKER_COUNT.get + " - Got so far: " + tmpAnswers.length)
@@ -39,6 +40,7 @@ class CrowdSACollection(params: Map[String, Any] = Map.empty) extends CreateProc
         answerzz.foreach(e => {
           if(tmpAnswers.filter(_.id == e.id).length == 0 && WORKER_COUNT.get >= tmpAnswers.length+1){
             logger.debug("Adding answer: " + e)
+            e.postTime = postTime
             e.receivedTime = new DateTime()
             tmpAnswers += e
           }

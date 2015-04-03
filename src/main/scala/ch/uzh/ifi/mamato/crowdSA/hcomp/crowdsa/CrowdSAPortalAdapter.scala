@@ -55,8 +55,8 @@ class CrowdSAPortalAdapter extends HCompPortalAdapter with LazyLogger {
 
     val manager: CrowdSAManager = new CrowdSAManager(CrowdSAPortalAdapter.service, query)
     map += query.getQuery().identifier -> map.getOrElse(query.getQuery().identifier, new CrowdSAQueries()).add(manager)
+    val res: Long = manager.createQuestion()
 
-    val res = manager.createQuestion()
     logger.debug("CreateQuestion returned id: " + res)
     if(res > 0) {
       manager.waitForResponse()

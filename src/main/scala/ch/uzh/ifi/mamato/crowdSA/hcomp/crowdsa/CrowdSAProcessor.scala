@@ -6,6 +6,7 @@ import ch.uzh.ifi.mamato.crowdSA.util.{HttpRestClient, LazyLogger}
 import java.util.Date
 import ch.uzh.ifi.pdeboer.pplib.hcomp.{HCompAnswer, HCompQueryProperties, HCompQuery}
 import ch.uzh.ifi.pdeboer.pplib.util.GrowingTimer
+import com.typesafe.config.ConfigFactory
 import org.apache.http.entity.mime.MultipartEntityBuilder
 import org.apache.http.entity.mime.content.StringBody
 import org.apache.http.message.BasicNameValuePair
@@ -34,15 +35,14 @@ class CrowdSAManager(val service: CrowdSAService, val qu: CrowdSAQuery) extends 
       durationIn(SECONDS)
     }
 
-    val timer = new GrowingTimer(1 second, 1.0001, 20 seconds)
-    //very very ugly, but we dont have a break statement in scala..
     var answer: Option[Answer] = None
     try {
       (1 to 100000).view.foreach(i => {
-        Thread.sleep(5000)
+        Thread.sleep(ConfigFactory.load("application.conf").getInt("pollTimeMS"))
         answer = poll()
-        if (cancelled || answer.isDefined) throw new Exception("I'm actually not an Exception")
-        timer.waitTime
+        if (cancelled || answer.isDefined){
+          throw new Exception("I'm actually not an Exception")
+        }
       })
     }
     catch {

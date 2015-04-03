@@ -76,6 +76,7 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
         val answers: List[Answer] = memoizer.mem("voting_"+tmpAnswers2.hashCode()) {
 
           val question_id = CrowdSAPortalAdapter.service.CreateQuestion(query)
+          val postTime = new DateTime()
 
           while (CrowdSAContest.WORKER_COUNT.get > tmpAnswers2.length){
             logger.debug("Needed answers: " + CrowdSAContest.WORKER_COUNT.get + " - Got so far: " + tmpAnswers.length)
@@ -84,6 +85,7 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
             answerzz.foreach(e => {
               if (tmpAnswers2.filter(_.id == e.id).length == 0 && CrowdSAContest.WORKER_COUNT.get >= tmpAnswers.length+1) {
                 logger.debug("Adding answer: " + e)
+                e.postTime = postTime
                 e.receivedTime = new DateTime()
                 tmpAnswers2 += e
                 tmpAnswers += e.answer
@@ -93,6 +95,7 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
 
           logger.debug("Disabling question because got enough answers")
           CrowdSAPortalAdapter.service.DisableQuestion(question_id)
+
           tmpAnswers2.toList
         }
 
@@ -108,5 +111,5 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
   }
 
 object CrowdSAContest {
-  val WORKER_COUNT = new ProcessParameter[Int]("worker_count", Some(List(2)))
+  val WORKER_COUNT = new ProcessParameter[Int]("worker_count", Some(List(3)))
 }

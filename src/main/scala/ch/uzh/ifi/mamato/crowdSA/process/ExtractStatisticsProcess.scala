@@ -44,7 +44,6 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
       val statMethod = StatMethodsDAO.findByStatMethod(stat_method)
 
       if(convergedAnswer.answer != ""){
-        logger.debug(convergedAnswer.answer)
         logger.debug("***** result DISCOVERY STEP")
         //Create the dataset!
         val datasetId = CrowdSAPortalAdapter.service.createDataset(convergedAnswer.id)
@@ -134,14 +133,14 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
         })
 
       } else {
-        logger.debug("Skipping dataset because was a false match.")
-        result += "Dataset for statistical method: " + stat_method + " was a false positive"
+        logger.debug("Skipping dataset because was a false match. ")
+        result += " ** Dataset for statistical method: " + stat_method + " was a false positive.** "
       }
 
     })
 
     //return if paper is valid or not
-    result += "End of recombination."
+    result += "**** End of recombination."
     logger.info(result)
     result
   }
