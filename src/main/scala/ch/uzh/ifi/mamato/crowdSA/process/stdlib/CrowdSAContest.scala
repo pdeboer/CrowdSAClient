@@ -1,7 +1,9 @@
 package ch.uzh.ifi.mamato.crowdSA.process.stdlib
 
 import java.util.Date
+import java.util.concurrent.atomic.AtomicInteger
 
+import ch.uzh.ifi.mamato.crowdSA.Main
 import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAPortalAdapter, CrowdSAQuery, CrowdSAQueryProperties}
 import ch.uzh.ifi.mamato.crowdSA.model.{Highlight, Answer}
 import ch.uzh.ifi.mamato.crowdSA.persistence.QuestionDAO
@@ -9,6 +11,7 @@ import ch.uzh.ifi.pdeboer.pplib.hcomp.{HComp, HCompQuery, MultipleChoiceQuery, M
 import ch.uzh.ifi.pdeboer.pplib.process.parameter.{ProcessParameter, Patch}
 import ch.uzh.ifi.pdeboer.pplib.process._
 import ch.uzh.ifi.pdeboer.pplib.util.U
+import com.typesafe.config.ConfigFactory
 import org.joda.time.DateTime
 
 import scala.collection.mutable
@@ -76,11 +79,14 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
         val answers: List[Answer] = memoizer.mem("voting_"+tmpAnswers2.hashCode()) {
 
           val question_id = CrowdSAPortalAdapter.service.CreateQuestion(query)
+
           val postTime = new DateTime()
 
           while (CrowdSAContest.WORKER_COUNT.get > tmpAnswers2.length){
             logger.debug("Needed answers: " + CrowdSAContest.WORKER_COUNT.get + " - Got so far: " + tmpAnswers.length)
-            Thread.sleep(5000)
+
+            Thread.sleep(ConfigFactory.load("application.conf").getInt("pollTimeMS"))
+
             val answerzz = CrowdSAPortalAdapter.service.GetAnswersForQuestion(question_id)
             answerzz.foreach(e => {
               if (tmpAnswers2.filter(_.id == e.id).length == 0 && CrowdSAContest.WORKER_COUNT.get >= tmpAnswers.length+1) {
@@ -89,6 +95,8 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
                 e.receivedTime = new DateTime()
                 tmpAnswers2 += e
                 tmpAnswers += e.answer
+                val budget = Main.crowdSA.budget
+                Main.crowdSA.setBudget(Some(Main.crowdSA.budget.get-query.getQuery().suggestedPaymentCents))
               }
             })
           }

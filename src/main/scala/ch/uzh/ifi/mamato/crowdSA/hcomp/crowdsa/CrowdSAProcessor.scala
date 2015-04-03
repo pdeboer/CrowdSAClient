@@ -68,7 +68,7 @@ class CrowdSAManager(val service: CrowdSAService, val qu: CrowdSAQuery) extends 
 
   def poll(): Option[Answer] = {
 		val answers = service.GetAnswersForQuestion(questionId)
-		answers.headOption match {
+		answers.lastOption match {
       case None => None
       case Some(a: Answer) => handleAnswerResult(a)
 		}
@@ -80,6 +80,7 @@ class CrowdSAManager(val service: CrowdSAService, val qu: CrowdSAQuery) extends 
       //We approve all NON EMPTY answers by default.
       if(a.answer != null && a.answer!="") {
         service.ApproveAnswer(a)
+
       } else {
         service.RejectAnswer(a)
       }

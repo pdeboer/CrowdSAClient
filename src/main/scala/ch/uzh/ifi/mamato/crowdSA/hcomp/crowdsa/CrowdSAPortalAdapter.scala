@@ -27,9 +27,9 @@ class CrowdSAPortalAdapter extends HCompPortalAdapter with LazyLogger {
 
   val serviceURL = ConfigFactory.load("application.conf").getString("crowdSAHost")
 
-  var map = mutable.HashMap.empty[Int, CrowdSAQueries]
-
   CrowdSAPortalAdapter.service = new CrowdSAService(new Server(serviceURL))
+
+  var map = mutable.HashMap.empty[Int, CrowdSAQueries]
 
   /**
    * Hack to solve the properties problem

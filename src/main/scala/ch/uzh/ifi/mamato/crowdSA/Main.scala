@@ -1,13 +1,14 @@
 package ch.uzh.ifi.mamato.crowdSA
 
 import java.util.Date
+import java.util.concurrent.atomic.AtomicInteger
 
 import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAQuery, CrowdSAQueryProperties, CrowdSAPortalAdapter}
 import ch.uzh.ifi.mamato.crowdSA.model.Highlight
 import ch.uzh.ifi.mamato.crowdSA.persistence.{ProcessCandidate, CandidateESDAO, StatMethodsDAO, DBSettings}
 import ch.uzh.ifi.mamato.crowdSA.process.{ExtractStatisticsRecombination, ExtractStatisticsProcess}
 import ch.uzh.ifi.mamato.crowdSA.util.{PdfUtils, LazyLogger}
-import ch.uzh.ifi.pdeboer.pplib.hcomp.{HCompQuery, HComp}
+import ch.uzh.ifi.pdeboer.pplib.hcomp.{HCompPortal, HCompQuery, HComp}
 import ch.uzh.ifi.pdeboer.pplib.process.parameter.DefaultParameters
 import ch.uzh.ifi.pdeboer.pplib.process.recombination.{RecombinationVariantGenerator, TypedParameterVariantGenerator, SimpleRecombinationVariantXMLExporter, RecombinationVariant}
 import ch.uzh.ifi.pdeboer.pplib.process.stdlib.{CollectDecideProcess, Collection, ListScaleProcess}
@@ -19,7 +20,6 @@ import scala.util.Random
 /**
  * Created by Mattia on 18.12.2014.
  */
-
 
 object Main extends App with LazyLogger {
   logger.info("**** Mattia Amato CrowdSA Client ****")

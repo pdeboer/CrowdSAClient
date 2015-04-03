@@ -1,5 +1,6 @@
 package ch.uzh.ifi.mamato.crowdSA.process.stdlib
 
+import ch.uzh.ifi.mamato.crowdSA.Main
 import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAPortalAdapter, CrowdSAManager, CrowdSAQuery, CrowdSAQueryProperties}
 import ch.uzh.ifi.mamato.crowdSA.model.Answer
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
@@ -12,6 +13,7 @@ import ch.uzh.ifi.pdeboer.pplib.process.PPLibProcess
 import ch.uzh.ifi.pdeboer.pplib.process.ProcessMemoizer
 import ch.uzh.ifi.pdeboer.pplib.process.parameter.{Patch, ProcessParameter}
 import ch.uzh.ifi.pdeboer.pplib.process.stdlib.CollectionWithSigmaPruning._
+import com.typesafe.config.ConfigFactory
 import org.joda.time.DateTime
 
 import scala.collection.mutable
@@ -31,11 +33,14 @@ class CrowdSACollection(params: Map[String, Any] = Map.empty) extends CreateProc
     val answers: List[Answer] = memoizer.mem("answer_line_" + query) {
 
       val question_id = CrowdSAPortalAdapter.service.CreateQuestion(query)
+
       val postTime = new DateTime()
 
       while (WORKER_COUNT.get > tmpAnswers.length){
         logger.debug("Needed answers: " + WORKER_COUNT.get + " - Got so far: " + tmpAnswers.length)
-        Thread.sleep(5000)
+
+        Thread.sleep(ConfigFactory.load("application.conf").getInt("pollTimeMS"))
+
         val answerzz = CrowdSAPortalAdapter.service.GetAnswersForQuestion(question_id)
         answerzz.foreach(e => {
           if(tmpAnswers.filter(_.id == e.id).length == 0 && WORKER_COUNT.get >= tmpAnswers.length+1){
@@ -43,6 +48,8 @@ class CrowdSACollection(params: Map[String, Any] = Map.empty) extends CreateProc
             e.postTime = postTime
             e.receivedTime = new DateTime()
             tmpAnswers += e
+            val budget = Main.crowdSA.budget
+            Main.crowdSA.setBudget(Some(Main.crowdSA.budget.get-query.getQuery().suggestedPaymentCents))
           }
         })
       }

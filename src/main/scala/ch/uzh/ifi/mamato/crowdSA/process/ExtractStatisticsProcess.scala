@@ -150,5 +150,4 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
   private class ProcessVariant(decorated: RecombinationVariant) extends RecombinationVariant(decorated.stubs) {
     def createDiscovery = decorated.createProcess[CrowdSAQuery, Answer]("discoveryProcess")
   }
-
 }
