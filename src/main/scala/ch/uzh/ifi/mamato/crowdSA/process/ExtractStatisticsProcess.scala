@@ -94,7 +94,18 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
             }
           })
 
-          if(!found.get()) {
+          var allFalse = true
+          assumptionToTest.foreach( att => {
+            if(att._1 == assumption){
+              if(att._2.answer.equalsIgnoreCase("true")){
+                allFalse = false
+              }
+            }
+          })
+
+          // Ask general question if all the previous questions are false
+          // or if there is no match in the paper
+          if(!found.get() || allFalse) {
             logger.debug("No match found for assumption: "+ assumption)
 
             logger.debug("Asking general question for assumption: " + assumption)
@@ -105,7 +116,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
                 override def suggestedPaymentCents: Int = 10
               }, new CrowdSAQueryProperties(paper_id, "Boolean",
                 new Highlight("DatasetWithGeneralAssumption",
-                  convergedAnswer.answer.replaceAll("#", ",")+assumption), 10,
+                  convergedAnswer.answer.replaceAll("#", ",")+ "," +assumption), 10,
                 ((new Date().getTime()/1000) + 1000*60*60*24*365), 100, Some(""), null)))
 
             assumptionToTest.+=:(assumption, converged)
