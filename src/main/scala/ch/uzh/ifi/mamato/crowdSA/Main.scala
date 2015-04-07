@@ -130,7 +130,7 @@ object Main extends App with LazyLogger {
             logger.debug("Setting budget...")
             crowdSA.setBudget(Some(DEFAULT_BUDGET))
 
-            val res = extractStatisticsProcess.runRecombinedVariant(recombinations(c.id - 1))
+            val res = extractStatisticsProcess.runRecombinedVariant(recombinations.head)
             c.result = Some(res)
             c.cost = Some(DEFAULT_BUDGET - crowdSA.budget.get)
           }
