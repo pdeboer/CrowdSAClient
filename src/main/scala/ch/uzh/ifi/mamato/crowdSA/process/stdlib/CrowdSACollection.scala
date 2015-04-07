@@ -3,6 +3,7 @@ package ch.uzh.ifi.mamato.crowdSA.process.stdlib
 import ch.uzh.ifi.mamato.crowdSA.Main
 import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAPortalAdapter, CrowdSAManager, CrowdSAQuery, CrowdSAQueryProperties}
 import ch.uzh.ifi.mamato.crowdSA.model.Answer
+import ch.uzh.ifi.mamato.crowdSA.persistence.AnswersDAO
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
 import ch.uzh.ifi.pdeboer.pplib.patterns.pruners.{SigmaCalculator, SigmaPruner}
 import ch.uzh.ifi.pdeboer.pplib.process.CreateProcess
@@ -47,6 +48,7 @@ class CrowdSACollection(params: Map[String, Any] = Map.empty) extends CreateProc
             logger.debug("Adding answer: " + e)
             e.postTime = postTime
             e.receivedTime = new DateTime()
+            AnswersDAO.create(e)
             tmpAnswers += e
             val budget = Main.crowdSA.budget
             Main.crowdSA.setBudget(Some(Main.crowdSA.budget.get-query.getQuery().suggestedPaymentCents))

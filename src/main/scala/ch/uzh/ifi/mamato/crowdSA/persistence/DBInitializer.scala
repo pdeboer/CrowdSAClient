@@ -33,7 +33,7 @@ object DBInitializer extends LazyLogger {
       catch {
         case e: java.sql.SQLException =>
           DB autoCommit { implicit s =>
-            sql"CREATE TABLE discovery (id BIGINT NOT NULL AUTO_INCREMENT,description VARCHAR(10000) NULL, start_time varchar(100) NULL, end_time varchar(100) NULL, result VARCHAR(8000) NULL, error VARCHAR(2000) NULL, cost INT NULL, PRIMARY KEY(id));".execute().apply()
+            sql"CREATE TABLE discovery (id BIGINT NOT NULL AUTO_INCREMENT,description VARCHAR(10000) NULL, start_time varchar(100) NULL, end_time varchar(100) NULL, result TEXT NULL, error TEXT NULL, cost INT NULL, PRIMARY KEY(id));".execute().apply()
             //sql"INSERT INTO discovery(description, budget_cts, remote_id) values ('Test paper', 1000, 1);".execute.apply()
           }
           logger.debug("Table Discovery created!")
@@ -51,6 +51,20 @@ object DBInitializer extends LazyLogger {
             sql"INSERT INTO questions(question, question_type, reward_cts, created_at, remote_paper_id, remote_question_id, disabled, maximal_assignments, expiration_time_sec, possible_answers) values ('Test question','Boolean',10,123123123,1,1, false, NULL, NULL, NULL);".execute.apply()
           }
           logger.debug("Table Questions created!")
+      }
+
+      //Answers TABLE
+      try {
+        sql"select 1 from answers limit 1".map(_.long(1)).single.apply()
+        logger.debug("Answers already initialized")
+      }
+      catch {
+        case e: java.sql.SQLException =>
+          DB autoCommit { implicit s =>
+            sql"CREATE TABLE answers (id BIGINT NOT NULL UNIQUE, answer TEXT NOT NULL, created_at BIGINT NOT NULL, accepted BIT NULL, bonus_cts INT NULL, rejected BIT NULL, assignments_id BIGINT NOT NULL, PRIMARY KEY(id));".execute().apply()
+            sql"INSERT INTO answers(id, answer, created_at, accepted, bonus_cts, rejected, assignments_id) values (-2,'Test Answer', 123123123, 0,0,1, -2);".execute.apply()
+          }
+          logger.debug("Table Answers created!")
       }
 
       //Stat_methods TABLE
@@ -119,10 +133,9 @@ object DBInitializer extends LazyLogger {
             sql"INSERT INTO assumptions(assumption, url) values ('Homogeneity of regression slopes', null);".execute.apply()
             sql"INSERT INTO assumptions(assumption, url) values ('Independence of Error terms', 'http://www.pages.drexel.edu/~tpm23/STAT902/DWTest.pdf');".execute.apply()
 
-            Is the highlighted dataset tested for the type of the dependent variable to be a dichotomy?
             sql"INSERT INTO assumptions(assumption, url) values ('The type of the dependent variable to be a dichotomy', null);".execute.apply()
             sql"INSERT INTO assumptions(assumption, url) values ('Independence by ensuring that the variables are not intervals, nor normally distributed, nor linearly related, nor of equal variance within each group', null);".execute.apply()
-            sql"INSERT INTO assumptions(assumption, url) values ('The sample size to be larger than for linear regression', null);".execute.apply()
+            sql"INSERT INTO assumptions(assumption, url) values ('The sample size to be larger than for linear regression (N=10)', null);".execute.apply()
 
             sql"INSERT INTO assumptions(assumption, url) values ('Valid variables which have to be either interval or ratio measurements', null);".execute.apply()
             sql"INSERT INTO assumptions(assumption, url) values ('Outliers which should either kept to a minimum or removed entierly', null);".execute.apply()
@@ -327,7 +340,7 @@ object DBInitializer extends LazyLogger {
 
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (8, 'Is the dependent variable a dichotomy?', 'dichotomy');".execute.apply()
 
-            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (9, 'The type of the independent variables need not be interval, nor normally distributed, nor linearly related, nor of equal variance within each group. Is this true?', 'distributed,linear,variance,independent variable');".execute.apply()
+            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (9, 'Is the type of the independent variables neither interval, nor normally distributed, nor linearly related and nor of equal variance within each group?', 'distributed,linear,variance,independent variable');".execute.apply()
 
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (10, 'Are the samples larger than for the linear regression?', 'sample,population,linearity,regression');".execute.apply()
 

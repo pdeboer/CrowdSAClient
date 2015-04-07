@@ -31,7 +31,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
     val processes = new ProcessVariant(v)
 
     val assumptionToTest = new mutable.MutableList[(String, Answer)]
-    var result = "Result for paper: " + Main.titlePdf + " - "
+    var result = "Result for paper: " + Main.titlePdf + "\n"
 
     // From each discovery question we will get at the end only one answer.
     // This answers is the convergence of all the answers
@@ -127,7 +127,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
         })
 
         logger.debug("Checking if paper is valid or not")
-        result += "Regarding dataset id: " + datasetId + " - "
+        result += "\n*Regarding dataset id: " + datasetId + "\n"
         assumptionToTest.groupBy(_._1).foreach( att => {
           var valid = false
           att._2.foreach(tc => {
@@ -136,22 +136,22 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
             }
           })
           if(valid){
-            result += "SUCCESS: Assumption " + att._1 + " is respected. "
+            result += "SUCCESS: Assumption " + att._1 + " is respected.\n"
           }else {
-            result += "FAIL: Assumption " + att._1 + " is not respected. "
+            result += "FAIL: Assumption " + att._1 + " is not respected.\n"
           }
 
         })
 
       } else {
-        logger.debug("Skipping dataset because was a false match. ")
-        result += " ** Dataset for statistical method: " + stat_method + " was a false positive.** "
+        logger.debug("Skip dataset because was a false match.")
+        result += "\n** Dataset for statistical method: " + stat_method + " was a false positive.**\n"
       }
 
     })
 
     //return if paper is valid or not
-    result += "**** End of recombination."
+    result += "\n\n**** End of recombination."
     logger.info(result)
     result
   }

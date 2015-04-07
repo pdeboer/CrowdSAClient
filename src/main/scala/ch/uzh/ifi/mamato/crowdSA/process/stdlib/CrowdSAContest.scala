@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import ch.uzh.ifi.mamato.crowdSA.Main
 import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAPortalAdapter, CrowdSAQuery, CrowdSAQueryProperties}
 import ch.uzh.ifi.mamato.crowdSA.model.{Highlight, Answer}
-import ch.uzh.ifi.mamato.crowdSA.persistence.QuestionDAO
+import ch.uzh.ifi.mamato.crowdSA.persistence.{AnswersDAO, QuestionDAO}
 import ch.uzh.ifi.pdeboer.pplib.hcomp.{HComp, HCompQuery, MultipleChoiceQuery, MultipleChoiceAnswer}
 import ch.uzh.ifi.pdeboer.pplib.process.parameter.{ProcessParameter, Patch}
 import ch.uzh.ifi.pdeboer.pplib.process._
@@ -93,6 +93,7 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
                 logger.debug("Adding answer: " + e)
                 e.postTime = postTime
                 e.receivedTime = new DateTime()
+                AnswersDAO.create(e)
                 tmpAnswers2 += e
                 tmpAnswers += e.answer
                 val budget = Main.crowdSA.budget
