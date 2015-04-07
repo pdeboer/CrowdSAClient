@@ -15,9 +15,10 @@ object CandidateESDAO {
   ConnectionPool.singleton(conf.getString("db.default.url"), conf.getString("db.default.user"), conf.getString("db.default.password"))
   implicit val session = AutoSession
 
-  def candidates: List[ProcessCandidate] = DB readOnly { implicit session =>
-    sql"select id, description, start_time, end_time, result, error, cost from discovery".map(rs => {
+  def candidates(paper_id: Long): List[ProcessCandidate] = DB readOnly { implicit session =>
+    sql"select id, description, start_time, end_time, result, error, cost, paper_id from discovery where paper_id=${paper_id}".map(rs => {
       val pc = ProcessCandidate(rs.long("id").toInt, rs.string("description"))
+      pc.paper_id = rs.longOpt("paper_id")
       pc.startTime = rs.jodaDateTimeOpt("start_time")
       pc.endTime = rs.jodaDateTimeOpt("end_time")
       pc.result = rs.stringOpt("result")
@@ -27,8 +28,8 @@ object CandidateESDAO {
     }).list().apply()
   }
 
-  def insertProcessCandidate(c: ProcessCandidate): Unit = DB localTx { implicit session =>
-    sql"INSERT INTO discovery (description) VALUES(${c.description})".update.apply()
+  def insertProcessCandidate(c: ProcessCandidate, paper_id: Long): Unit = DB localTx { implicit session =>
+    sql"INSERT INTO discovery (description, paper_id) VALUES(${c.description}, ${paper_id})".update.apply()
   }
 
   def updateProcessCandidateTimes(c: ProcessCandidate): Unit = DB localTx { implicit session =>
@@ -40,6 +41,7 @@ object CandidateESDAO {
 }
 
 case class ProcessCandidate(id: Int, description: String) {
+  var paper_id: Option[Long] = None
   var startTime: Option[DateTime] = None
   var endTime: Option[DateTime] = None
   var result: Option[String] = None

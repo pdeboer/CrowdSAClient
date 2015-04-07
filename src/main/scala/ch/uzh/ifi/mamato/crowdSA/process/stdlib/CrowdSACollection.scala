@@ -36,11 +36,12 @@ class CrowdSACollection(params: Map[String, Any] = Map.empty) extends CreateProc
       val question_id = CrowdSAPortalAdapter.service.CreateQuestion(query)
 
       val postTime = new DateTime()
+      val sleep = ConfigFactory.load("application.conf").getLong("pollTimeMS")
 
       while (WORKER_COUNT.get > tmpAnswers.length){
         logger.debug("Needed answers: " + WORKER_COUNT.get + " - Got so far: " + tmpAnswers.length)
 
-        Thread.sleep(ConfigFactory.load("application.conf").getInt("pollTimeMS"))
+        Thread.sleep(sleep)
 
         val answerzz = CrowdSAPortalAdapter.service.GetAnswersForQuestion(question_id)
         answerzz.foreach(e => {

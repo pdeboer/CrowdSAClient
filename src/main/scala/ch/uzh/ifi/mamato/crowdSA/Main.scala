@@ -106,9 +106,9 @@ object Main extends App with LazyLogger {
       val recombinations: List[RecombinationVariant] = ExtractStatisticsRecombination.recombinations
 
       //populate DB if it hasn't been done yet
-      if (CandidateESDAO.candidates.length == 0) {
+      if (CandidateESDAO.candidates(remote_id).length == 0) {
         recombinations.zipWithIndex.map(r => ProcessCandidate(r._2, getXML(r._1)))
-          .foreach(c => CandidateESDAO.insertProcessCandidate(c))
+          .foreach(c => CandidateESDAO.insertProcessCandidate(c, remote_id))
       }
 
       //Create the process of extraction of statistical means
@@ -150,7 +150,7 @@ object Main extends App with LazyLogger {
       logger.info("finished at " + new Date())
 
       def nextCandidate = {
-        val c = CandidateESDAO.candidates
+        val c = CandidateESDAO.candidates(remote_id)
           .filter(c => c.endTime.isEmpty && (c.startTime.isEmpty || c.startTime.get.plusHours(10).isBeforeNow))
         if (c.length > 0) {
           val targetIndex = (c.length * Random.nextDouble()).toInt
