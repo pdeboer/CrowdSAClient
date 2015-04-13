@@ -87,7 +87,7 @@ object Main extends App with LazyLogger {
         m =>
           logger.debug("Creating DISCOVERY question for match: " + m._1)
           val query = new HCompQuery {
-            override def question: String = "Identify the dataset of the statistical method: <u><i> " + m._1 + " </i></u> highlighted in the paper"
+            override def question: String = "Method: <u><i> " + m._1 + " </i></u>"
 
             override def title: String = m._2
 
