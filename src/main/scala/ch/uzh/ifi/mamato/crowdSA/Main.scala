@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAQuery, CrowdSAQueryProperties, CrowdSAPortalAdapter}
 import ch.uzh.ifi.mamato.crowdSA.model.Highlight
-import ch.uzh.ifi.mamato.crowdSA.persistence.{ProcessCandidate, CandidateESDAO, StatMethodsDAO, DBSettings}
+import ch.uzh.ifi.mamato.crowdSA.persistence._
 import ch.uzh.ifi.mamato.crowdSA.process.{ExtractStatisticsRecombination, ExtractStatisticsProcess}
 import ch.uzh.ifi.mamato.crowdSA.util.{PdfUtils, LazyLogger}
 import ch.uzh.ifi.pdeboer.pplib.hcomp.{HCompPortal, HCompQuery, HComp}
@@ -13,6 +13,7 @@ import ch.uzh.ifi.pdeboer.pplib.process.parameter.DefaultParameters
 import ch.uzh.ifi.pdeboer.pplib.process.recombination.{RecombinationVariantGenerator, TypedParameterVariantGenerator, SimpleRecombinationVariantXMLExporter, RecombinationVariant}
 import ch.uzh.ifi.pdeboer.pplib.process.stdlib.{CollectDecideProcess, Collection, ListScaleProcess}
 import org.joda.time.DateTime
+import ch.uzh.ifi.pdeboer.pplib.util.CollectionUtils._
 
 import scala.collection.mutable
 import scala.util.Random
@@ -94,7 +95,7 @@ object Main extends App with LazyLogger {
             override def suggestedPaymentCents: Int = 10
           }
 
-          val highlight = new Highlight("Discovery", m._2)
+          val highlight = HighlightDAO.create("Discovery", m._2, -1)
           val properties = new CrowdSAQueryProperties(remote_id, "Discovery", highlight, 10,
             ((new Date().getTime() / 1000) + 60 * 60 * 24 * 365),
             100, Some(""), null)

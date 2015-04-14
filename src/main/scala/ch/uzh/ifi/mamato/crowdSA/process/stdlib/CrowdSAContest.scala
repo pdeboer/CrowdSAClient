@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import ch.uzh.ifi.mamato.crowdSA.Main
 import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAPortalAdapter, CrowdSAQuery, CrowdSAQueryProperties}
 import ch.uzh.ifi.mamato.crowdSA.model.{Highlight, Answer}
-import ch.uzh.ifi.mamato.crowdSA.persistence.{AnswersDAO, QuestionDAO}
+import ch.uzh.ifi.mamato.crowdSA.persistence.{HighlightDAO, AnswersDAO, QuestionDAO}
 import ch.uzh.ifi.pdeboer.pplib.hcomp.{HComp, HCompQuery, MultipleChoiceQuery, MultipleChoiceAnswer}
 import ch.uzh.ifi.pdeboer.pplib.process.parameter.{ProcessParameter, Patch}
 import ch.uzh.ifi.pdeboer.pplib.process._
@@ -29,15 +29,17 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
       else {
         val memoizer: ProcessMemoizer = getProcessMemoizer(alternatives.hashCode() + "").getOrElse(new NoProcessMemoizer())
 
-        //TODO: useless?
+
         var paperId: Long = -1
+        //TODO: useless?
         if(alternatives.head.answer != ""){
           paperId = CrowdSAPortalAdapter.service.getPaperIdFromAnswerId(alternatives.head.id)
         } else {
           paperId = CrowdSAPortalAdapter.service.getPaperIdFromAnswerId(alternatives(1).id)
         }
 
-        //TODO: useless?
+        // Get all distinct answers and the teams id which created this answer.
+        // These teams will not be able to answer the voting question.
         var ans = new mutable.MutableList[String]
         val teams = new mutable.MutableList[Long]
         alternatives.foreach(a => {
@@ -47,6 +49,7 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
           }
         })
 
+        // Add each answer present in the voting list to the highlighting term list
         val termsHighlight = new mutable.MutableList[String]
         ans.foreach(a => {
           termsHighlight += a
@@ -59,16 +62,22 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
         //3 get question
         val originalQuestion = QuestionDAO.getByRemoteQuestionId(quest_id)
 
+        val originalQuestionHighlight = HighlightDAO.findByRemoteQuestionId(quest_id)
+
         val query = new CrowdSAQuery(
           new HCompQuery {
-            override def question: String = "Please select the answer that you think best answers the question: '"+originalQuestion.get.question+"'"
+            override def question: String = if(originalQuestion.get.question contains "Method: "){
+              "The answers below were submitted by other crowd workers when asking to identify the dataset of '" + originalQuestion.get.question+ "'. Please chose the answer which you think best identifies the dataset."
+            } else {
+              "The answers below were submitted by other crowd workers when asking to answer the Yes/No question: '"+ originalQuestion.get.question+ "'. Please chose the answer which you think is the right one."
+            }
 
             override def title: String = "Voting"
 
             override def suggestedPaymentCents: Int = 10
           },
           new CrowdSAQueryProperties(paperId, "Voting",
-            new Highlight("Dataset", termsHighlight.mkString("#")),
+            HighlightDAO.create("Dataset", termsHighlight.mkString("#")+"#"+originalQuestionHighlight.get.terms, -1),
             10, ((new Date().getTime()/1000) + 60*60*24*365),
             100, Some(ans.mkString("$$")), Some(teams.toList))
         )

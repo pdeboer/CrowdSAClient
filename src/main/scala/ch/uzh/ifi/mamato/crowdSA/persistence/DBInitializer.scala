@@ -20,7 +20,6 @@ object DBInitializer extends LazyLogger {
         case e: java.sql.SQLException =>
           DB autoCommit { implicit s =>
             sql"CREATE TABLE papers (id BIGINT NOT NULL AUTO_INCREMENT,title VARCHAR(255) NOT NULL, budget_cts INT NOT NULL, remote_id BIGINT NOT NULL, PRIMARY KEY(id));".execute().apply()
-            sql"INSERT INTO papers(title, budget_cts, remote_id) values ('Test paper', 1000, 1);".execute.apply()
           }
           logger.debug("Table Papers created!")
       }
@@ -34,7 +33,6 @@ object DBInitializer extends LazyLogger {
         case e: java.sql.SQLException =>
           DB autoCommit { implicit s =>
             sql"CREATE TABLE discovery (id BIGINT NOT NULL AUTO_INCREMENT,description VARCHAR(10000) NULL, paper_id BIGINT NULL, start_time varchar(100) NULL, end_time varchar(100) NULL, result TEXT NULL, error TEXT NULL, cost INT NULL, PRIMARY KEY(id));".execute().apply()
-            //sql"INSERT INTO discovery(description, budget_cts, remote_id) values ('Test paper', 1000, 1);".execute.apply()
           }
           logger.debug("Table Discovery created!")
       }
@@ -48,9 +46,21 @@ object DBInitializer extends LazyLogger {
         case e: java.sql.SQLException =>
           DB autoCommit { implicit s =>
             sql"CREATE TABLE questions (id BIGINT NOT NULL AUTO_INCREMENT,question VARCHAR(255) NOT NULL,question_type VARCHAR(255) NOT NULL,reward_cts INT NOT NULL,created_at BIGINT NOT NULL,remote_paper_id BIGINT NOT NULL,remote_question_id BIGINT NOT NULL, disabled BIT NOT NULL, maximal_assignments INT NULL, expiration_time_sec BIGINT NULL, possible_answers VARCHAR(2000) NULL, PRIMARY KEY(id));".execute().apply()
-            sql"INSERT INTO questions(question, question_type, reward_cts, created_at, remote_paper_id, remote_question_id, disabled, maximal_assignments, expiration_time_sec, possible_answers) values ('Test question','Boolean',10,123123123,1,1, false, NULL, NULL, NULL);".execute.apply()
           }
           logger.debug("Table Questions created!")
+      }
+
+      //Highlight TABLE
+      try {
+        sql"select 1 from highlights limit 1".map(_.long(1)).single.apply()
+        logger.debug("Highlights already initialized")
+      }
+      catch {
+        case e: java.sql.SQLException =>
+          DB autoCommit { implicit s =>
+            sql"CREATE TABLE highlights (id BIGINT NOT NULL AUTO_INCREMENT, assumption VARCHAR(255) NOT NULL, terms VARCHAR(10000) NOT NULL,remote_question_id BIGINT NOT NULL, PRIMARY KEY(id));".execute().apply()
+          }
+          logger.debug("Table Highlights created!")
       }
 
       //Answers TABLE
@@ -62,7 +72,6 @@ object DBInitializer extends LazyLogger {
         case e: java.sql.SQLException =>
           DB autoCommit { implicit s =>
             sql"CREATE TABLE answers (id BIGINT NOT NULL UNIQUE, answer TEXT NOT NULL, created_at BIGINT NOT NULL, accepted BIT NULL, bonus_cts INT NULL, rejected BIT NULL, assignments_id BIGINT NOT NULL, PRIMARY KEY(id));".execute().apply()
-            sql"INSERT INTO answers(id, answer, created_at, accepted, bonus_cts, rejected, assignments_id) values (-2,'Test Answer', 123123123, 0,0,1, -2);".execute.apply()
           }
           logger.debug("Table Answers created!")
       }

@@ -4,7 +4,7 @@ import java.io.File
 import java.util.Date
 
 import ch.uzh.ifi.mamato.crowdSA.model.{Answer, Assignment, Question}
-import ch.uzh.ifi.mamato.crowdSA.persistence.{PaperDAO, QuestionDAO}
+import ch.uzh.ifi.mamato.crowdSA.persistence.{HighlightDAO, PaperDAO, QuestionDAO}
 import ch.uzh.ifi.mamato.crowdSA.util.{HttpRestClient, LazyLogger}
 import com.fasterxml.jackson.core.`type`.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -217,6 +217,7 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
             params += new BasicNameValuePair("assumption", properties.highlight.assumption)
             params += new BasicNameValuePair("terms", properties.highlight.terms)
             logger.debug("Adding highlight returned: " + post("/highlight", params.toList))
+            HighlightDAO.save(properties.highlight.id, remote_question_id)
           }
 
           if(properties.deniedTurkers != null){

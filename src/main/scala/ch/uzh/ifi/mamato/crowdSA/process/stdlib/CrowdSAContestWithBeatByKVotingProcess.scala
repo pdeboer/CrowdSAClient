@@ -2,6 +2,7 @@ package ch.uzh.ifi.mamato.crowdSA.process.stdlib
 
 import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAQueryProperties, CrowdSAPortalAdapter, CrowdSAQuery}
 import ch.uzh.ifi.mamato.crowdSA.model.{Highlight, Answer}
+import ch.uzh.ifi.mamato.crowdSA.persistence.HighlightDAO
 import ch.uzh.ifi.pdeboer.pplib.hcomp.HCompQuery
 import ch.uzh.ifi.pdeboer.pplib.process._
 import ch.uzh.ifi.pdeboer.pplib.process.parameter.ProcessParameter
@@ -62,7 +63,7 @@ class CrowdSAContestWithBeatByKVotingProcess(params: Map[String, Any] = Map.empt
 
           override def suggestedPaymentCents: Int = 10
         },
-        new CrowdSAQueryProperties(paperId, "Voting", new Highlight("Dataset", termsHighlight.mkString(",")), 10, 1000 * 60 * 60 * 24 * 365, 100, Some(ans.mkString("$$")), null)
+        new CrowdSAQueryProperties(paperId, "Voting", HighlightDAO.create("Dataset", termsHighlight.mkString(","), -1), 10, 1000 * 60 * 60 * 24 * 365, 100, Some(ans.mkString("$$")), null)
       )
 
       val tmpAnswers = new mutable.MutableList[String]
