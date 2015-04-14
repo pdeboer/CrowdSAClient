@@ -14,7 +14,7 @@ import ch.uzh.ifi.pdeboer.pplib.process.stdlib.{ContestWithBeatByKVotingProcess,
 object ExtractStatisticsRecombination {
 
   def createVotingProcesses(): List[PassableProcessParam[_, _]] = new TypedParameterVariantGenerator[CrowdSAContest]()
-    .addVariation(CrowdSAContest.WORKER_COUNT, List(2))
+    .addVariation(CrowdSAContest.WORKER_COUNT, List(3))
     .generatePassableProcesses[List[Answer], Answer] /* :::
     new TypedParameterVariantGenerator[CrowdSAContestWithBeatByKVotingProcess]()
       .generatePassableProcesses[List[Answer], Answer] :::
@@ -28,7 +28,7 @@ object ExtractStatisticsRecombination {
     .addVariation(CrowdSACollectionWithSigmaPruning.PRUNE_TEXT_LENGTH, List(false))
     .addVariation(DefaultParameters.WORKER_COUNT, List(2))
     .generatePassableProcesses[CrowdSAQuery, List[Answer]] ::: */new TypedParameterVariantGenerator[CrowdSACollection]()
-    .addVariation(DefaultParameters.WORKER_COUNT, List(2))
+    .addVariation(DefaultParameters.WORKER_COUNT, List(3))
     .generatePassableProcesses[CrowdSAQuery, List[Answer]]
 
 
