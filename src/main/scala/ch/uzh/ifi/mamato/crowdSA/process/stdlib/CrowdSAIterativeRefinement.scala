@@ -12,6 +12,7 @@ import org.joda.time.DateTime
 
 /**
  * Created by mattia on 23.03.15.
+ * This class is based on the example (Summarize Application) provided by Patrick de Boer
  */
 @PPLibProcess
 class CrowdSAIterativeRefinementProcess(params: Map[String, Any] = Map.empty) extends CreateProcess[CrowdSAQuery, Answer](params) with HCompPortalAccess with InstructionHandler {

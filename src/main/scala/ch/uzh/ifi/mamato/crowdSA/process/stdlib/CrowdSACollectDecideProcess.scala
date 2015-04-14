@@ -7,6 +7,11 @@ import ch.uzh.ifi.pdeboer.pplib.process.parameter.{ProcessParameter, PassablePro
 
 import scala.collection.mutable
 
+/**
+ * This class is based on the example (Summarize Application) provided by Patrick de Boer
+ * @param _params
+ */
+
 @PPLibProcess
 class CrowdSACollectDecideProcess(_params: Map[String, Any] = Map.empty) extends CreateProcess[CrowdSAQuery, Answer](_params) {
 

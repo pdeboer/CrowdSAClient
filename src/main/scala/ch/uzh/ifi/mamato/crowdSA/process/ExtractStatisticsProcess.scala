@@ -19,12 +19,19 @@ import ch.uzh.ifi.pdeboer.pplib.util.CollectionUtils._
 import scala.collection.mutable
 
 /**
+ * Main process which start the two phases: Discovery and Assessment.
+ * For each discovery question created by the Main class the discovery process is started. Once the answers converges to
+ * one, the second phase starts.
  * Created by mattia on 27.02.15.
  */
-
 class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuestion: List[CrowdSAQuery])
   extends Recombinable[String] with LazyLogger {
 
+  /**
+   * Runs a recombination variant. First the Discovery step is performed, and second the Assessment step.
+   * @param v The variation to execute
+   * @return A feedback based on all the converged answers for this variant.
+   */
   override def runRecombinedVariant(v: RecombinationVariant): String = {
     logger.debug("running variant " + new SimpleRecombinationVariantXMLExporter(v).xml)
 
@@ -96,6 +103,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
                   10, ((new Date().getTime() / 1000) + 1000 * 60 * 60 * 24 * 365),
                   100, Some(""), null)))
 
+              // Add converged answer to the assumption to test
               assumptionToTest.+=:(assumption, converged)
 
               logger.debug("Assessment step for question: " + b.question + " converged to answer: " + converged.answer)
@@ -105,6 +113,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
           var allFalse = true
           assumptionToTest.foreach( att => {
             if(att._1 == assumption){
+              // If one test validate the assumption then the assumption holds for this method.
               if(att._2.answer.equalsIgnoreCase("true")){
                 allFalse = false
               }
@@ -128,6 +137,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
                     convergedAnswer.answer + "#" +assumption, -1), 10,
                   ((new Date().getTime()/1000) + 1000*60*60*24*365), 100, Some(""), null)))
 
+              //Update the list of assumption to test with the generic converged answer
               assumptionToTest.+=:(assumption, converged)
               logger.debug("Assessment step for general question about: " + assumption + " converged to answer: " + converged.answer)
 

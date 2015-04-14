@@ -12,6 +12,7 @@ import scala.util.Random
 
 /**
  * Created by mattia on 23.03.15.
+ * This class is based on the example (Summarize Application) provided by Patrick de Boer
  */
 @PPLibProcess
 class CrowdSAContestWithBeatByKVotingProcess(params: Map[String, Any] = Map.empty[String, Any]) extends DecideProcess[List[Answer], Answer](params) with HCompPortalAccess with InstructionHandler {

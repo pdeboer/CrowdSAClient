@@ -12,7 +12,12 @@ import ch.uzh.ifi.pdeboer.pplib.process.parameter._
 @PPLibProcess
 class AssessmentProcess(_params: Map[String, Any] = Map.empty)
   extends CreateProcess[CrowdSAQuery, Answer](_params) {
-
+  /**
+   * Run an Assessment Process. This process will create all the questions to test if an assumption hold for a certain
+   * statistical method.
+   * @param data A query composed by HCompQuery and CrowdSAQueryProperties
+   * @return The converged answer
+   */
   override protected def run(data: CrowdSAQuery): Answer = {
     val processType = AssessmentProcess.ASSESSMENT_PROCESS.get
 

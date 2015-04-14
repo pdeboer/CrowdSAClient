@@ -14,6 +14,11 @@ import ch.uzh.ifi.pdeboer.pplib.process.parameter._
 class DiscoveryProcess(_params: Map[String, Any] = Map.empty)
   extends CreateProcess[CrowdSAQuery, Answer](_params) {
 
+  /**
+   * Run the Discovery Process which ask to identify the dataset of a statistical method.
+   * @param data
+   * @return The converged answer
+   */
   override protected def run(data: CrowdSAQuery): Answer = {
     val processType = DiscoveryProcess.DISCOVERY_PROCESS.get
 

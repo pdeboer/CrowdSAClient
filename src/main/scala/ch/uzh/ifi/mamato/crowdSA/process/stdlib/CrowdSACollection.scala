@@ -20,6 +20,9 @@ import org.joda.time.DateTime
 import scala.collection.mutable
 import scala.util.Random
 
+/**
+ * This class is based on the example (Summarize Application) provided by Patrick de Boer
+ */
 
 @PPLibProcess
 class CrowdSACollection(params: Map[String, Any] = Map.empty) extends CreateProcess[CrowdSAQuery, List[Answer]](params) with HCompPortalAccess with InstructionHandler {

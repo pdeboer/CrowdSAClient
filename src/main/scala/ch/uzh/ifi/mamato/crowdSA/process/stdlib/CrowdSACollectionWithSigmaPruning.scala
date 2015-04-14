@@ -14,6 +14,7 @@ import scala.util.Random
 
 /**
  * Created by mattia on 23.03.15.
+ * This class is based on the example (Summarize Application) provided by Patrick de Boer
  */
 
 @PPLibProcess
