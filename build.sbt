@@ -1,4 +1,4 @@
-name := "bachelorClient"
+name := "crowdsaClient"
 
 version := "1.0"
 
