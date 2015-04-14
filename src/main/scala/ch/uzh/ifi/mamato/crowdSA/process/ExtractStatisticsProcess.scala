@@ -100,7 +100,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
                 }, new CrowdSAQueryProperties(paper_id, "Boolean",
                   HighlightDAO.create("DatasetWithAssumptionTest",
                     convergedAnswer.answer + "#" + b.test_names, -1),
-                  10, ((new Date().getTime() / 1000) + 1000 * 60 * 60 * 24 * 365),
+                  10, ((new Date().getTime() / 1000) + 60 * 60 * 24 * 365),
                   100, Some(""), null)))
 
               // Add converged answer to the assumption to test
@@ -129,13 +129,13 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
               logger.debug("Asking general question for assumption: " + assumption)
               val converged = v.createProcess[CrowdSAQuery, Answer]("assessmentProcess").process(
                 new CrowdSAQuery(new HCompQuery {
-                  override def question: String = "Is the dataset highlighted in the paper tested for <i>" + assumption + "</i>?"
+                  override def question: String = "Is the dataset highlighted in the paper tested for the assumption: <i>" + assumption + "</i>?"
                   override def title: String = assumption
                   override def suggestedPaymentCents: Int = 10
                 }, new CrowdSAQueryProperties(paper_id, "Boolean",
                   HighlightDAO.create("DatasetWithGeneralAssumption",
                     convergedAnswer.answer + "#" +assumption, -1), 10,
-                  ((new Date().getTime()/1000) + 1000*60*60*24*365), 100, Some(""), null)))
+                  ((new Date().getTime()/1000) + 60*60*24*365), 100, Some(""), null)))
 
               //Update the list of assumption to test with the generic converged answer
               assumptionToTest.+=:(assumption, converged)
@@ -166,7 +166,6 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
               result += "FAIL: Assumption " + att._1 + " is not respected.\n"
             }
           }
-
         })
 
       } else {
