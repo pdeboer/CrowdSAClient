@@ -343,52 +343,52 @@ object DBInitializer extends LazyLogger {
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (5, 'Is the Hilbert-Schmidt independence criterion used to test the Independence?', 'Hilbert-Schmidt,independence criterion');".execute.apply()
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (5, 'Is the Schweizer-Wolff approach used to test the Independence?', 'Schweizer-wolff');".execute.apply()
 
-            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (6, 'Are there some interaction between the covariance and the independent variable?', 'covariance,independent variable');".execute.apply()
+            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (6, 'Are the covariance and the independent variable completely separated?', 'covariance,independent variable');".execute.apply()
 
-            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (7, 'Is the Durbin-Watson used to test the Independence of error terms?', 'Durbin-watson,autocorrelation,residuals,regression analysis');".execute.apply()
+            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (7, 'Is the Durbin-Watson test used to test the Independence of error terms?', 'Durbin-watson,autocorrelation,residuals,regression analysis');".execute.apply()
 
-            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (8, 'Is the dependent variable a dichotomy?', 'dichotomy');".execute.apply()
+            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (8, 'Is the dependent variable separated in two components (dichotomy)?', 'dichotomy');".execute.apply()
 
-            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (9, 'Is the type of the independent variables neither interval, nor normally distributed, nor linearly related and nor of equal variance within each group?', 'distributed,linear,variance,independent variable');".execute.apply()
+            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (9, 'Is the type of the independent variable neither interval, nor normally distributed, nor linearly related and nor of equal variance within each group?', 'distributed,linear,variance,independent variable');".execute.apply()
 
-            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (10, 'Are the samples larger than for the linear regression?', 'sample,population,linearity,regression');".execute.apply()
+            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (10, 'Are the samples larger than for the linear regression (N=10)?', 'sample,population,linearity,regression');".execute.apply()
 
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (11, 'Are the variables: intervals or ratio measurements?', 'intervals,ratio');".execute.apply()
 
-            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (12, 'Are the outliers kept to a minimum and/or are removed entierly?', 'outliers,minimum,removed');".execute.apply()
+            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (12, 'Are the outliers kept to a minimum and/or are removed entirely?', 'outliers,minimum,removed');".execute.apply()
 
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (13, 'Are the responses ordinal?', 'ordinal');".execute.apply()
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (14, 'Are the samples of the populations random?', 'population,random,samples');".execute.apply()
 
-            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (15, 'Are the datas measured at least on an ordinal scale?', 'ordinal');".execute.apply()
-            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (16, 'Are the pairs chosen randomly and independently?', 'random,independently');".execute.apply()
+            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (15, 'Is the dataset measured at least on an ordinal scale?', 'ordinal');".execute.apply()
+            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (16, 'Are the pairs of the dataset chosen randomly and independently?', 'random,independently');".execute.apply()
 
-            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (17, 'Are the Continuous distributions the same for all the test variables?', 'continuous,distribution,variables');".execute.apply()
-            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (18, 'Is the case a random samples from the populations?', 'random,samples,population');".execute.apply()
-            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (19, 'Are the pair matched?', 'pair');".execute.apply()
+            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (17, 'Are the Continuous distributions the same for all the variables of the dataset?', 'continuous,distribution,variables');".execute.apply()
+            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (18, 'Do the dataset represent a random sample from the population?', 'random,samples,population');".execute.apply()
+            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (19, 'Are the pair in the dataset matched?', 'pair');".execute.apply()
 
-            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (20, 'There exists at least one group that is measured on three or more different occasions?', 'measured,occasions');".execute.apply()
-            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (21, 'Is the group analyzed a random sample from the populations?', 'random,sample,population');".execute.apply()
-            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (22, 'Is one dependant variable either an ordinal interval or ratio?', 'dependant,variable,ordinal,interval,ratio');".execute.apply()
+            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (20, 'There exists at least one group in the datset which is measured on three or more different occasions?', 'measured,occasions');".execute.apply()
+            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (21, 'Is the data used for the friedman test, a random sample from the whole population (dataset)?', 'random,sample,population');".execute.apply()
+            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (22, 'Is one of the dependant variable in the datset either an ordinal interval or ratio?', 'dependant,variable,ordinal,interval,ratio');".execute.apply()
 
-            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (23, 'Are the samples normally distributed?', 'normality,normal,distribution,samples');".execute.apply()
-            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (24, 'Are the data quantitative?', 'data,quantitative');".execute.apply()
+            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (23, 'Are the components of the dataset normally distributed?', 'normality,normal,distribution,samples');".execute.apply()
+            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (24, 'Are the data in the dataset all quantitative?', 'data,quantitative');".execute.apply()
 
-            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (25, 'Are the observation independent?', 'independent,observation');".execute.apply()
-            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (26, 'Is the sample size at least 10?', 'sample, population,size');".execute.apply()
-            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (27, 'Is the sample of the type simple random?', 'simple,random,sample');".execute.apply()
+            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (25, 'Are the observations independent?', 'independent,observation');".execute.apply()
+            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (26, 'Is the sample size at least 10?', 'sample,population,size');".execute.apply()
+            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (27, 'Is the sample used for the chi-square test randomly chosen from the dataset?', 'simple,random,sample');".execute.apply()
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (28, 'Is the data in frequency form?', 'frequency');".execute.apply()
 
-            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (29, 'Are particular distribution assumed?', 'distribution,assumption,assumed');".execute.apply()
+            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (29, 'Is in the paper NO particular distribution assumed for the chi-square test for compatibility of K counts?', 'distribution,assumption,assumed');".execute.apply()
 
-            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (30, 'Is the sample size greather than 20?', '20,twenty,sample,size,population');".execute.apply()
-            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (31, 'Are the cell frequencies greather than 3?', '3,three,frequency,frequencies,cell,cells');".execute.apply()
-            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (32, 'Are the K classes, when put together, a complete series?', 'K classes,K class,complete series');".execute.apply()
-            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (33, 'Have both distributions the same interval classification and the same number of elements?', 'cell,cell frequency');".execute.apply()
-            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (34, 'Has the error a constant variance that is on average equals 0?', 'average,zero,0,error,constant variance');".execute.apply()
+            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (30, 'Is the sample size greater than 20?', '20,twenty,sample,size,population');".execute.apply()
+            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (31, 'Are the cell frequencies greater than 3 in the dataset?', '3,three,frequency,frequencies,cell,cells');".execute.apply()
+            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (32, 'Are the K classes, when put together, a complete serie?', 'K classes,K class,complete series');".execute.apply()
+            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (33, 'Have both distributions in the dataset the same interval classification and the same number of elements?', 'cell,cell frequency');".execute.apply()
+            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (34, 'Has the error a constant variance that is, on average, equals to 0?', 'average,zero,0,error,constant variance');".execute.apply()
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (35, 'There is an association between the factor and the measurement error?', 'factor,association,measurement,error');".execute.apply()
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (36, 'There is an association between the errors?', 'error,errors,association');".execute.apply()
-            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (37, 'Do the samples represent the population?', 'sample,samples,population,populations');".execute.apply()
+            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (37, 'Do the samples represent the whole population?', 'sample,samples,population,populations');".execute.apply()
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (38, 'Are the variables correlated?', 'correlation,correlated');".execute.apply()
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (39, 'Is the dataset non-informative censored?', 'non-informative,censored');".execute.apply()
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (40, 'Are the hazards proportional?', 'hazards,hazard,proportional');".execute.apply()
