@@ -98,14 +98,6 @@ class CrowdSAPortalAdapter extends HCompPortalAdapter with LazyLogger {
     }
   }
 
-  def findAllUnapprovedHitsAndApprove: Unit = {
-    ???
-  }
-
-  def expireAllHits: Unit = {
-    ???
-  }
-
 }
 
 object CrowdSAPortalAdapter {

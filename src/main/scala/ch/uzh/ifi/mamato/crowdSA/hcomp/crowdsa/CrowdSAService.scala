@@ -37,7 +37,7 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
   val config1 = RequestConfig.custom().setSocketTimeout((30*1000).toInt).build()
 
   /**
-   * Get REST method in the server
+   * Get REST method
    * @param path
    * @return
    */
@@ -52,7 +52,7 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
   }
 
   /**
-   * Post to a REST method in the server some parameters
+   * Post REST method
    * @param path
    * @param params
    * @return
@@ -94,12 +94,14 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
   def uploadPaper(pdf_path: String, pdf_title: String, budget_cts:Int, highlight_enabled: Boolean) : Long= {
 
     val paper = PaperDAO.findByTitle(pdf_title).getOrElse(null)
-    if(paper != null && get("/checkPaper/"+paper.remote_id).toBoolean) {
-      paper.remote_id
+    var remotePaperCheck = false
+    if(paper != null) {
+      remotePaperCheck = get("/checkPaper/"+paper.remote_id).toBoolean
+      if(remotePaperCheck){
+        return paper.remote_id
+      }
     }
-    //Upload paper only if it is not already uploaded
-    else {
-
+      //Upload paper only if it is not already uploaded
       logger.info("Uploading paper: " + pdf_title)
       val uri = server.url + "/paper"
       val httpClient = HttpRestClient.httpClient
@@ -141,19 +143,6 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
           -1
         }
       }
-    }
-  }
-
-  def RegisterQuestionType(
-                       Title: String,
-                       Description: String,
-                       Reward: Int,
-                       AssignmentDurationInSeconds: Int,
-                       Keywords: Seq[String],
-                       AutoApprovalDelayInSeconds: Int,
-                       QualificationRequirements: Seq[QualificationRequirement]): String = {
-
-    ???
   }
 
   def GetAnswersForQuestion(question_id: Long) : Iterable[Answer] = {
@@ -171,9 +160,6 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
   def CreateQuestion(query: CrowdSAQuery): Long = {
 
     val properties = query.getProperties()
-                 //LifetimeInSeconds: Int,
-                 //MaxAssignments: Int,
-                 //RequesterAnnotation: Option[String] = None): Long = {
 
     //check if paper exists
     val isUploaded = get("/checkPaper/"+properties.paper_id).toBoolean
@@ -417,12 +403,3 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
   }
 
 }
-
-private[crowdSA] case class QualificationRequirement(
-                                                    QualificationTypeId: String,
-                                                    Comparator: String,
-                                                    RequiredToPreview: Boolean = false,
-                                                    extraParameters: Seq[(String, String)] = Seq.empty) {
-  ???
-                                                    }
-
