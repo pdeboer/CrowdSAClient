@@ -49,7 +49,7 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
 
         val termsHighlight = new mutable.MutableList[String]
         ans.foreach(a => {
-          termsHighlight += a.replace("#", ",")
+          termsHighlight += a
         })
 
         //1 get assignment
@@ -68,7 +68,7 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
             override def suggestedPaymentCents: Int = 10
           },
           new CrowdSAQueryProperties(paperId, "Voting",
-            new Highlight("Dataset", termsHighlight.mkString(",")),
+            new Highlight("Dataset", termsHighlight.mkString("#")),
             10, ((new Date().getTime()/1000) + 60*60*24*365),
             100, Some(ans.mkString("$$")), Some(teams.toList))
         )

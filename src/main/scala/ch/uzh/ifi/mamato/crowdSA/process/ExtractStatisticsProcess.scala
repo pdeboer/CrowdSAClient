@@ -84,7 +84,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
                   override def suggestedPaymentCents: Int = 10
                 }, new CrowdSAQueryProperties(paper_id, "Boolean",
                   new Highlight("DatasetWithAssumptionTest",
-                    convergedAnswer.answer.replaceAll("#", ",") + "," + b.test_names),
+                    convergedAnswer.answer + "#" + b.test_names),
                   10, ((new Date().getTime() / 1000) + 1000 * 60 * 60 * 24 * 365),
                   100, Some(""), null)))
 
@@ -116,7 +116,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
                 override def suggestedPaymentCents: Int = 10
               }, new CrowdSAQueryProperties(paper_id, "Boolean",
                 new Highlight("DatasetWithGeneralAssumption",
-                  convergedAnswer.answer.replaceAll("#", ",")+ "," +assumption), 10,
+                  convergedAnswer.answer + "#" +assumption), 10,
                 ((new Date().getTime()/1000) + 1000*60*60*24*365), 100, Some(""), null)))
 
             assumptionToTest.+=:(assumption, converged)
