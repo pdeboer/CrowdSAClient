@@ -1,10 +1,12 @@
 package ch.uzh.ifi.mamato.crowdSA.util
 
 import java.io._
+import java.util.regex.{Pattern, Matcher}
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.util.PDFTextStripper
 
 import scala.collection.mutable
+import scala.util.matching.Regex
 
 /**
  * Created by mattia on 20.02.15.
@@ -45,6 +47,7 @@ object PdfUtils {
   def findContextMatch(source: String, toMatch: String): List[String] = {
     val mut = new mutable.MutableList[String]
     try {
+      val pattern = ("(?i)("+toMatch+")").r
       for(m <- toMatch.r.findAllMatchIn(source)){
         val contextAfter = m.after.toString
         mut += toMatch+ contextAfter.substring(0, 20)

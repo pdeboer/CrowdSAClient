@@ -82,7 +82,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
             // start the AssessmentProcess and wait for Answer for each question (this is also a collectDecide process)
             logger.debug("Checking if there is a match for the assumption: " + assumption)
 
-            if(PdfUtils.findContextMatchMutipleMatches(pdfToText.toUpperCase(), b.test_names.toUpperCase().split(",").toList).length >0) {
+            if(PdfUtils.findContextMatchMutipleMatches(pdfToText, b.test_names.split(",").toList).length >0) {
               logger.debug("Match found for assumption: " + assumption)
 
               this.synchronized{
