@@ -70,7 +70,7 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
             override def question: String = if(originalQuestion.get.question contains "Method: "){
               "The answers below were submitted by other crowd workers when asking to identify the dataset of '" + originalQuestion.get.question+ "'. Please chose the answer which you think best identifies the dataset."
             } else {
-              "The answers below were submitted by other crowd workers when asking to answer the Yes/No question: '"+ originalQuestion.get.question+ "'. Please chose the answer which you think is the right one."
+              "The answers below were submitted by other crowd workers when asking to answer the Yes/No question: '<i><u>"+ originalQuestion.get.question+ "</u></i>'. Please chose the answer which you think is the right one."
             }
 
             override def title: String = "Voting"
@@ -78,7 +78,7 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
             override def suggestedPaymentCents: Int = 10
           },
           new CrowdSAQueryProperties(paperId, "Voting",
-            HighlightDAO.create("Dataset", termsHighlight.mkString("#")+"#"+originalQuestionHighlight.get.terms, -1),
+            HighlightDAO.create("Dataset", originalQuestionHighlight.get.terms.replaceAll(",", "#")+"#"+termsHighlight.mkString("#"), -1),
             10, ((new Date().getTime()/1000) + 60*60*24*365),
             100, Some(ans.mkString("$$")), Some(teams.toList))
         )
