@@ -38,7 +38,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
     // Process single variant
     val processes = new ProcessVariant(v)
 
-    val assumptionToTest = new mutable.MutableList[(String, Answer)]
+    val datasetAssumptionTested = new mutable.MutableList[(Long, String, String, mutable.MutableList[Answer])]
     var result = ""
     this.synchronized {
       result = "Result for paper: " + Main.titlePdf + "\n"
@@ -91,22 +91,27 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
             // Check if the assumption test name is present in the pdf.
             val assumption = AssumptionsDAO.find(e.assumption_id).get.assumption
             logger.info("Running assumption step")
-            checkAssumption(assumption, e, pdfToText, paper_id, convergedAnswer, assumptionToTest, v)
+            checkAssumption(assumption, e, pdfToText, paper_id, convergedAnswer, datasetAssumptionTested, v, datasetId, stat_method)
           })
 
           this.synchronized {
-            result += "\n* Regarding statitical method: " + statMethod.get.stat_method + " identified by dataset id: " + datasetId + "\n"
-            assumptionToTest.groupBy(_._1).foreach( att => {
-              var valid = false
-              att._2.foreach(tc => {
-                if(tc._2.answer.equalsIgnoreCase("true")){
-                  valid = true
+          var allFalse = true
+            result += "\n* Dataset id: " + datasetId +"\n"
+            result += "* - Method: " + stat_method + "\n"
+            datasetAssumptionTested.foreach(elem => {
+              if(elem._1 == datasetId && elem._2 == stat_method){
+                result += "* -- Assumption: " + elem._3 + "\n"
+                elem._4.foreach(assump => {
+                  if(assump.answer == "true"){
+                    allFalse = false
+                  }
+                })
+                if(allFalse){
+                  result += "* --- FAIL"
+                }else{
+                  result += "* --- SUCCESS"
                 }
-              })
-              if(valid){
-                result += "SUCCESS: Assumption " + att._1 + " is respected.\n"
-              }else {
-                result += "FAIL: Assumption " + att._1 + " is not respected.\n"
+                result += "\n\n"
               }
             })
           }
@@ -130,8 +135,8 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
 
   def checkAssumption(assumption: String, e: StatMethod2Assumption,
                       pdfToText: String, paper_id: Long, convergedAnswer: Answer,
-                      assumptionToTest: mutable.MutableList[(String, Answer)],
-                       v: RecombinationVariant) = {
+                      datasetAssumptionTested: mutable.MutableList[(Long, String, String, mutable.MutableList[Answer])],
+                       v: RecombinationVariant, dataset_id: Long, statMethod: String) = {
     logger.debug("Analyzing paper for assumption: " + assumption)
     // Find if in the text the assumption is present, otherwise ask only a single general question.
     var found: Boolean = false
@@ -162,7 +167,19 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
 
         // Add converged answer to the assumption to test
         this.synchronized {
-          assumptionToTest.+=:(assumption, converged)
+          var found = false
+          datasetAssumptionTested.foreach(a => {
+            if(a._1 == dataset_id && a._2 == statMethod && a._3 == assumption){
+              found = true
+              a._4.+=:(converged)
+            }
+          })
+
+          if(!found){
+            val list = new mutable.MutableList[Answer]
+            list.+=(converged)
+            datasetAssumptionTested.+=:((dataset_id, statMethod, assumption, list))
+          }
         }
 
         logger.debug("Assessment step for question: " + b.question + " converged to answer: " + converged.answer)
@@ -170,19 +187,20 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
     })
 
     var allFalse = true
-    this.synchronized{
-      assumptionToTest.foreach(att => {
-        if (att._1 == assumption) {
-          // If one test validate the assumption then the assumption holds for this method.
-          if (att._2.answer.equalsIgnoreCase("true")) {
-            allFalse = false
-          }
+    this.synchronized {
+      datasetAssumptionTested.foreach(a => {
+        if(a._1 == dataset_id && a._2 == statMethod && a._3 == assumption){
+          a._4.foreach(ans =>{
+            if(ans.answer == "true"){
+              allFalse = false
+            }
+          })
         }
       })
     }
+
     // Ask general question if all the previous questions are false
     // or if there is no match in the paper
-
       if (!found || allFalse) {
         logger.debug("No match found for assumption: " + assumption)
 
@@ -201,7 +219,19 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
 
         //Update the list of assumption to test with the generic converged answer
         this.synchronized {
-          assumptionToTest.+=:(assumption, converged)
+          var found = false
+          datasetAssumptionTested.foreach(a => {
+            if(a._1 == dataset_id && a._2 == statMethod && a._3 == assumption){
+              found = true
+              a._4.+=:(converged)
+            }
+          })
+
+          if(!found){
+            val list = new mutable.MutableList[Answer]
+            list.+=(converged)
+            datasetAssumptionTested.+=:((dataset_id, statMethod, assumption, list))
+          }
         }
         logger.debug("Assessment step for general question about: " + assumption + " converged to answer: " + converged.answer)
 

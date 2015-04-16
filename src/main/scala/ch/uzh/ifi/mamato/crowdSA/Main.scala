@@ -54,7 +54,7 @@ object Main extends App with LazyLogger {
       val pdfToText = PdfUtils.getTextFromPdf(pathPdf).get
 
       //TODO: remove me
-      val maxMatches = 2
+      //val maxMatches = 2
 
       // get context of statistical methods that correspond to the ones present in the database
       toMatch.foreach {
@@ -64,9 +64,9 @@ object Main extends App with LazyLogger {
           mapp.foreach {
             p =>
               //TODO: remove me
-              if(statMethod2ContextStatMethod.length < maxMatches) {
+              //if(statMethod2ContextStatMethod.length < maxMatches) {
               statMethod2ContextStatMethod.+=:(sm.stat_method, p)
-            }
+            //}
           }
       }
     } catch {
