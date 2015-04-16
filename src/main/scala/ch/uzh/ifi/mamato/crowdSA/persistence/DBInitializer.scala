@@ -127,7 +127,7 @@ object DBInitializer extends LazyLogger {
       //Assumptions TABLE
       try {
         sql"select 1 from assumptions limit 1".map(_.long(1)).single.apply()
-        logger.debug("Stat_methods already initialized")
+        logger.debug("assumptions already initialized")
       }
       catch {
         case e: java.sql.SQLException =>

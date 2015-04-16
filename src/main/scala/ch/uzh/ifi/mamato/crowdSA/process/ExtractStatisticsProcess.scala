@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 import ch.uzh.ifi.mamato.crowdSA.Main
 import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAQuery, CrowdSAPortalAdapter, CrowdSAQueryProperties}
-import ch.uzh.ifi.mamato.crowdSA.model.{Highlight, Answer, Dataset}
+import ch.uzh.ifi.mamato.crowdSA.model._
 import ch.uzh.ifi.mamato.crowdSA.persistence._
 import ch.uzh.ifi.mamato.crowdSA.util.{PdfUtils, LazyLogger}
 import ch.uzh.ifi.pdeboer.pplib.hcomp.{HCompAnswer, HCompQuery}
@@ -43,6 +43,11 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
     this.synchronized {
       result = "Result for paper: " + Main.titlePdf + "\n"
     }
+
+    //Store all the statistical methods already asked for each dataset
+    var datasetStatMethod = new mutable.MutableList[(Long, String)]
+    datasetStatMethod.+=:(-1, "")
+
     // From each discovery question we will get at the end only one answer.
     // This answers is the convergence of all the answers
     discoveryQuestion.mpar.foreach(d => {
@@ -54,11 +59,11 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
       val statMethod = StatMethodsDAO.findByStatMethod(stat_method)
 
       // If the dataset exists and the match was not a false positive statistical method:
-      if(convergedAnswer.answer != ""){
+      if (convergedAnswer.answer != "") {
         logger.debug("***** result DISCOVERY STEP")
-        //Create the dataset!
+        // Try to create the dataset!
         var datasetId: Long = -1
-        this.synchronized{
+        this.synchronized {
           datasetId = CrowdSAPortalAdapter.service.createDataset(convergedAnswer.id)
         }
 
@@ -68,109 +73,51 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
 
         // Get text of pdf
         val pdfToText = PdfUtils.getTextFromPdf(Main.pathPdf).get
-
-        logger.debug("Getting assumptions for statistical method: " + statMethod.get.stat_method)
-        StatMethod2AssumptionDAO.findByStatMethodId(statMethod.get.id).mpar.foreach(e => {
-
-          // Check if the assumption test name is present in the pdf.
-          val assumption = AssumptionsDAO.find(e.assumption_id).get.assumption
-
-          logger.debug("Analyzing paper for assumption: " + assumption)
-          // Find if in the text the assumption is present, otherwise ask only a single general question.
-          var found: Boolean = false
-          Assumption2QuestionsDAO.findByAssumptionId(e.assumption_id).mpar.foreach(b => {
-            // start the AssessmentProcess and wait for Answer for each question (this is also a collectDecide process)
-            logger.debug("Checking if there is a match for the assumption: " + assumption)
-
-            if(PdfUtils.findContextMatchMutipleMatches(pdfToText, b.test_names.split(",").toList).length >0) {
-              logger.debug("Match found for assumption: " + assumption)
-
-              this.synchronized{
-                found = true
-              }
-
-              // If a match is found for the assumption ask the question!
-              val converged = v.createProcess[CrowdSAQuery, Answer]("assessmentProcess").process(
-                new CrowdSAQuery(new HCompQuery {
-                  override def question: String = b.question
-
-                  override def title: String = b.id.toString
-
-                  override def suggestedPaymentCents: Int = 10
-                }, new CrowdSAQueryProperties(paper_id, "Boolean",
-                  HighlightDAO.create("DatasetWithAssumptionTest",
-                    convergedAnswer.answer + "#" + b.test_names.replaceAll(",", "#"), -1),
-                  10, ((new Date().getTime() / 1000) + 60 * 60 * 24 * 365),
-                  100, Some(""), null)))
-
-              // Add converged answer to the assumption to test
-              assumptionToTest.+=:(assumption, converged)
-
-              logger.debug("Assessment step for question: " + b.question + " converged to answer: " + converged.answer)
-            }
-          })
-
-          var allFalse = true
-          assumptionToTest.foreach( att => {
-            if(att._1 == assumption){
-              // If one test validate the assumption then the assumption holds for this method.
-              if(att._2.answer.equalsIgnoreCase("true")){
-                allFalse = false
-              }
-            }
-          })
-
-          // Ask general question if all the previous questions are false
-          // or if there is no match in the paper
-          this.synchronized{
-            if(!found || allFalse) {
-              logger.debug("No match found for assumption: "+ assumption)
-
-              logger.debug("Asking general question for assumption: " + assumption)
-              val converged = v.createProcess[CrowdSAQuery, Answer]("assessmentProcess").process(
-                new CrowdSAQuery(new HCompQuery {
-                  override def question: String = "Is the dataset highlighted in the paper tested for the assumption: <i>" + assumption + "</i>?"
-                  override def title: String = assumption
-                  override def suggestedPaymentCents: Int = 10
-                }, new CrowdSAQueryProperties(paper_id, "Boolean",
-                  HighlightDAO.create("DatasetWithGeneralAssumption",
-                    convergedAnswer.answer + "#" +assumption, -1), 10,
-                  ((new Date().getTime()/1000) + 60*60*24*365), 100, Some(""), null)))
-
-              //Update the list of assumption to test with the generic converged answer
-              assumptionToTest.+=:(assumption, converged)
-              logger.debug("Assessment step for general question about: " + assumption + " converged to answer: " + converged.answer)
-
+        var foundd = false
+        datasetStatMethod.mpar.foreach(a => {
+          if(a._1 == datasetId && a._2 == stat_method){
+            this.synchronized {
+              foundd = true
             }
           }
-
         })
 
-        logger.debug("Checking if paper is valid or not")
-        this.synchronized {
-          result += "\n* Regarding statitical method: " + statMethod.get.stat_method + " identified by dataset id: " + datasetId + "\n"
+        if(!foundd) {
+          this.synchronized {
+            datasetStatMethod.+=:(datasetId, stat_method)
+          }
+          logger.debug("Getting assumptions for statistical method: " + statMethod.get.stat_method)
+          StatMethod2AssumptionDAO.findByStatMethodId(statMethod.get.id).mpar.foreach(e => {
+            // Check if the assumption test name is present in the pdf.
+            val assumption = AssumptionsDAO.find(e.assumption_id).get.assumption
+            logger.info("Running assumption step")
+            checkAssumption(assumption, e, pdfToText, paper_id, convergedAnswer, assumptionToTest, v)
+          })
+
+          this.synchronized {
+            result += "\n* Regarding statitical method: " + statMethod.get.stat_method + " identified by dataset id: " + datasetId + "\n"
+            assumptionToTest.groupBy(_._1).foreach( att => {
+              var valid = false
+              att._2.foreach(tc => {
+                if(tc._2.answer.equalsIgnoreCase("true")){
+                  valid = true
+                }
+              })
+              if(valid){
+                result += "SUCCESS: Assumption " + att._1 + " is respected.\n"
+              }else {
+                result += "FAIL: Assumption " + att._1 + " is not respected.\n"
+              }
+            })
+          }
+        } else {
+          // Do nothing, the statistical method was already tested (or is already under test)
         }
-        assumptionToTest.groupBy(_._1).foreach( att => {
-          var valid = false
-          att._2.foreach(tc => {
-            if(tc._2.answer.equalsIgnoreCase("true")){
-              valid = true
-            }
-          })
-          if(valid){
-            this.synchronized {
-              result += "SUCCESS: Assumption " + att._1 + " is respected.\n"
-            }
-          }else {
-            this.synchronized {
-              result += "FAIL: Assumption " + att._1 + " is not respected.\n"
-            }
-          }
-        })
-
       } else {
-        logger.debug("Skip dataset because was a false match.")
-        result += "\n** Dataset for statistical method: " + stat_method + " was a false positive.**\n"
+        this.synchronized {
+          logger.debug("Skip dataset because was a false match.")
+          result += "\n** Dataset for statistical method: " + stat_method + " was a false positive.**\n"
+        }
       }
 
     })
@@ -179,6 +126,87 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
     result += "\n\n**** End of recombination."
     logger.info(result)
     result
+  }
+
+  def checkAssumption(assumption: String, e: StatMethod2Assumption,
+                      pdfToText: String, paper_id: Long, convergedAnswer: Answer,
+                      assumptionToTest: mutable.MutableList[(String, Answer)],
+                       v: RecombinationVariant) = {
+    logger.debug("Analyzing paper for assumption: " + assumption)
+    // Find if in the text the assumption is present, otherwise ask only a single general question.
+    var found: Boolean = false
+    Assumption2QuestionsDAO.findByAssumptionId(e.assumption_id).mpar.foreach(b => {
+      // start the AssessmentProcess and wait for Answer for each question (this is also a collectDecide process)
+      logger.debug("Checking if there is a match for the assumption: " + assumption)
+
+      if (PdfUtils.findContextMatchMutipleMatches(pdfToText, b.test_names.split(",").toList).length > 0) {
+        logger.debug("Match found for assumption: " + assumption)
+
+        this.synchronized {
+          found = true
+        }
+
+        // If a match is found for the assumption ask the question!
+        val converged = v.createProcess[CrowdSAQuery, Answer]("assessmentProcess").process(
+          new CrowdSAQuery(new HCompQuery {
+            override def question: String = b.question
+
+            override def title: String = b.id.toString
+
+            override def suggestedPaymentCents: Int = 10
+          }, new CrowdSAQueryProperties(paper_id, "Boolean",
+            HighlightDAO.create("DatasetWithAssumptionTest",
+              convergedAnswer.answer + "#" + b.test_names.replaceAll(",", "#"), -1),
+            10, ((new Date().getTime() / 1000) + 60 * 60 * 24 * 365),
+            100, Some(""), null)))
+
+        // Add converged answer to the assumption to test
+        this.synchronized {
+          assumptionToTest.+=:(assumption, converged)
+        }
+
+        logger.debug("Assessment step for question: " + b.question + " converged to answer: " + converged.answer)
+      }
+    })
+
+    var allFalse = true
+    this.synchronized{
+      assumptionToTest.foreach(att => {
+        if (att._1 == assumption) {
+          // If one test validate the assumption then the assumption holds for this method.
+          if (att._2.answer.equalsIgnoreCase("true")) {
+            allFalse = false
+          }
+        }
+      })
+    }
+    // Ask general question if all the previous questions are false
+    // or if there is no match in the paper
+
+      if (!found || allFalse) {
+        logger.debug("No match found for assumption: " + assumption)
+
+        logger.debug("Asking general question for assumption: " + assumption)
+        val converged = v.createProcess[CrowdSAQuery, Answer]("assessmentProcess").process(
+          new CrowdSAQuery(new HCompQuery {
+            override def question: String = "Is the dataset highlighted in the paper tested for the assumption: <i>" + assumption + "</i>?"
+
+            override def title: String = assumption
+
+            override def suggestedPaymentCents: Int = 10
+          }, new CrowdSAQueryProperties(paper_id, "Boolean",
+            HighlightDAO.create("DatasetWithGeneralAssumption",
+              convergedAnswer.answer + "#" + assumption, -1), 10,
+            ((new Date().getTime() / 1000) + 60 * 60 * 24 * 365), 100, Some(""), null)))
+
+        //Update the list of assumption to test with the generic converged answer
+        this.synchronized {
+          assumptionToTest.+=:(assumption, converged)
+        }
+        logger.debug("Assessment step for general question about: " + assumption + " converged to answer: " + converged.answer)
+
+      }
+
   }
 
   override def allRecombinationKeys: List[String] = List("discoveryProcess")
