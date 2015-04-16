@@ -106,7 +106,6 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
                 AnswersDAO.create(e)
                 tmpAnswers2 += e
                 tmpAnswers += e.answer
-                val budget = Main.crowdSA.budget
                 Main.crowdSA.setBudget(Some(Main.crowdSA.budget.get-query.getQuery().suggestedPaymentCents))
               }
             })

@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 import ch.uzh.ifi.mamato.crowdSA.Main
 import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAQuery, CrowdSAPortalAdapter, CrowdSAQueryProperties}
-import ch.uzh.ifi.mamato.crowdSA.model.{Highlight, Answer, Dataset}
+import ch.uzh.ifi.mamato.crowdSA.model.{StatMethod, Highlight, Answer, Dataset}
 import ch.uzh.ifi.mamato.crowdSA.persistence._
 import ch.uzh.ifi.mamato.crowdSA.util.{PdfUtils, LazyLogger}
 import ch.uzh.ifi.pdeboer.pplib.hcomp.{HCompAnswer, HCompQuery}
@@ -51,7 +51,10 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
 
       // FIXME: ugly!
       val stat_method = d.query.question.substring(d.query.question.indexOf("<i> ") + 4, d.query.question.indexOf(" </i>"))
-      val statMethod = StatMethodsDAO.findByStatMethod(stat_method)
+      var statMethod: Option[StatMethod] = None
+      this.synchronized {
+        statMethod = StatMethodsDAO.findByStatMethod(stat_method)
+      }
 
       // If the dataset exists and the match was not a false positive statistical method:
       if(convergedAnswer.answer != ""){
