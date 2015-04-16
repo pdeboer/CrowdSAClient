@@ -96,7 +96,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
 
           this.synchronized {
           var allFalse = true
-            result += "\n* Dataset id: " + datasetId +"\n"
+            result += "\n\n* Dataset id: " + datasetId +"\n"
             result += "* - Method: " + stat_method + "\n"
             datasetAssumptionTested.foreach(elem => {
               if(elem._1 == datasetId && elem._2 == stat_method){
@@ -111,7 +111,6 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
                 }else{
                   result += "* --- SUCCESS"
                 }
-                result += "\n\n"
               }
             })
           }
