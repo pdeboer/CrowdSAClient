@@ -55,8 +55,12 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
       val convergedAnswer = v.createProcess[CrowdSAQuery, Answer]("discoveryProcess").process(d)
 
       // FIXME: ugly!
-      val stat_method = d.query.question.substring(d.query.question.indexOf("<i> ") + 4, d.query.question.indexOf(" </i>"))
-      val statMethod = StatMethodsDAO.findByStatMethod(stat_method)
+      var stat_method = ""
+      var statMethod: Option[StatMethod] = None
+      this.synchronized{
+        stat_method = d.query.question.substring(d.query.question.indexOf("<i> ") + 4, d.query.question.indexOf(" </i>"))
+        statMethod = StatMethodsDAO.findByStatMethod(stat_method)
+      }
 
       // If the dataset exists and the match was not a false positive statistical method:
       if (convergedAnswer.answer != "") {
@@ -96,7 +100,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
 
           this.synchronized {
           var allFalse = true
-            result += "\n\n* Dataset id: " + datasetId +"\n"
+            result += "\n* Dataset id: " + datasetId +"\n"
             result += "* - Method: " + stat_method + "\n"
             datasetAssumptionTested.foreach(elem => {
               if(elem._1 == datasetId && elem._2 == stat_method){
@@ -107,9 +111,9 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
                   }
                 })
                 if(allFalse){
-                  result += "* --- FAIL"
+                  result += "* --- FAIL\n"
                 }else{
-                  result += "* --- SUCCESS"
+                  result += "* --- SUCCESS\n"
                 }
               }
             })
