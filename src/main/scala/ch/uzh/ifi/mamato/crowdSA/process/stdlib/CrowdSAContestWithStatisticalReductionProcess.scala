@@ -2,11 +2,10 @@ package ch.uzh.ifi.mamato.crowdSA.process.stdlib
 
 
 import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAPortalAdapter, CrowdSAQueryProperties, CrowdSAQuery}
-import ch.uzh.ifi.mamato.crowdSA.model.{Highlight, Answer}
+import ch.uzh.ifi.mamato.crowdSA.model.Answer
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
-import ch.uzh.ifi.pdeboer.pplib.process._
-import ch.uzh.ifi.pdeboer.pplib.process.parameter.ProcessParameter
-import ch.uzh.ifi.pdeboer.pplib.util.{U, MonteCarlo}
+import ch.uzh.ifi.pdeboer.pplib.process.entities._
+import ch.uzh.ifi.pdeboer.pplib.util.MonteCarlo
 import org.joda.time.DateTime
 
 import scala.collection.mutable
@@ -20,9 +19,6 @@ import scala.util.Random
 
 @PPLibProcess
 class CrowdSAContestWithStatisticalReductionProcess(params: Map[String, Any] = Map.empty[String, Any]) extends DecideProcess[List[Answer], Answer](params) with HCompPortalAccess with InstructionHandler {
-
-  import ch.uzh.ifi.pdeboer.pplib.process.parameter.DefaultParameters._
-  import ch.uzh.ifi.pdeboer.pplib.process.stdlib.ContestWithStatisticalReductionProcess._
 
   protected val MONTECARLO_ITERATIONS: Int = 100000
   protected var votesCast = scala.collection.mutable.Map.empty[String, Int]
@@ -76,7 +72,7 @@ class CrowdSAContestWithStatisticalReductionProcess(params: Map[String, Any] = M
       }
     })
 
-    val alternatives = if (SHUFFLE_CHOICES.get) Random.shuffle(ans.toList) else ans.toList
+    val alternatives = if (DefaultParameters.SHUFFLE_CHOICES.get) Random.shuffle(ans.toList) else ans.toList
 
     val service = CrowdSAPortalAdapter.service
     val paperId = service.getPaperIdFromAnswerId(answerId)
@@ -112,7 +108,7 @@ class CrowdSAContestWithStatisticalReductionProcess(params: Map[String, Any] = M
       val question_id = CrowdSAPortalAdapter.service.getAssignmentForAnswerId(firstAnswer.id).remote_question_id
 
 
-        while (minVotesForAgreement(choices).getOrElse(Integer.MAX_VALUE) > itemWithMostVotes._2 && votesCast.values.sum < MAX_ITERATIONS.get) {
+        while (minVotesForAgreement(choices).getOrElse(Integer.MAX_VALUE) > itemWithMostVotes._2 && votesCast.values.sum < DefaultParameters.MAX_ITERATIONS.get) {
           logger.info("started iteration " + globalIteration)
           Thread.sleep(5000)
           val answerzz = CrowdSAPortalAdapter.service.GetAnswersForQuestion(question_id)
@@ -141,8 +137,8 @@ class CrowdSAContestWithStatisticalReductionProcess(params: Map[String, Any] = M
 
   override def optionalParameters: List[ProcessParameter[_]] =
     List(CrowdSAContestWithStatisticalReductionProcess.CONFIDENCE_PARAMETER,
-      SHUFFLE_CHOICES,
-      MAX_ITERATIONS) ::: super.optionalParameters
+      DefaultParameters.SHUFFLE_CHOICES,
+      DefaultParameters.MAX_ITERATIONS) ::: super.optionalParameters
 }
 
 object CrowdSAContestWithStatisticalReductionProcess {

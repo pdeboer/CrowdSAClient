@@ -2,12 +2,10 @@ package ch.uzh.ifi.mamato.crowdSA.process.stdlib
 
 import java.util.Date
 
-import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAPortalAdapter, CrowdSAQuery}
+import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.CrowdSAQuery
 import ch.uzh.ifi.mamato.crowdSA.model.Answer
 import ch.uzh.ifi.mamato.crowdSA.patterns.{CrowdSAIRDefaultHCompDriver, CrowdSAIterativeRefinementExecutor}
-import ch.uzh.ifi.pdeboer.pplib.patterns.{IterativeRefinementExecutor, IRDefaultHCompDriver}
-import ch.uzh.ifi.pdeboer.pplib.process._
-import ch.uzh.ifi.pdeboer.pplib.process.parameter.{GenericPassableProcessParam, ProcessParameter}
+import ch.uzh.ifi.pdeboer.pplib.process.entities._
 import org.joda.time.DateTime
 
 /**
@@ -17,7 +15,6 @@ import org.joda.time.DateTime
 @PPLibProcess
 class CrowdSAIterativeRefinementProcess(params: Map[String, Any] = Map.empty) extends CreateProcess[CrowdSAQuery, Answer](params) with HCompPortalAccess with InstructionHandler {
 
-  import ch.uzh.ifi.pdeboer.pplib.process.parameter.DefaultParameters._
   import ch.uzh.ifi.pdeboer.pplib.process.stdlib.IterativeRefinementProcess._
 
   override protected def run(query: CrowdSAQuery): Answer = {
@@ -41,7 +38,7 @@ class CrowdSAIterativeRefinementProcess(params: Map[String, Any] = Map.empty) ex
 }
 
 object CrowdSAIterativeRefinementProcess {
-  val VOTING_PROCESS_TYPE = new ProcessParameter[GenericPassableProcessParam[List[Answer], Answer, CreateProcess[List[Answer], Answer]]]("votingProcess", None)
+  val VOTING_PROCESS_TYPE = new ProcessParameter[PassableProcessParam[List[Answer], Answer, CreateProcess[List[Answer], Answer]]]("votingProcess", None)
   val STRING_DIFFERENCE_THRESHOLD = new ProcessParameter[Int]("iterationStringDifferenceThreshold", Some(List(1)))
   val TOLERATED_NUMBER_OF_ITERATIONS_BELOW_THRESHOLD = new ProcessParameter[Int]("toleratedNumberOfIterationsBelowThreshold", Some(List(2)))
 }

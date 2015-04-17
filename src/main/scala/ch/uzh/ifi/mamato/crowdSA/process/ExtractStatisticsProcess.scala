@@ -1,19 +1,14 @@
 package ch.uzh.ifi.mamato.crowdSA.process
 
 import java.util.Date
-import java.util.concurrent.atomic.AtomicReference
 
 import ch.uzh.ifi.mamato.crowdSA.Main
 import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAQuery, CrowdSAPortalAdapter, CrowdSAQueryProperties}
 import ch.uzh.ifi.mamato.crowdSA.model._
 import ch.uzh.ifi.mamato.crowdSA.persistence._
 import ch.uzh.ifi.mamato.crowdSA.util.{PdfUtils, LazyLogger}
-import ch.uzh.ifi.pdeboer.pplib.hcomp.{HCompAnswer, HCompQuery}
-import ch.uzh.ifi.pdeboer.pplib.process.ProcessStub
-import ch.uzh.ifi.pdeboer.pplib.process.parameter.{IndexedPatch, Patch}
+import ch.uzh.ifi.pdeboer.pplib.hcomp.HCompQuery
 import ch.uzh.ifi.pdeboer.pplib.process.recombination.{SimpleRecombinationVariantXMLExporter, RecombinationVariant, Recombinable}
-import ch.uzh.ifi.pdeboer.pplib.process.stdlib.{ContestWithStatisticalReductionProcess, FixPatchProcess}
-import ch.uzh.ifi.pdeboer.pplib.util.U
 import ch.uzh.ifi.pdeboer.pplib.util.CollectionUtils._
 
 import scala.collection.mutable

@@ -1,19 +1,14 @@
 package ch.uzh.ifi.mamato.crowdSA
 
 import java.util.Date
-import java.util.concurrent.atomic.AtomicInteger
 
 import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAQuery, CrowdSAQueryProperties, CrowdSAPortalAdapter}
-import ch.uzh.ifi.mamato.crowdSA.model.Highlight
 import ch.uzh.ifi.mamato.crowdSA.persistence._
 import ch.uzh.ifi.mamato.crowdSA.process.{ExtractStatisticsRecombination, ExtractStatisticsProcess}
 import ch.uzh.ifi.mamato.crowdSA.util.{PdfUtils, LazyLogger}
-import ch.uzh.ifi.pdeboer.pplib.hcomp.{HCompPortal, HCompQuery, HComp}
-import ch.uzh.ifi.pdeboer.pplib.process.parameter.DefaultParameters
-import ch.uzh.ifi.pdeboer.pplib.process.recombination.{RecombinationVariantGenerator, TypedParameterVariantGenerator, SimpleRecombinationVariantXMLExporter, RecombinationVariant}
-import ch.uzh.ifi.pdeboer.pplib.process.stdlib.{CollectDecideProcess, Collection, ListScaleProcess}
+import ch.uzh.ifi.pdeboer.pplib.hcomp.{HCompQuery, HComp}
+import ch.uzh.ifi.pdeboer.pplib.process.recombination.{RecombinationVariant, SimpleRecombinationVariantXMLExporter}
 import org.joda.time.DateTime
-import ch.uzh.ifi.pdeboer.pplib.util.CollectionUtils._
 
 import scala.collection.mutable
 import scala.util.Random
@@ -54,7 +49,7 @@ object Main extends App with LazyLogger {
       val pdfToText = PdfUtils.getTextFromPdf(pathPdf).get
 
       //TODO: remove me
-      val maxMatches = 4
+      //val maxMatches = 4
 
       // get context of statistical methods that correspond to the ones present in the database
       toMatch.foreach {
@@ -64,9 +59,9 @@ object Main extends App with LazyLogger {
           mapp.foreach {
             p =>
               //TODO: remove me
-              if(statMethod2ContextStatMethod.length < maxMatches) {
+              //if(statMethod2ContextStatMethod.length < maxMatches) {
               statMethod2ContextStatMethod.+=:(sm.stat_method, p)
-            }
+            //}
           }
       }
     } catch {

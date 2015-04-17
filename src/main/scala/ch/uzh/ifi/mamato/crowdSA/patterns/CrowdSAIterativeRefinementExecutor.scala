@@ -1,13 +1,12 @@
 package ch.uzh.ifi.mamato.crowdSA.patterns
 
-import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAPortalAdapter, CrowdSAQueryProperties, CrowdSAQuery}
-import ch.uzh.ifi.mamato.crowdSA.model.{Highlight, Answer}
+import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAQueryProperties, CrowdSAQuery}
+import ch.uzh.ifi.mamato.crowdSA.model.Answer
 import ch.uzh.ifi.mamato.crowdSA.persistence.HighlightDAO
 import ch.uzh.ifi.mamato.crowdSA.util.LazyLogger
-import ch.uzh.ifi.pdeboer.pplib.hcomp.{HCompQuery, HCompInstructionsWithTuple, HCompPortalAdapter}
+import ch.uzh.ifi.pdeboer.pplib.hcomp.{HCompQuery, HCompPortalAdapter}
 import ch.uzh.ifi.pdeboer.pplib.patterns.IterationWatcher
-import ch.uzh.ifi.pdeboer.pplib.process.parameter.{DefaultParameters, GenericPassableProcessParam}
-import ch.uzh.ifi.pdeboer.pplib.process.{CreateProcess, NoProcessMemoizer, ProcessMemoizer}
+import ch.uzh.ifi.pdeboer.pplib.process.entities._
 import org.joda.time.DateTime
 
 /**
@@ -57,7 +56,7 @@ trait CrowdSAIterativeRefinementDriver[Answer] {
   def selectBestRefinement(candidates: List[Answer]): Answer
 }
 
-class CrowdSAIRDefaultHCompDriver(portal: HCompPortalAdapter, quest: String, stat_method: String, paperId: Long, votingProcessParam: GenericPassableProcessParam[List[Answer], Answer, CreateProcess[List[Answer], Answer]], questionPricing: Int = 10, memoizerPrefix: String = "") extends CrowdSAIterativeRefinementDriver[Answer] {
+class CrowdSAIRDefaultHCompDriver(portal: HCompPortalAdapter, quest: String, stat_method: String, paperId: Long, votingProcessParam: PassableProcessParam[List[Answer], Answer, CreateProcess[List[Answer], Answer]], questionPricing: Int = 10, memoizerPrefix: String = "") extends CrowdSAIterativeRefinementDriver[Answer] {
 
   override def refine(originalTextToRefine: Answer, currentRefinementState: Answer, iterationId: Int): Answer = {
 

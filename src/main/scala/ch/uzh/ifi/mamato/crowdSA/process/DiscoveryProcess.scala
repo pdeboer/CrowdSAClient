@@ -1,10 +1,8 @@
 package ch.uzh.ifi.mamato.crowdSA.process
 
-import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAQuery, CrowdSAQueryProperties}
+import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.CrowdSAQuery
 import ch.uzh.ifi.mamato.crowdSA.model.Answer
-import ch.uzh.ifi.pdeboer.pplib.hcomp.HCompQuery
-import ch.uzh.ifi.pdeboer.pplib.process.{CreateProcess, PPLibProcess}
-import ch.uzh.ifi.pdeboer.pplib.process.parameter._
+import ch.uzh.ifi.pdeboer.pplib.process.entities.{PassableProcessParam, ProcessParameter, CreateProcess, PPLibProcess}
 
 /**
  * Created by mattia on 06.03.15.

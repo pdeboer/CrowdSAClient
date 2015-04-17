@@ -1,16 +1,12 @@
 package ch.uzh.ifi.mamato.crowdSA.process.stdlib
 
-import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAQueryProperties, CrowdSAQuery, CrowdSAPortalAdapter}
+import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAQuery, CrowdSAPortalAdapter}
 import ch.uzh.ifi.mamato.crowdSA.model.Answer
-import ch.uzh.ifi.pdeboer.pplib.hcomp.HCompQuery
 import ch.uzh.ifi.pdeboer.pplib.patterns.pruners.{SigmaCalculator, SigmaPruner}
-import ch.uzh.ifi.pdeboer.pplib.process._
-import ch.uzh.ifi.pdeboer.pplib.process.parameter.ProcessParameter
-import ch.uzh.ifi.pdeboer.pplib.util.{U, MonteCarlo}
+import ch.uzh.ifi.pdeboer.pplib.process.entities._
 import org.joda.time.DateTime
 
 import scala.collection.mutable
-import scala.util.Random
 
 /**
  * Created by mattia on 23.03.15.
@@ -20,7 +16,6 @@ import scala.util.Random
 @PPLibProcess
 class CrowdSACollectionWithSigmaPruning(params: Map[String, Any] = Map.empty) extends CreateProcess[CrowdSAQuery, List[Answer]](params) with HCompPortalAccess with InstructionHandler {
 
-  import ch.uzh.ifi.pdeboer.pplib.process.parameter.DefaultParameters._
   import ch.uzh.ifi.pdeboer.pplib.process.stdlib.CollectionWithSigmaPruning._
   override protected def run(query: CrowdSAQuery): List[Answer] = {
     val memoizer: ProcessMemoizer = getProcessMemoizer(query.hashCode() + "").getOrElse(new NoProcessMemoizer())
@@ -67,11 +62,11 @@ class CrowdSACollectionWithSigmaPruning(params: Map[String, Any] = Map.empty) ex
 
   override def optionalParameters: List[ProcessParameter[_]] = List(
     CrowdSACollectionWithSigmaPruning.PRUNE_TEXT_LENGTH,
-    CrowdSACollectionWithSigmaPruning.NUM_SIGMAS, WORKER_COUNT) ::: super.optionalParameters
+    CrowdSACollectionWithSigmaPruning.NUM_SIGMAS, CrowdSACollectionWithSigmaPruning.WORKER_COUNT) ::: super.optionalParameters
 }
 
 object CrowdSACollectionWithSigmaPruning {
   val NUM_SIGMAS = new ProcessParameter[Int]("numSigmas", Some(List(3)))
   val PRUNE_TEXT_LENGTH = new ProcessParameter[Boolean]("pruneByTextLength", Some(List(true)))
-  val WORKER_COUNT = new ProcessParameter[List[Int]]("worker_count", Some(Iterable(List(2))))
+  val WORKER_COUNT = new ProcessParameter[List[Int]]("worker_count", Some(Iterable(List(3))))
 }

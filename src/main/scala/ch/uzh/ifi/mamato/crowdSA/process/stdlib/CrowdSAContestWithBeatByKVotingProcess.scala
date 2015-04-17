@@ -1,11 +1,10 @@
 package ch.uzh.ifi.mamato.crowdSA.process.stdlib
 
 import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAQueryProperties, CrowdSAPortalAdapter, CrowdSAQuery}
-import ch.uzh.ifi.mamato.crowdSA.model.{Highlight, Answer}
+import ch.uzh.ifi.mamato.crowdSA.model.Answer
 import ch.uzh.ifi.mamato.crowdSA.persistence.HighlightDAO
 import ch.uzh.ifi.pdeboer.pplib.hcomp.HCompQuery
-import ch.uzh.ifi.pdeboer.pplib.process._
-import ch.uzh.ifi.pdeboer.pplib.process.parameter.ProcessParameter
+import ch.uzh.ifi.pdeboer.pplib.process.entities._
 import org.joda.time.DateTime
 
 import scala.util.Random
@@ -17,7 +16,6 @@ import scala.util.Random
 @PPLibProcess
 class CrowdSAContestWithBeatByKVotingProcess(params: Map[String, Any] = Map.empty[String, Any]) extends DecideProcess[List[Answer], Answer](params) with HCompPortalAccess with InstructionHandler {
 
-  import ch.uzh.ifi.pdeboer.pplib.process.parameter.DefaultParameters._
   import ch.uzh.ifi.pdeboer.pplib.process.stdlib.ContestWithBeatByKVotingProcess._
   import scala.collection.mutable
 
@@ -51,7 +49,7 @@ class CrowdSAContestWithBeatByKVotingProcess(params: Map[String, Any] = Map.empt
 
       //data.foreach(d => votes += (d.answer -> 0))
 
-      val choices = if (SHUFFLE_CHOICES.get) Random.shuffle(ans) else ans
+      val choices = if (DefaultParameters.SHUFFLE_CHOICES.get) Random.shuffle(ans) else ans
 
       val termsHighlight = new mutable.MutableList[String]
       choices.foreach(a => termsHighlight += a.replace("#", ","))
@@ -126,10 +124,10 @@ class CrowdSAContestWithBeatByKVotingProcess(params: Map[String, Any] = Map.empt
   def delta = if (votes.values.sum == 0) 3 else Math.abs(bestAndSecondBest._1._2 - bestAndSecondBest._2._2)
 
   def shouldStartAnotherIteration: Boolean = {
-    delta < K.get && votes.values.sum + delta < MAX_ITERATIONS.get
+    delta < K.get && votes.values.sum + delta < DefaultParameters.MAX_ITERATIONS.get
   }
 
-  override def optionalParameters: List[ProcessParameter[_]] = List(SHUFFLE_CHOICES, MAX_ITERATIONS, K, INSTRUCTIONS_ITALIC)
+  override def optionalParameters: List[ProcessParameter[_]] = List(DefaultParameters.SHUFFLE_CHOICES, DefaultParameters.MAX_ITERATIONS, K, DefaultParameters.INSTRUCTIONS_ITALIC)
 }
 
 object CrowdSAContestWithBeatByKVotingProcess {

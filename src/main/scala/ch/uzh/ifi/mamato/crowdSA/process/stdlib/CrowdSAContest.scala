@@ -1,21 +1,17 @@
 package ch.uzh.ifi.mamato.crowdSA.process.stdlib
 
 import java.util.Date
-import java.util.concurrent.atomic.AtomicInteger
 
 import ch.uzh.ifi.mamato.crowdSA.Main
 import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAPortalAdapter, CrowdSAQuery, CrowdSAQueryProperties}
-import ch.uzh.ifi.mamato.crowdSA.model.{Highlight, Answer}
+import ch.uzh.ifi.mamato.crowdSA.model.Answer
 import ch.uzh.ifi.mamato.crowdSA.persistence.{HighlightDAO, AnswersDAO, QuestionDAO}
-import ch.uzh.ifi.pdeboer.pplib.hcomp.{HComp, HCompQuery, MultipleChoiceQuery, MultipleChoiceAnswer}
-import ch.uzh.ifi.pdeboer.pplib.process.parameter.{ProcessParameter, Patch}
-import ch.uzh.ifi.pdeboer.pplib.process._
-import ch.uzh.ifi.pdeboer.pplib.util.U
+import ch.uzh.ifi.pdeboer.pplib.hcomp.HCompQuery
+import ch.uzh.ifi.pdeboer.pplib.process.entities._
 import com.typesafe.config.ConfigFactory
 import org.joda.time.DateTime
 
 import scala.collection.mutable
-import scala.util.Random
 
 /**
  * Created by mattia on 10.03.15.
