@@ -3,7 +3,7 @@ package ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa
 import java.io.File
 import java.util.Date
 
-import ch.uzh.ifi.mamato.crowdSA.model.{Answer, Assignment, Question}
+import ch.uzh.ifi.mamato.crowdSA.model.{Dataset, Answer, Assignment, Question}
 import ch.uzh.ifi.mamato.crowdSA.persistence.{HighlightDAO, PaperDAO, QuestionDAO}
 import ch.uzh.ifi.mamato.crowdSA.util.{HttpRestClient, LazyLogger}
 import com.fasterxml.jackson.core.`type`.TypeReference
@@ -243,9 +243,13 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
       if(resp.startsWith("Error")){
         logger.error(resp)
       }else {
-        val question = QuestionDAO.findByRemoteId(qId).get
-        QuestionDAO.save(question.id, true, question.expiration_time_sec,
-          question.maximal_assignments)
+        try{
+          val question = QuestionDAO.findByRemoteId(qId).get
+          QuestionDAO.save(question.id, true, question.expiration_time_sec,
+            question.maximal_assignments)
+        } catch {
+          case e: Exception => e.printStackTrace()
+        }
         logger.debug(resp)
       }
     } catch {
@@ -295,10 +299,6 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
     }
   }
 
-  def BlockTurker(turker_id: String, reason: String): Unit = {
-    ???
-  }
-
   /**
    * Extend question's maximal assignments.
    * @param question_id the remote id of the question
@@ -323,7 +323,6 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
       case e: Exception => e.printStackTrace()
     }
   }
-
 
   def ExtendQuestionExpiration(question_id: Long, ExpirationIncrementInSeconds: Int): Unit = {
     try {
@@ -398,6 +397,21 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
       case e: Exception => {
         e.printStackTrace()
         -1
+      }
+    }
+  }
+
+  def getDatasetById(datasetId: Long): Dataset = {
+    try{
+      val params = new collection.mutable.MutableList[NameValuePair]
+      val resp = get("/dataset/"+datasetId.toString)
+      val jsonAssignment: JsValue = Json.parse(resp)
+      val dataset = jsonAssignment.validate[Dataset]
+      dataset.get
+    } catch {
+      case e: Exception => {
+        e.printStackTrace()
+        null
       }
     }
   }

@@ -62,9 +62,12 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
 
         val originalQuestionHighlight = HighlightDAO.findByRemoteQuestionId(quest_id)
 
+        val wasDiscovery = originalQuestion.get.question contains "Method: "
+        var toHighlight = originalQuestionHighlight.get.terms.replaceAll(",", "#")+"#"+termsHighlight.mkString("#")
+
         val query = new CrowdSAQuery(
           new HCompQuery {
-            override def question: String = if(originalQuestion.get.question contains "Method: "){
+            override def question: String = if(wasDiscovery){
               "The answers below were submitted by other crowd workers when asking to identify the dataset of '" + originalQuestion.get.question+ "'. Please chose the answer which you think best identifies the dataset."
             } else {
               "The answers below were submitted by other crowd workers when asking to answer the Yes/No question: '<i><u>"+ originalQuestion.get.question+ "</u></i>'. Please chose the answer which you think is the right one."
@@ -75,7 +78,7 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
             override def suggestedPaymentCents: Int = 10
           },
           new CrowdSAQueryProperties(paperId, "Voting",
-            HighlightDAO.create("Dataset", originalQuestionHighlight.get.terms.replaceAll(",", "#")+"#"+termsHighlight.mkString("#"), -1),
+            HighlightDAO.create("Dataset", toHighlight, -1),
             10, ((new Date().getTime()/1000) + 60*60*24*365),
             100, Some(ans.mkString("$$")), Some(teams.toList))
         )
