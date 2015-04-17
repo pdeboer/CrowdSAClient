@@ -60,9 +60,12 @@ object ExtractStatisticsRecombination {
       )
     )
 
-    val candidateProcesses =
+    implicit val flattener: Map[String, List[PassableProcessParam[_ <: ProcessStub[_, _]]]]
+    = (t: (String, List[PassableProcessParam[_ <: ProcessStub[_, _]]])) ⇒ t._2.map(x => (t._1, x))
+
+    val candidateProcesses: Map[String, List[PassableProcessParam[_ <: ProcessStub[_, _]]]] =
       candidateProcessParameters.map {
-      case (key, generators) => (key, generators.map(_.generatePassableProcesses()).flatten)
+        case (key, generators) => (key, generators.map(_.generatePassableProcesses()).flatten(flattener))
     }
 
     new RecombinationVariantGenerator(candidateProcesses).variants

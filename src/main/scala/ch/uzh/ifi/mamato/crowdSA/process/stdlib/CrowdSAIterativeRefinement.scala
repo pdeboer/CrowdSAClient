@@ -38,7 +38,7 @@ class CrowdSAIterativeRefinementProcess(params: Map[String, Any] = Map.empty) ex
 }
 
 object CrowdSAIterativeRefinementProcess {
-  val VOTING_PROCESS_TYPE = new ProcessParameter[PassableProcessParam[List[Answer], Answer, CreateProcess[List[Answer], Answer]]]("votingProcess", None)
+  val VOTING_PROCESS_TYPE = new ProcessParameter[PassableProcessParam[DecideProcess[List[Answer], Answer]]]("votingProcess", None)
   val STRING_DIFFERENCE_THRESHOLD = new ProcessParameter[Int]("iterationStringDifferenceThreshold", Some(List(1)))
   val TOLERATED_NUMBER_OF_ITERATIONS_BELOW_THRESHOLD = new ProcessParameter[Int]("toleratedNumberOfIterationsBelowThreshold", Some(List(2)))
 }

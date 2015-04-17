@@ -56,7 +56,7 @@ trait CrowdSAIterativeRefinementDriver[Answer] {
   def selectBestRefinement(candidates: List[Answer]): Answer
 }
 
-class CrowdSAIRDefaultHCompDriver(portal: HCompPortalAdapter, quest: String, stat_method: String, paperId: Long, votingProcessParam: PassableProcessParam[List[Answer], Answer, CreateProcess[List[Answer], Answer]], questionPricing: Int = 10, memoizerPrefix: String = "") extends CrowdSAIterativeRefinementDriver[Answer] {
+class CrowdSAIRDefaultHCompDriver(portal: HCompPortalAdapter, quest: String, stat_method: String, paperId: Long, votingProcessParam: PassableProcessParam[DecideProcess[List[Answer], Answer]], questionPricing: Int = 10, memoizerPrefix: String = "") extends CrowdSAIterativeRefinementDriver[Answer] {
 
   override def refine(originalTextToRefine: Answer, currentRefinementState: Answer, iterationId: Int): Answer = {
 

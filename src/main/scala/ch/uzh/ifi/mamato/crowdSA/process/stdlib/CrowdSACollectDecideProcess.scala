@@ -26,7 +26,7 @@ class CrowdSACollectDecideProcess(_params: Map[String, Any] = Map.empty)
 
     logger.info("Running collect-phase for query: " + data)
     //Collection step
-    val collection: List[Answer] = memoizer.mem("collectProcess")(CrowdSACollectDecideProcess.COLLECT.get.run(data))
+    val collection: List[Answer] = memoizer.mem("collectProcess")(CrowdSACollectDecideProcess.COLLECT.get.process(data))
 
     val collectionTmpDistinct = new mutable.MutableList[String]
     val collectionDistinct = new mutable.MutableList[Answer]
@@ -43,7 +43,7 @@ class CrowdSACollectDecideProcess(_params: Map[String, Any] = Map.empty)
           -> CrowdSACollectDecideProcess.FORWARD_ANSWER_TO_DECIDE_MESSAGE.get), replace = true)
 
     //Decide step
-    val res: Answer = memoizer.mem(getClass.getSimpleName + "decideProcess")(CrowdSACollectDecideProcess.DECIDE.get.run(collectionDistinct.toList))
+    val res: Answer = memoizer.mem(getClass.getSimpleName + "decideProcess")(CrowdSACollectDecideProcess.DECIDE.get.process(collectionDistinct.toList))
     logger.info(s"Collect/decide for $res has finished with result $res")
     res
   }

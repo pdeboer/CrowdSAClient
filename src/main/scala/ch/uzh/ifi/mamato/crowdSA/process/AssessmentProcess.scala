@@ -2,7 +2,7 @@ package ch.uzh.ifi.mamato.crowdSA.process
 
 import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.CrowdSAQuery
 import ch.uzh.ifi.mamato.crowdSA.model.Answer
-import ch.uzh.ifi.pdeboer.pplib.process.entities.{PassableProcessParam, ProcessParameter, CreateProcess, PPLibProcess}
+import ch.uzh.ifi.pdeboer.pplib.process.entities._
 
 /**
  * Created by mattia on 18.03.15.
@@ -11,6 +11,7 @@ import ch.uzh.ifi.pdeboer.pplib.process.entities.{PassableProcessParam, ProcessP
 @PPLibProcess
 class AssessmentProcess(_params: Map[String, Any] = Map.empty)
   extends CreateProcess[CrowdSAQuery, Answer](_params) {
+
   /**
    * Run an Assessment Process. This process will create all the questions to test if an assumption hold for a certain
    * statistical method.
@@ -25,7 +26,7 @@ class AssessmentProcess(_params: Map[String, Any] = Map.empty)
     //val process = processType.create(lowerPriorityParams)
     //process.process(data)
 
-    processType.run(data)
+    process(data)
 
   }
 

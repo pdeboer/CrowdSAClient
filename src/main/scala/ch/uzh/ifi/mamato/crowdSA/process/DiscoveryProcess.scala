@@ -25,7 +25,8 @@ class DiscoveryProcess(_params: Map[String, Any] = Map.empty)
     //val process = processType.create(lowerPriorityParams)
     //process.process(data)
 
-    processType.run(data)
+    process(data)
+
   }
 
   override def expectedParametersBeforeRun: List[ProcessParameter[_]] = List(DiscoveryProcess.DISCOVERY_PROCESS)
