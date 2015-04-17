@@ -159,7 +159,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
             override def suggestedPaymentCents: Int = 10
           }, new CrowdSAQueryProperties(paper_id, "Boolean",
             HighlightDAO.create("DatasetWithAssumptionTest",
-              datasetConverged.answer + "#" + b.test_names.replaceAll(",", "#") + "#", -1),
+              datasetConverged.answer + "#" + b.test_names.replaceAll(",", "#"), -1),
             10, ((new Date().getTime() / 1000) + 60 * 60 * 24 * 365),
             100, Some(""), null)))
 
