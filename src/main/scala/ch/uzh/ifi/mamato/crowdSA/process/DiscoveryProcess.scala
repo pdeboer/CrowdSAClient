@@ -18,12 +18,18 @@ class DiscoveryProcess(_params: Map[String, Any] = Map.empty)
    * @return The converged answer
    */
   override protected def run(data: CrowdSAQuery): Answer = {
-    DiscoveryProcess.DISCOVERY_PROCESS.get.process(data)
+
+    val processType = DiscoveryProcess.DISCOVERY_PROCESS.get
+
+    val lowerPriorityParams = params
+
+    val process = processType.create(lowerPriorityParams)
+    process.process(data)
   }
 
   override def expectedParametersBeforeRun: List[ProcessParameter[_]] = List(DiscoveryProcess.DISCOVERY_PROCESS)
 }
 
 object DiscoveryProcess {
-  val DISCOVERY_PROCESS = new ProcessParameter[CreateProcess[CrowdSAQuery, Answer]]("discoveryProcess", None)
+  val DISCOVERY_PROCESS = new ProcessParameter[PassableProcessParam[CreateProcess[CrowdSAQuery, Answer]]]("discoveryProcess", None)
 }
