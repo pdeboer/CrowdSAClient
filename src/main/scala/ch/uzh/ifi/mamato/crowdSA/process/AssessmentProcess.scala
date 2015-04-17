@@ -19,15 +19,7 @@ class AssessmentProcess(_params: Map[String, Any] = Map.empty)
    * @return The converged answer
    */
   override protected def run(data: CrowdSAQuery): Answer = {
-    val processType = AssessmentProcess.ASSESSMENT_PROCESS.get
-
-    val lowerPriorityParams = params
-
-    //val process = processType.create(lowerPriorityParams)
-    //process.process(data)
-
-    process(data)
-
+    AssessmentProcess.ASSESSMENT_PROCESS.get.process(data)
   }
 
   override def expectedParametersBeforeRun: List[ProcessParameter[_]] = List(AssessmentProcess.ASSESSMENT_PROCESS)

@@ -50,22 +50,22 @@ object ExtractStatisticsRecombination {
     */
 
     val candidateProcessParameters = Map(
-      "discoveryProcess" -> List(
-        new TypedParameterVariantGenerator[DiscoveryProcess]()
-          .addVariation(DiscoveryProcess.DISCOVERY_PROCESS, collectDecide)// ::: iterativeRefinement)
-      ),
-      "assessmentProcess" -> List(
-        new TypedParameterVariantGenerator[AssessmentProcess]()
-        .addVariation(AssessmentProcess.ASSESSMENT_PROCESS, collectDecide)
+      (
+        "discoveryProcess", new TypedParameterVariantGenerator[DiscoveryProcess]()
+          .addVariation(DiscoveryProcess.DISCOVERY_PROCESS, collectDecide)
+          .generatePassableProcesses()// ::: iterativeRefinement))
+      )
+    ,
+      (
+        "assessmentProcess", new TypedParameterVariantGenerator[AssessmentProcess]()
+          .addVariation(AssessmentProcess.ASSESSMENT_PROCESS, collectDecide)
+          .generatePassableProcesses()
       )
     )
 
-    implicit val flattener: Map[String, List[PassableProcessParam[_ <: ProcessStub[_, _]]]]
-    = (t: (String, List[PassableProcessParam[_ <: ProcessStub[_, _]]])) ⇒ t._2.map(x => (t._1, x))
-
     val candidateProcesses: Map[String, List[PassableProcessParam[_ <: ProcessStub[_, _]]]] =
       candidateProcessParameters.map {
-        case (key, generators) => (key, generators.map(_.generatePassableProcesses()).flatten(flattener))
+        case (key, generators) => (key, generators)
     }
 
     new RecombinationVariantGenerator(candidateProcesses).variants
