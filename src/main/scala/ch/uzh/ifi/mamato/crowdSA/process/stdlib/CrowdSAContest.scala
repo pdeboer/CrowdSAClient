@@ -20,12 +20,13 @@ import scala.collection.mutable
 @PPLibProcess
 class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends DecideProcess[List[Answer], Answer](params) with HCompPortalAccess with InstructionHandler {
 
-    override def run(alternatives: List[Answer]): Answer = {
+  protected var votes = mutable.HashMap.empty[String, Int]
+
+  override def run(alternatives: List[Answer]): Answer = {
       if (alternatives.size == 0) null
       else if (alternatives.size == 1) alternatives.head
       else {
         val memoizer: ProcessMemoizer = getProcessMemoizer(alternatives.hashCode() + "").getOrElse(new NoProcessMemoizer())
-
 
         var paperId: Long = -1
         //TODO: useless?
@@ -79,42 +80,48 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
             100, Some(ans.mkString("$$")), Some(teams.toList))
         )
 
-        val tmpAnswers = new mutable.MutableList[String]
-        val tmpAnswers2 = new mutable.MutableList[Answer]
+        val answersValues = new mutable.MutableList[String]
+        val allAnswers = new mutable.MutableList[Answer]
 
-        val answers: List[Answer] = memoizer.mem("voting_"+tmpAnswers2.hashCode()) {
+        val answers: List[Answer] = memoizer.mem("voting_"+allAnswers.hashCode()) {
 
           val question_id = CrowdSAPortalAdapter.service.CreateQuestion(query)
-
           val postTime = new DateTime()
 
-          while (CrowdSAContest.WORKER_COUNT.get > tmpAnswers2.length){
-            logger.debug("Needed answers: " + CrowdSAContest.WORKER_COUNT.get + " - Got so far: " + tmpAnswers.length)
-
+          //TODO: Fix me (should be done by PPLib)
+          while (CrowdSAContest.WORKER_COUNT.get > allAnswers.length){
             Thread.sleep(ConfigFactory.load("application.conf").getInt("pollTimeMS"))
-
-            val answerzz = CrowdSAPortalAdapter.service.GetAnswersForQuestion(question_id)
-            answerzz.foreach(e => {
-              if (tmpAnswers2.filter(_.id == e.id).length == 0 && CrowdSAContest.WORKER_COUNT.get >= tmpAnswers.length+1) {
+            val answersSoFar = CrowdSAPortalAdapter.service.GetAnswersForQuestion(question_id)
+            answersSoFar.foreach(e => {
+              if (allAnswers.filter(_.id == e.id).length == 0 && CrowdSAContest.WORKER_COUNT.get >= allAnswers.length+1) {
                 logger.debug("Adding answer: " + e)
                 e.postTime = postTime
                 e.receivedTime = new DateTime()
                 AnswersDAO.create(e)
-                tmpAnswers2 += e
-                tmpAnswers += e.answer
-                val budget = Main.crowdSA.budget
+
+                votes.+=(e.answer -> votes.getOrElse(e.answer, 0))
+
+                allAnswers.+=(e)
+                answersValues += e.answer
+                if(e.answer!= null && e.answer != ""){
+                  CrowdSAPortalAdapter.service.ApproveAnswer(e)
+                } else {
+                  CrowdSAPortalAdapter.service.RejectAnswer(e)
+                }
                 Main.crowdSA.setBudget(Some(Main.crowdSA.budget.get-query.getQuery().suggestedPaymentCents))
               }
             })
+            logger.debug("Needed answers: " + CrowdSAContest.WORKER_COUNT.get + " - Got so far: " + answersSoFar.toList.length)
           }
 
           logger.debug("Disabling question because got enough answers")
           CrowdSAPortalAdapter.service.DisableQuestion(question_id)
 
-          tmpAnswers2.toList
+          allAnswers.toList
         }
 
-        val valueOfAnswer: String = tmpAnswers.groupBy(s => s).maxBy(s => s._2.size)._1
+        logger.debug("Votes: " + votes)
+        val valueOfAnswer: String = votes.maxBy(s => s._2)._1
         logger.info("***** WINNER CONTEST " + valueOfAnswer)
         alternatives.find(_.answer == valueOfAnswer).get
       }

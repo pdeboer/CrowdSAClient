@@ -13,7 +13,7 @@ object ExtractStatisticsRecombination {
 
   def createVotingProcesses() =
     new TypedParameterVariantGenerator[CrowdSAContest]()
-    .addVariation(CrowdSAContest.WORKER_COUNT, List(1))
+    .addVariation(CrowdSAContest.WORKER_COUNT, List(2))
     .generatePassableProcesses() /* :::
     new TypedParameterVariantGenerator[CrowdSAContestWithBeatByKVotingProcess]()
       .generatePassableProcesses[List[Answer], Answer] :::
@@ -28,7 +28,7 @@ object ExtractStatisticsRecombination {
     .addVariation(DefaultParameters.WORKER_COUNT, List(2))
     .generatePassableProcesses[CrowdSAQuery, List[Answer]] ::: */
     new TypedParameterVariantGenerator[CrowdSACollection]()
-    .addVariation(CrowdSACollection.WORKER_COUNT, List(1))
+    .addVariation(CrowdSACollection.WORKER_COUNT, List(2))
     .generatePassableProcesses()
 
 
