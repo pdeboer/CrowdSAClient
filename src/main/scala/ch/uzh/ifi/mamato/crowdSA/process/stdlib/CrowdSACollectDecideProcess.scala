@@ -26,7 +26,7 @@ class CrowdSACollectDecideProcess(_params: Map[String, Any] = Map.empty)
 
     logger.info("Running collect-phase for query: " + data)
     //Collection step
-    val collection: List[Answer] = memoizer.mem("collectProcess")(CrowdSACollectDecideProcess.COLLECT.get.create(if (CrowdSACollectDecideProcess.FORWARD_PARAMS_TO_COLLECT.get) params else Map.empty).process(data))
+    val collection: List[Answer] = memoizer.mem("collectProcess")(CrowdSACollectDecideProcess.COLLECT.get.run(data))
 
     val collectionTmpDistinct = new mutable.MutableList[String]
     val collectionDistinct = new mutable.MutableList[Answer]
@@ -43,7 +43,7 @@ class CrowdSACollectDecideProcess(_params: Map[String, Any] = Map.empty)
           -> CrowdSACollectDecideProcess.FORWARD_ANSWER_TO_DECIDE_MESSAGE.get), replace = true)
 
     //Decide step
-    val res: Answer = memoizer.mem(getClass.getSimpleName + "decideProcess")(CrowdSACollectDecideProcess.DECIDE.get.create(if (CrowdSACollectDecideProcess.FORWARD_PARAMS_TO_DECIDE.get) params else Map.empty).process(collectionDistinct.toList))
+    val res: Answer = memoizer.mem(getClass.getSimpleName + "decideProcess")(CrowdSACollectDecideProcess.DECIDE.get.run(collectionDistinct.toList))
     logger.info(s"Collect/decide for $res has finished with result $res")
     res
   }
@@ -54,8 +54,8 @@ class CrowdSACollectDecideProcess(_params: Map[String, Any] = Map.empty)
 object CrowdSACollectDecideProcess {
   val FORWARD_PARAMS_TO_COLLECT = new ProcessParameter[Boolean]("forwardParamsToCollect", Some(List(true)))
   val FORWARD_PARAMS_TO_DECIDE = new ProcessParameter[Boolean]("forwardParamsToDecide", Some(List(true)))
-  val COLLECT = new ProcessParameter[PassableProcessParam[CrowdSAQuery, List[Answer]]]("collect", None)
-  val DECIDE = new ProcessParameter[PassableProcessParam[List[Answer], Answer]]("decide", None)
+  val COLLECT = new ProcessParameter[CreateProcess[CrowdSAQuery, List[Answer]]]("collect", None)
+  val DECIDE = new ProcessParameter[DecideProcess[List[Answer], Answer]]("decide", None)
   val FORWARD_ANSWER_TO_DECIDE_PARAMETER = new ProcessParameter[Option[ProcessParameter[String]]]("forwardAnswerToDecideParameter", Some(List(None)))
   val FORWARD_ANSWER_TO_DECIDE_MESSAGE = new ProcessParameter[String]("forwardAnswerToDecideMessage", Some(List("Is the dataset identified correct?")))
 }

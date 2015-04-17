@@ -22,13 +22,16 @@ class AssessmentProcess(_params: Map[String, Any] = Map.empty)
 
     val lowerPriorityParams = params
 
-    val process = processType.create(lowerPriorityParams)
-    process.process(data)
+    //val process = processType.create(lowerPriorityParams)
+    //process.process(data)
+
+    processType.run(data)
+
   }
 
   override def expectedParametersBeforeRun: List[ProcessParameter[_]] = List(AssessmentProcess.ASSESSMENT_PROCESS)
 }
 
 object AssessmentProcess {
-  val ASSESSMENT_PROCESS = new ProcessParameter[PassableProcessParam[CrowdSAQuery, Answer]]("assessmentProcess", None)
+  val ASSESSMENT_PROCESS = new ProcessParameter[CreateProcess[CrowdSAQuery, Answer]]("assessmentProcess", None)
 }

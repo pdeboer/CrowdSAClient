@@ -11,9 +11,10 @@ import ch.uzh.ifi.pdeboer.pplib.process.recombination.{RecombinationVariantGener
  */
 object ExtractStatisticsRecombination {
 
-  def createVotingProcesses(): List[DecideProcess[List[Answer], Answer]] = new TypedParameterVariantGenerator[CrowdSAContest]()
+  def createVotingProcesses() =
+    new TypedParameterVariantGenerator[CrowdSAContest]()
     .addVariation(CrowdSAContest.WORKER_COUNT, List(1))
-    .generatePassableProcesses[List[Answer], Answer] /* :::
+    .generatePassableProcesses() /* :::
     new TypedParameterVariantGenerator[CrowdSAContestWithBeatByKVotingProcess]()
       .generatePassableProcesses[List[Answer], Answer] :::
       new TypedParameterVariantGenerator[CrowdSAContestWithStatisticalReductionProcess]()
@@ -28,12 +29,12 @@ object ExtractStatisticsRecombination {
     .generatePassableProcesses[CrowdSAQuery, List[Answer]] ::: */
     new TypedParameterVariantGenerator[CrowdSACollection]()
     .addVariation(CrowdSACollection.WORKER_COUNT, List(1))
-    .generatePassableProcesses[CrowdSAQuery, List[Answer]]
+    .generatePassableProcesses()
 
 
   def recombinations = {
 
-    val collectDecide: List[PassableProcessParam[CreateProcess[CrowdSAQuery, Answer]]] =
+    val collectDecide =
       new TypedParameterVariantGenerator[CrowdSACollectDecideProcess]()
       .addVariation(CrowdSACollectDecideProcess.FORWARD_PARAMS_TO_COLLECT, List(false))
       .addVariation(CrowdSACollectDecideProcess.FORWARD_PARAMS_TO_DECIDE, List(false))
@@ -59,7 +60,8 @@ object ExtractStatisticsRecombination {
       )
     )
 
-    val candidateProcesses = candidateProcessParameters.map {
+    val candidateProcesses =
+      candidateProcessParameters.map {
       case (key, generators) => (key, generators.map(_.generatePassableProcesses()).flatten)
     }
 

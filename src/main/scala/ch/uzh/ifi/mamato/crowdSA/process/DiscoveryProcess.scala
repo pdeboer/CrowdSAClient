@@ -22,13 +22,15 @@ class DiscoveryProcess(_params: Map[String, Any] = Map.empty)
 
     val lowerPriorityParams = params
 
-    val process = processType.create(lowerPriorityParams)
-    process.process(data)
+    //val process = processType.create(lowerPriorityParams)
+    //process.process(data)
+
+    processType.run(data)
   }
 
   override def expectedParametersBeforeRun: List[ProcessParameter[_]] = List(DiscoveryProcess.DISCOVERY_PROCESS)
 }
 
 object DiscoveryProcess {
-  val DISCOVERY_PROCESS = new ProcessParameter[PassableProcessParam[CrowdSAQuery, Answer]]("discoveryProcess", None)
+  val DISCOVERY_PROCESS = new ProcessParameter[CreateProcess[CrowdSAQuery, Answer]]("discoveryProcess", None)
 }
