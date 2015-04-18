@@ -141,7 +141,7 @@ object DBInitializer extends LazyLogger {
             sql"INSERT INTO assumptions(assumption, url) values ('Independence of Error terms', 'http://www.pages.drexel.edu/~tpm23/STAT902/DWTest.pdf');".execute.apply()
 
             sql"INSERT INTO assumptions(assumption, url) values ('Ordinal variables', null);".execute.apply()
-            sql"INSERT INTO assumptions(assumption, url) values ('Interaction between variables in dataset are present', null);".execute.apply()
+            sql"INSERT INTO assumptions(assumption, url) values ('Are there interactions between the variables in the dataset?', null);".execute.apply()
             sql"INSERT INTO assumptions(assumption, url) values ('The sample size is greater than 30', null);".execute.apply()
             sql"INSERT INTO assumptions(assumption, url) values ('The sample size is greater than 30', null);".execute.apply()
 

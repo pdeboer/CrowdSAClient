@@ -72,7 +72,7 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
         val query = new CrowdSAQuery(
           new HCompQuery {
             override def question: String = if(wasDiscoveryQuestion){
-              "The answers below were submitted by other crowd workers when asking to identify the dataset of '" + originalQuestion.get.question+ "'. Please chose the answer which you think best identifies the dataset."
+              "The answers below were submitted by other crowd workers when asking to identify the dataset of '" + originalQuestion.get.question+ "'. Please chose the answer which you think best identifies the data used by this method."
             } else {
               "The answers below were submitted by other crowd workers when asking to answer the Yes/No question: '<i><u>"+ originalQuestion.get.question+ "</u></i>'. Please chose the answer which you think is the right one."
             }
