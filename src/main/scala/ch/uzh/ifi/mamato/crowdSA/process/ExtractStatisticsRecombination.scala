@@ -23,13 +23,12 @@ object ExtractStatisticsRecombination {
       .generatePassableProcesses[List[Answer], Answer]
     */
 
-  def createCollectionProcesses() =/* new TypedParameterVariantGenerator[CrowdSACollectionWithSigmaPruning]()
+  def createCollectionProcesses() = new TypedParameterVariantGenerator[CrowdSACollection]()
+    .addVariation(CrowdSACollection.WORKER_COUNT, List(2))
+    .generatePassableProcesses()/* ::: new TypedParameterVariantGenerator[CrowdSACollectionWithSigmaPruning]()
     .addVariation(CrowdSACollectionWithSigmaPruning.PRUNE_TEXT_LENGTH, List(false))
     .addVariation(DefaultParameters.WORKER_COUNT, List(2))
-    .generatePassableProcesses[CrowdSAQuery, List[Answer]] ::: */
-    new TypedParameterVariantGenerator[CrowdSACollection]()
-    .addVariation(CrowdSACollection.WORKER_COUNT, List(2))
-    .generatePassableProcesses()
+    .generatePassableProcesses[CrowdSAQuery, List[Answer]] */
 
 
   def recombinations = {
@@ -49,11 +48,12 @@ object ExtractStatisticsRecombination {
       .generatePassableProcesses[CrowdSAQuery, Answer]
     */
 
+    // Hack to solve the .flatten problem
     val candidateProcessParameters = Map(
       (
         "discoveryProcess", new TypedParameterVariantGenerator[DiscoveryProcess]()
           .addVariation(DiscoveryProcess.DISCOVERY_PROCESS, collectDecide)
-          .generatePassableProcesses()// ::: iterativeRefinement))
+          .generatePassableProcesses()
       )
     ,
       (

@@ -157,10 +157,14 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
     }
   }
 
+  /**
+   * Create a question
+   * @param query
+   * @return -1 if error occurs, id of remote question otherwise
+   */
   def CreateQuestion(query: CrowdSAQuery): Long = {
 
     val properties = query.getProperties()
-
     //check if paper exists
     val isUploaded = get("/checkPaper/"+properties.paper_id).toBoolean
 
@@ -263,9 +267,7 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
 
   def GetAssignmentsForQuestion(question_id: Long): Iterable[Assignment] = {
     try {
-
       val jsonAssignment: JsValue = Json.parse(get("/assignments/"+question_id))
-
       val a = jsonAssignment.validate[List[Assignment]]
       a.get.toIterable
     } catch {

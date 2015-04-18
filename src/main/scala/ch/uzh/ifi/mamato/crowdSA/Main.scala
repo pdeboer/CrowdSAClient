@@ -49,7 +49,7 @@ object Main extends App with LazyLogger {
       val pdfToText = PdfUtils.getTextFromPdf(pathPdf).get
 
       //TODO: remove me
-      val maxMatches = 4
+      val maxMatches = 2
 
       // get context of statistical methods that correspond to the ones present in the database
       toMatch.foreach {
@@ -98,19 +98,19 @@ object Main extends App with LazyLogger {
       }
 
       def getXML(r: RecombinationVariant) = new SimpleRecombinationVariantXMLExporter(r).xml.toString
-
       val recombinations: List[RecombinationVariant] = ExtractStatisticsRecombination.recombinations
 
-      //populate DB if it hasn't been done yet
+      // populate DB if it hasn't been done yet
+      // To run multiple time the client at the same time, the candidate are based on the uploaded paper id.
       if (CandidateESDAO.candidates(remote_id).length == 0) {
         recombinations.zipWithIndex.map(r => ProcessCandidate(r._2, getXML(r._1)))
           .foreach(c => CandidateESDAO.insertProcessCandidate(c, remote_id))
       }
 
-      //Create the process of extraction of statistical means
+      //Create the process for the extraction of statistical means
       val extractStatisticsProcess = new ExtractStatisticsProcess(crowdSA, discoveryQuestions.toList)
 
-      //For each candidate process execute the process with the same input
+      //For each candidate process execute the process
       while (nextCandidate.isDefined) {
         val cOpt = nextCandidate
         if (cOpt.isDefined) {
@@ -153,6 +153,7 @@ object Main extends App with LazyLogger {
           Some(c(targetIndex))
         } else {
           logger.info("No more candidate to execute..")
+          logger.info("Please delete the database or run the client with a new paper.")
           None
         }
       }

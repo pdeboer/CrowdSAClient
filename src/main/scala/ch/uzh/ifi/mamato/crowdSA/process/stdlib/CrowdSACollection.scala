@@ -18,7 +18,7 @@ import scala.collection.mutable
 class CrowdSACollection(params: Map[String, Any] = Map.empty) extends CreateProcess[CrowdSAQuery, List[Answer]](params) with HCompPortalAccess with InstructionHandler {
 
   override protected def run(query: CrowdSAQuery): List[Answer] = {
-    val memoizer: ProcessMemoizer = getProcessMemoizer(query.hashCode() + "").getOrElse(new NoProcessMemoizer())
+    val memoizer: ProcessMemoizer = getProcessMemoizer(query.hashCode()+"").getOrElse(new NoProcessMemoizer())
 
     val answers: List[Answer] = memoizer.mem("answer_line_" + query) {
 
@@ -26,6 +26,7 @@ class CrowdSACollection(params: Map[String, Any] = Map.empty) extends CreateProc
       val postTime = new DateTime()
       var answerSoFar = new mutable.MutableList[Answer]
 
+      //FIXME: This should be done by PPLib
       while (CrowdSACollection.WORKER_COUNT.get > answerSoFar.length){
         Thread.sleep(ConfigFactory.load("application.conf").getInt("pollTimeMS"))
         val allAnswers = CrowdSAPortalAdapter.service.GetAnswersForQuestion(question_id)
@@ -36,6 +37,8 @@ class CrowdSACollection(params: Map[String, Any] = Map.empty) extends CreateProc
             e.receivedTime = new DateTime()
             AnswersDAO.create(e)
             answerSoFar.+=(e)
+
+            // Accept all the answers which are not empty
             if(e.answer!= null && e.answer != ""){
               CrowdSAPortalAdapter.service.ApproveAnswer(e)
             } else {
