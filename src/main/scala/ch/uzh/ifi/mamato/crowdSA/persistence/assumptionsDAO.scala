@@ -16,7 +16,7 @@ object AssumptionsDAO extends SQLSyntaxSupport[Assumption] {
 
 
   def find(id: Long)(implicit session: DBSession = autoSession): Option[Assumption] = withSQL {
-    select.from(AssumptionsDAO as p).where.eq(p.id, id)//.and.append(isNotDeleted)
+    select.from(AssumptionsDAO as p).where.eq(p.id, id)
   }.map(AssumptionsDAO(p)).single.apply()
 
   def findByAssumption(assumption: String)(implicit session: DBSession = autoSession): Option[Assumption] = withSQL {
@@ -31,7 +31,7 @@ object AssumptionsDAO extends SQLSyntaxSupport[Assumption] {
   }.map(AssumptionsDAO(p)).list.apply()
 
   def countAll()(implicit session: DBSession = autoSession): Long = withSQL {
-    select(sqls.count).from(AssumptionsDAO as p)//.where.append(isNotDeleted)
+    select(sqls.count).from(AssumptionsDAO as p)
   }.map(rs => rs.long(1)).single.apply().get
 
   def findAllBy(where: SQLSyntax)(implicit session: DBSession = autoSession): List[Assumption] = withSQL {
@@ -40,7 +40,7 @@ object AssumptionsDAO extends SQLSyntaxSupport[Assumption] {
   }.map(AssumptionsDAO(p)).list.apply()
 
   def countBy(where: SQLSyntax)(implicit session: DBSession = autoSession): Long = withSQL {
-    select(sqls.count).from(AssumptionsDAO as p).where.append(sqls"${where}")//.and.append(isNotDeleted)
+    select(sqls.count).from(AssumptionsDAO as p).where.append(sqls"${where}")
   }.map(_.long(1)).single.apply().get
 
   def create(assumption: String)(implicit session: DBSession = autoSession): Assumption = {
@@ -55,7 +55,7 @@ object AssumptionsDAO extends SQLSyntaxSupport[Assumption] {
     withSQL {
       update(AssumptionsDAO).set(
         column.assumption -> m.assumption
-      ).where.eq(column.id, m.id)//.and.isNull(column.deletedAt)
+      ).where.eq(column.id, m.id)
     }.update.apply()
     m
   }

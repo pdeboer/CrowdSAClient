@@ -28,7 +28,7 @@ class CrowdSAContestWithBeatByKVotingProcess(params: Map[String, Any] = Map.empt
 
       val memoizer: ProcessMemoizer = getProcessMemoizer(data.hashCode() + "").getOrElse(new NoProcessMemoizer())
 
-      //TODO: Ugly to fix!!
+      //TODO: Ugly need a fix
       var paperId: Long = -1
       if(data.head.answer != "") {
         paperId = CrowdSAPortalAdapter.service.getPaperIdFromAnswerId(data.head.id)
@@ -36,20 +36,9 @@ class CrowdSAContestWithBeatByKVotingProcess(params: Map[String, Any] = Map.empt
         paperId = CrowdSAPortalAdapter.service.getPaperIdFromAnswerId(data(1).id)
       }
 
-      //TODO: useless?
-      var ans = new mutable.MutableList[String]
-      data.foreach(a => {
-        if (!ans.contains(a.answer)) {
-          ans += a.answer
+      data.foreach(d => votes += (d.answer -> 0))
 
-          //Init votes
-          votes += (a.answer -> 0)
-        }
-      })
-
-      //data.foreach(d => votes += (d.answer -> 0))
-
-      val choices = if (DefaultParameters.SHUFFLE_CHOICES.get) Random.shuffle(ans) else ans
+      val choices = if (DefaultParameters.SHUFFLE_CHOICES.get) Random.shuffle(data.map{_.answer}) else data.map{_.answer}
 
       val termsHighlight = new mutable.MutableList[String]
       choices.foreach(a => termsHighlight += a.replace("#", ","))
@@ -62,7 +51,7 @@ class CrowdSAContestWithBeatByKVotingProcess(params: Map[String, Any] = Map.empt
 
           override def suggestedPaymentCents: Int = 10
         },
-        new CrowdSAQueryProperties(paperId, "Voting", HighlightDAO.create("Dataset", termsHighlight.mkString(","), -1), 10, 1000 * 60 * 60 * 24 * 365, 100, Some(ans.mkString("$$")), null)
+        new CrowdSAQueryProperties(paperId, "Voting", HighlightDAO.create("Dataset", termsHighlight.mkString(","), -1), 10, 1000 * 60 * 60 * 24 * 365, 100, Some(data.map{_.answer}.mkString("$$")), null)
       )
 
       val tmpAnswers = new mutable.MutableList[String]

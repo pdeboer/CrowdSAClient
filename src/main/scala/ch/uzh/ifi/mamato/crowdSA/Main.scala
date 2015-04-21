@@ -18,7 +18,7 @@ import scala.util.Random
  */
 
 object Main extends App with LazyLogger {
-  logger.info("**** Mattia Amato CrowdSA Client ****")
+  logger.info("**** Mattia Amato - CrowdSA Client ****")
   if(args.length != 2){
     logger.info("Please use two arguments when starting the client." +
       "The first is the path to the PDF file, the second the title of the PDF.")
@@ -41,15 +41,11 @@ object Main extends App with LazyLogger {
     val toMatch = StatMethodsDAO.findAll()
     logger.debug("Found " + toMatch.length + " statistical methods in the database")
 
-    // open pdf
-    // convert it to text
+    // open pdf and convert it to text
 
     var statMethod2ContextStatMethod = new mutable.MutableList[(String, String)]
     try {
       val pdfToText = PdfUtils.getTextFromPdf(pathPdf).get
-
-      //TODO: remove me
-      //val maxMatches = 2
 
       // get context of statistical methods that correspond to the ones present in the database
       toMatch.foreach {
@@ -58,10 +54,7 @@ object Main extends App with LazyLogger {
 
           mapp.foreach {
             p =>
-              //TODO: remove me
-              //if(statMethod2ContextStatMethod.length < maxMatches) {
-                statMethod2ContextStatMethod.+=:(sm.stat_method, p)
-              //}
+              statMethod2ContextStatMethod.+=:(sm.stat_method, p)
           }
       }
     } catch {
