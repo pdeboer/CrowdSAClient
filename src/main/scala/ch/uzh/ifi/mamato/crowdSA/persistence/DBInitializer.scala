@@ -362,7 +362,7 @@ object DBInitializer extends LazyLogger {
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (20, 'Are the pair in the dataset matched?', 'pair');".execute.apply()
 
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (21, 'There exists at least one group in the datset which is measured on three or more different occasions?', 'measured,occasions');".execute.apply()
-            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (22, 'Is the data used for the friedman test randomly sampled?', 'random,sample,population');".execute.apply()
+            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (22, 'Is the dataset randomly sampled?', 'random,sample,population');".execute.apply()
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (23, 'Is one of the dependant variable either an ordinal interval or ratio?', 'dependant,variable,ordinal,interval,ratio');".execute.apply()
 
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (24, 'Are the data quantitatively described?', 'data,quantitative');".execute.apply()
