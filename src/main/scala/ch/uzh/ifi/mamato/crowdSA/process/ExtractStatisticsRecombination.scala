@@ -1,7 +1,5 @@
 package ch.uzh.ifi.mamato.crowdSA.process
 
-import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.CrowdSAQuery
-import ch.uzh.ifi.mamato.crowdSA.model.Answer
 import ch.uzh.ifi.mamato.crowdSA.process.stdlib._
 import ch.uzh.ifi.pdeboer.pplib.process.entities._
 import ch.uzh.ifi.pdeboer.pplib.process.recombination.{RecombinationVariantGenerator, TypedParameterVariantGenerator}
@@ -13,7 +11,7 @@ object ExtractStatisticsRecombination {
 
   def createVotingProcesses() =
     new TypedParameterVariantGenerator[CrowdSAContest]()
-    .addVariation(CrowdSAContest.WORKER_COUNT, List(3))
+    .addVariation(CrowdSAContest.WORKER_COUNT, List(1))
     .generatePassableProcesses() /* :::
     new TypedParameterVariantGenerator[CrowdSAContestWithBeatByKVotingProcess]()
       .generatePassableProcesses[List[Answer], Answer] :::
@@ -24,7 +22,7 @@ object ExtractStatisticsRecombination {
     */
 
   def createCollectionProcesses() = new TypedParameterVariantGenerator[CrowdSACollection]()
-    .addVariation(CrowdSACollection.WORKER_COUNT, List(3))
+    .addVariation(CrowdSACollection.WORKER_COUNT, List(1))
     .generatePassableProcesses()/* ::: new TypedParameterVariantGenerator[CrowdSACollectionWithSigmaPruning]()
     .addVariation(CrowdSACollectionWithSigmaPruning.PRUNE_TEXT_LENGTH, List(false))
     .addVariation(DefaultParameters.WORKER_COUNT, List(2))
