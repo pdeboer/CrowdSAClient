@@ -16,3 +16,5 @@ dist
 /.settings
 src/main/resources/*.pdf
 src/main/resources/*.conf
+
+test/main/resources/*.pdf
