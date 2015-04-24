@@ -95,7 +95,7 @@ object DBInitializer extends LazyLogger {
             sql"INSERT INTO stat_methods(stat_method) values ('correlation');".execute.apply()
             sql"INSERT INTO stat_methods(stat_method) values ('mann-whitney test');".execute.apply()
             sql"INSERT INTO stat_methods(stat_method) values ('wilcoxon signed-ranks test');".execute.apply()
-            sql"INSERT INTO stat_methods(stat_method) values ('krusakal-wallis test');".execute.apply()
+            sql"INSERT INTO stat_methods(stat_method) values ('kruskal-wallis test');".execute.apply()
             sql"INSERT INTO stat_methods(stat_method) values ('mcnemar');".execute.apply()
 
             sql"INSERT INTO stat_methods(stat_method) values ('friedman');".execute.apply()
