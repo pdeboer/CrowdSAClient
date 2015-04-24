@@ -2,7 +2,7 @@ name := "crowdsaClient"
 
 version := "1.0"
 
-scalaVersion := "2.11.5"
+scalaVersion := "2.11.6"
 
 libraryDependencies += "pdeboer" % "pplib_2.11" % "0.1-SNAPSHOT"
 
@@ -27,5 +27,15 @@ libraryDependencies ++= Seq(
   "org.scalikejdbc" %% "scalikejdbc-config"  % "2.2.2"
 )
 
-
 resolvers += Resolver.file("Local repo", file(System.getProperty("user.home") + "/.ivy2/local"))(Resolver.ivyStylePatterns)
+
+mainClass in assembly := Some("ch.uzh.ifi.mamato.crowdSA.Main")
+
+//assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeScala = true)
+
+assemblyMergeStrategy in assembly := {
+  case "log4j.properties"                            => MergeStrategy.concat
+  case x =>
+    val oldStrategy = (assemblyMergeStrategy in assembly).value
+    oldStrategy(x)
+}
