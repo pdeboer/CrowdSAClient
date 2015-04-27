@@ -1,26 +1,15 @@
 package ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa
 
-import ch.uzh.ifi.mamato.crowdSA.model.{Answer, Question}
-import ch.uzh.ifi.mamato.crowdSA.persistence.QuestionDAO
-import ch.uzh.ifi.mamato.crowdSA.util.{HttpRestClient, LazyLogger}
 import java.util.Date
-import ch.uzh.ifi.pdeboer.pplib.hcomp.{HCompAnswer, HCompQueryProperties, HCompQuery}
-import ch.uzh.ifi.pdeboer.pplib.util.GrowingTimer
-import com.typesafe.config.ConfigFactory
-import org.apache.http.entity.mime.MultipartEntityBuilder
-import org.apache.http.entity.mime.content.StringBody
-import org.apache.http.message.BasicNameValuePair
-import org.apache.http.{NameValuePair, HttpEntity}
-import org.apache.http.client.config.RequestConfig
-import org.apache.http.client.entity.EntityBuilder
-import org.apache.http.client.methods.{HttpGet, HttpPost}
-import org.apache.http.util.EntityUtils
-import org.joda.time.format.ISODateTimeFormat
-import org.joda.time.{DateTime, DateTimeZone, Seconds}
 
-import scala.collection
-import scala.collection.parallel.mutable
+import ch.uzh.ifi.mamato.crowdSA.model.Answer
+import ch.uzh.ifi.mamato.crowdSA.persistence.StatMethodsDAO
+import ch.uzh.ifi.mamato.crowdSA.util.LazyLogger
+import com.typesafe.config.ConfigFactory
+import org.joda.time.DateTime
+
 import scala.concurrent.duration._
+import scala.util.Random
 
 /**
  * Created by Mattia on 20.01.2015.
@@ -39,9 +28,12 @@ class CrowdSAManager(val service: CrowdSAService, val qu: CrowdSAQuery) extends 
     try {
       (1 to 100000).view.foreach(i => {
         Thread.sleep(ConfigFactory.load("application.conf").getInt("pollTimeMS"))
+
+        avoidDBConnectionTimeout()
+
         answer = poll()
         if (cancelled || answer.isDefined){
-          throw new Exception("I'm actually not an Exception")
+          throw new scala.Exception("I'm actually not an Exception")
         }
       })
     }
@@ -51,6 +43,12 @@ class CrowdSAManager(val service: CrowdSAService, val qu: CrowdSAQuery) extends 
       }
     }
     answer
+  }
+
+  private def avoidDBConnectionTimeout(): Unit = {
+    if (Random.nextDouble() < 0.1) {
+      StatMethodsDAO.findAll()
+    }
   }
 
   /**POST a question to the server
