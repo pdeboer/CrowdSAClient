@@ -48,9 +48,10 @@ object Main extends App with LazyLogger {
       val pdfToText = PdfUtils.getTextFromPdf(pathPdf).get
 
       // get context of statistical methods that correspond to the ones present in the database
+      val pdfTextInUpperCase: String = pdfToText.toUpperCase()
       toMatch.foreach {
         sm =>
-          val mapp = PdfUtils.findContextMatch(pdfToText.toUpperCase(), sm.stat_method.toUpperCase())
+          val mapp = PdfUtils.findContextMatch(pdfTextInUpperCase, sm.stat_method.toUpperCase())
 
           mapp.foreach {
             p =>

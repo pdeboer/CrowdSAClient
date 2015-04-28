@@ -1,28 +1,23 @@
 package ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa
 
 import java.io.File
+import java.nio.charset.Charset
 import java.util.Date
 
-import ch.uzh.ifi.mamato.crowdSA.model.{Dataset, Answer, Assignment, Question}
+import ch.uzh.ifi.mamato.crowdSA.model.{Answer, Assignment, Dataset, Question}
 import ch.uzh.ifi.mamato.crowdSA.persistence.{HighlightDAO, PaperDAO, QuestionDAO}
 import ch.uzh.ifi.mamato.crowdSA.util.{HttpRestClient, LazyLogger}
-import com.fasterxml.jackson.core.`type`.TypeReference
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.typesafe.config.ConfigFactory
 import org.apache.http.client.config.RequestConfig
+import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpPost}
 import org.apache.http.client.protocol.HttpClientContext
 import org.apache.http.entity.ContentType
-import org.apache.http.util.EntityUtils
-import org.apache.http.{HttpEntity, NameValuePair}
-import org.apache.http.client.methods.{CloseableHttpResponse, HttpPost, HttpGet}
 import org.apache.http.entity.mime.MultipartEntityBuilder
 import org.apache.http.entity.mime.content.{FileBody, StringBody}
 import org.apache.http.message.BasicNameValuePair
-import play.api.libs.json.{JsError, JsSuccess, JsValue, Json}
-import scalikejdbc._
-
-import scala.collection.mutable
-import scala.util.parsing.json.JSON
+import org.apache.http.util.EntityUtils
+import org.apache.http.{HttpEntity, NameValuePair}
+import play.api.libs.json.{JsValue, Json}
 
 /**
  * Created by Mattia on 20.01.2015.
@@ -66,7 +61,7 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
 
     val reqEntity = MultipartEntityBuilder.create()
     for(n <- params){
-      reqEntity.addPart(n.getName, new StringBody(n.getValue, ContentType.TEXT_PLAIN))
+      reqEntity.addPart(n.getName, new StringBody(n.getValue, "text/plain", Charset.forName("UTF-8")))
     }
 
     httpPost.setEntity(reqEntity.build())

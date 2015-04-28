@@ -112,6 +112,7 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends 
                   CrowdSAPortalAdapter.service.RejectAnswer(answer)
                 }
                 // Keep track of the cost. This should be done by PPLib.
+                // PDB: It's done by PPLib. Check out CostCountingEnabledHCompPortal
                 Main.crowdSA.setBudget(Some(Main.crowdSA.budget.get-query.getQuery().suggestedPaymentCents))
               }
             })
