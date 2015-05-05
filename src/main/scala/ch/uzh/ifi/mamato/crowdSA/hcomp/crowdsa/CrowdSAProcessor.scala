@@ -16,84 +16,85 @@ import scala.util.Random
  */
 class CrowdSAManager(val service: CrowdSAService, val qu: CrowdSAQuery) extends LazyLogger {
 
-  var questionId : Long= 0
-  var cancelled: Boolean = false
+	var questionId: Long = 0
+	var cancelled: Boolean = false
 
-  def waitForResponse() : Option[Answer] = {
-    def durationIn(unit: TimeUnit): FiniteDuration = {
-      durationIn(SECONDS)
-    }
+	def waitForResponse(): Option[Answer] = {
+		def durationIn(unit: TimeUnit): FiniteDuration = {
+			durationIn(SECONDS)
+		}
 
-    var answer: Option[Answer] = None
-    try {
-      (1 to 100000).view.foreach(i => {
-        Thread.sleep(ConfigFactory.load("application.conf").getInt("pollTimeMS"))
+		var answer: Option[Answer] = None
+		try {
+			(1 to 100000).view.foreach(i => {
+				Thread.sleep(ConfigFactory.load("application.conf").getInt("pollTimeMS"))
 
-        avoidDBConnectionTimeout()
+				avoidDBConnectionTimeout()
 
-        answer = poll()
-        if (cancelled || answer.isDefined){
-          throw new scala.Exception("I'm actually not an Exception")
-        }
-      })
-    }
-    catch {
-      case e: Exception => {
-        /*hopefully we land here*/
-      }
-    }
-    answer
-  }
+				answer = poll()
+				if (cancelled || answer.isDefined) {
+					throw new scala.Exception("I'm actually not an Exception")
+				}
+			})
+		}
+		catch {
+			case e: Exception => {
+				/*hopefully we land here*/
+			}
+		}
+		answer
+	}
 
-  private def avoidDBConnectionTimeout(): Unit = {
-    if (Random.nextDouble() < 0.1) {
-      StatMethodsDAO.findAll()
-    }
-  }
-
-  /**POST a question to the server
-   * @return question id
-   */
-  def createQuestion() : Long = {
-    questionId = service.CreateQuestion(qu)
-    questionId
-  }
-
-  def cancelQuestion(): Unit = {
-    service.DisableQuestion(questionId)
-    cancelled = true
-  }
-
-  def poll(): Option[Answer] = {
-		val answers = service.GetAnswersForQuestion(questionId)
-		answers.lastOption match {
-      case None => None
-      case Some(a: Answer) => handleAnswerResult(a)
+	private def avoidDBConnectionTimeout(): Unit = {
+		if (Random.nextDouble() < 0.1) {
+			logger.info("executing query to avoid a DB timeout on this connection")
+			StatMethodsDAO.findAll()
 		}
 	}
 
-  def handleAnswerResult(a: Answer): Option[Answer] = {
-    logger.debug("Got an answer: " + a.answer)
-    try {
-      //We approve all NON EMPTY answers by default.
-      if(a.answer != null && a.answer!="") {
-        service.ApproveAnswer(a)
+	/** POST a question to the server
+	  * @return question id
+	  */
+	def createQuestion(): Long = {
+		questionId = service.CreateQuestion(qu)
+		questionId
+	}
 
-      } else {
-        service.RejectAnswer(a)
-      }
+	def cancelQuestion(): Unit = {
+		service.DisableQuestion(questionId)
+		cancelled = true
+	}
 
-      a.acceptTime = Option(new DateTime(new Date(service.getAssignmentForAnswerId(a.id).created_at)))
-      a.submitTime = Option(new DateTime(new Date(a.created_at)))
+	def poll(): Option[Answer] = {
+		val answers = service.GetAnswersForQuestion(questionId)
+		answers.lastOption match {
+			case None => None
+			case Some(a: Answer) => handleAnswerResult(a)
+		}
+	}
 
-      Some(a)
-    }
-    catch {
-      case e: Exception => {
-        logger.error("could not approve assignment", e)
-        None
-      }
-    }
-  }
+	def handleAnswerResult(a: Answer): Option[Answer] = {
+		logger.debug("Got an answer: " + a.answer)
+		try {
+			//We approve all NON EMPTY answers by default.
+			if (a.answer != null && a.answer != "") {
+				service.ApproveAnswer(a)
+
+			} else {
+				service.RejectAnswer(a)
+			}
+
+			a.acceptTime = Option(new DateTime(new Date(service.getAssignmentForAnswerId(a.id).created_at)))
+			a.submitTime = Option(new DateTime(new Date(a.created_at)))
+
+			Some(a)
+		}
+		catch {
+			case e: Exception => {
+				logger.error("could not approve assignment", e)
+				None
+			}
+		}
+	}
 
 }
