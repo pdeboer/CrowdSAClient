@@ -15,7 +15,8 @@ import scala.collection.mutable
  */
 
 @PPLibProcess
-class CrowdSACollection(params: Map[String, Any] = Map.empty) extends CreateProcess[CrowdSAQuery, List[Answer]](params) with HCompPortalAccess with InstructionHandler {
+class CrowdSACollection(params: Map[String, Any] = Map.empty)
+  extends CreateProcess[CrowdSAQuery, List[Answer]](params) with HCompPortalAccess with InstructionHandler {
 
   override protected def run(query: CrowdSAQuery): List[Answer] = {
     val memoizer: ProcessMemoizer = getProcessMemoizer(query.hashCode()+"").getOrElse(new NoProcessMemoizer())

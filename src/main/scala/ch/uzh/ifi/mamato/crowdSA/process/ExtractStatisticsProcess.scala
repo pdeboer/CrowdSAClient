@@ -8,6 +8,7 @@ import ch.uzh.ifi.mamato.crowdSA.model._
 import ch.uzh.ifi.mamato.crowdSA.persistence._
 import ch.uzh.ifi.mamato.crowdSA.util.{LazyLogger, PdfUtils}
 import ch.uzh.ifi.pdeboer.pplib.hcomp.HCompQuery
+import ch.uzh.ifi.pdeboer.pplib.process.entities.ProcessStub
 import ch.uzh.ifi.pdeboer.pplib.process.recombination.{Recombinable, RecombinationVariant, SimpleRecombinationVariantXMLExporter}
 import ch.uzh.ifi.pdeboer.pplib.util.CollectionUtils._
 
@@ -238,10 +239,11 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
 		}
 	}
 
-	override def allRecombinationKeys: List[String] = List("discoveryProcess")
+	def allRecombinationKeys: List[String] = List("discoveryProcess")
 
 	private class ProcessVariant(decorated: RecombinationVariant) extends RecombinationVariant(decorated.stubs) {
 		def createDiscovery = decorated.createProcess[CrowdSAQuery, Answer]("discoveryProcess")
 	}
 
+  override def requiredProcessDefinitions: Map[String, Class[_ <: ProcessStub[_, _]]] = Map.empty
 }

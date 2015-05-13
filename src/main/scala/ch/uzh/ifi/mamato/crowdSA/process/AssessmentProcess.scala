@@ -10,7 +10,7 @@ import ch.uzh.ifi.pdeboer.pplib.process.entities._
 
 @PPLibProcess
 class AssessmentProcess(_params: Map[String, Any] = Map.empty)
-  extends CreateProcess[CrowdSAQuery, Answer](_params) {
+  extends CreateProcess[CrowdSAQuery, Answer](_params) with HCompPortalAccess with InstructionHandler{
 
   /**
    * Run an Assessment Process. This process will create all the questions to test if an assumption hold for a certain

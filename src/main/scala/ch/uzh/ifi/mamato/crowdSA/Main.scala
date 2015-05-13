@@ -20,7 +20,7 @@ import scala.util.Random
 object Main extends App with LazyLogger {
   logger.info("**** Mattia Amato - CrowdSA Client ****")
   if(args.length != 2){
-    logger.info("Please use two arguments when starting the client." +
+    logger.info("Please use two arguments when starting the client. " +
       "The first is the path to the PDF file, the second the title of the PDF.")
     System.exit(0)
   }

@@ -13,7 +13,7 @@ import scala.collection.mutable
 
 @PPLibProcess
 class CrowdSACollectDecideProcess(_params: Map[String, Any] = Map.empty)
-  extends CreateProcess[CrowdSAQuery, Answer](_params) {
+  extends CreateProcess[CrowdSAQuery, Answer](_params) with HCompPortalAccess with InstructionHandler {
 
   import ch.uzh.ifi.pdeboer.pplib.process.stdlib.CollectDecideProcess._
 

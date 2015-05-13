@@ -2,7 +2,7 @@ package ch.uzh.ifi.mamato.crowdSA.process
 
 import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.CrowdSAQuery
 import ch.uzh.ifi.mamato.crowdSA.model.Answer
-import ch.uzh.ifi.pdeboer.pplib.process.entities.{PassableProcessParam, ProcessParameter, CreateProcess, PPLibProcess}
+import ch.uzh.ifi.pdeboer.pplib.process.entities._
 
 /**
  * Created by mattia on 06.03.15.
@@ -10,7 +10,7 @@ import ch.uzh.ifi.pdeboer.pplib.process.entities.{PassableProcessParam, ProcessP
 
 @PPLibProcess
 class DiscoveryProcess(_params: Map[String, Any] = Map.empty)
-  extends CreateProcess[CrowdSAQuery, Answer](_params) {
+  extends CreateProcess[CrowdSAQuery, Answer](_params) with HCompPortalAccess with InstructionHandler{
 
   /**
    * Run the Discovery Process which ask to identify the dataset of a statistical method.

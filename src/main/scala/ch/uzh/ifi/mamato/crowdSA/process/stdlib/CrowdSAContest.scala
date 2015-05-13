@@ -18,7 +18,8 @@ import scala.collection.mutable
  * This class is based on the example (Summarize Application) provided by Patrick de Boer
  */
 @PPLibProcess
-class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any]) extends DecideProcess[List[Answer], Answer](params) with HCompPortalAccess with InstructionHandler {
+class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any])
+  extends DecideProcess[List[Answer], Answer](params) with HCompPortalAccess with InstructionHandler {
 
   protected var votes = mutable.HashMap.empty[String, Int]
 
