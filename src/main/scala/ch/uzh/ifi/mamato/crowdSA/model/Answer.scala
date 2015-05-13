@@ -11,7 +11,7 @@ import play.api.libs.functional.syntax._
  * Created by Mattia on 04.01.2015.
  */
 
-case class Answer(id: Long, answer: String, created_at: Long,
+case class Answer(id: Long, answer: String, created_at: Long, is_method_used: Boolean,
                   accepted: Option[Boolean], bonus_cts: Option[Int],
                   rejected: Option[Boolean], assignments_id: Long) extends HCompAnswer with Serializable with Prunable {
   override def toString() = answer
@@ -33,6 +33,7 @@ object Answer {
         "id" -> a.id,
         "answer" -> a.answer,
         "created_at" -> a.created_at,
+        "is_method_used" -> a.is_method_used,
         "accepted" -> a.accepted,
         "bonus_cts" -> a.bonus_cts,
         "rejected" -> a.rejected,
@@ -45,6 +46,7 @@ object Answer {
     (JsPath \ "id").read[Long] and
       (JsPath \ "answer").read[String] and
       (JsPath \ "created_at").read[Long] and
+      (JsPath \ "is_method_used").read[Boolean] and
       (JsPath \ "accepted").read[Option[Boolean]] and
       (JsPath \ "bonus_cts").read[Option[Int]] and
       (JsPath \ "rejected").read[Option[Boolean]] and

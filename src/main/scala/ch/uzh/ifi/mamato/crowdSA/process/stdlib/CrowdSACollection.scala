@@ -42,7 +42,10 @@ class CrowdSACollection(params: Map[String, Any] = Map.empty)
             // Accept all the answers which are not empty
             if(e.answer!= null && e.answer != ""){
               CrowdSAPortalAdapter.service.ApproveAnswer(e)
+            } else if(e.answer != null && e.answer == "" && !e.is_method_used) {
+              CrowdSAPortalAdapter.service.ApproveAnswer(e)
             } else {
+              // Reject only if the answer is empty and the method is known to be used
               CrowdSAPortalAdapter.service.RejectAnswer(e)
             }
             Main.crowdSA.setBudget(Some(Main.crowdSA.budget.get-query.getQuery().suggestedPaymentCents))

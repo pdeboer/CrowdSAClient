@@ -10,7 +10,9 @@ object AnswersDAO extends SQLSyntaxSupport[Answer] {
   override val tableName = "Answers"
 
   def apply(p: SyntaxProvider[Answer])(rs: WrappedResultSet): Answer = apply(p.resultName)(rs)
-  def apply(p: ResultName[Answer])(rs: WrappedResultSet): Answer = new Answer(rs.long(p.id), rs.string(p.answer), rs.long(p.created_at), rs.booleanOpt(p.accepted),rs.intOpt(p.bonus_cts), rs.booleanOpt(p.rejected), rs.long(p.assignments_id))
+  def apply(p: ResultName[Answer])(rs: WrappedResultSet): Answer = new Answer(rs.long(p.id), rs.string(p.answer),
+    rs.long(p.created_at), rs.boolean(p.is_method_used), rs.booleanOpt(p.accepted),rs.intOpt(p.bonus_cts),
+    rs.booleanOpt(p.rejected), rs.long(p.assignments_id))
 
   val p = AnswersDAO.syntax("p")
 
@@ -49,6 +51,7 @@ object AnswersDAO extends SQLSyntaxSupport[Answer] {
         column.id -> answer.id,
         column.answer -> answer.answer,
         column.created_at -> answer.created_at,
+        column.is_method_used -> answer.is_method_used,
         column.accepted -> answer.accepted,
         column.bonus_cts -> answer.bonus_cts,
         column.rejected -> answer.rejected,

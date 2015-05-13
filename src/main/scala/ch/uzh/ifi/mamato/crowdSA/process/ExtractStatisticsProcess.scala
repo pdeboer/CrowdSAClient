@@ -62,7 +62,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
 			}
 
 			// If the dataset exists, the statistical method is NOT a false positive
-			if (datasetConverged.answer != "") {
+			if (datasetConverged.answer != "" && datasetConverged.is_method_used == true) {
 				logger.debug("***** result DISCOVERY STEP")
 				// Try to create the dataset if it doesn't yet exists!
 				var datasetId: Long = -1
@@ -111,10 +111,15 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
 						})
 					}
 				}
-			} else {
+			} else if(datasetConverged.answer == "" && datasetConverged.is_method_used == false) {
 				this.synchronized {
-					logger.debug("Skip dataset because was a false match.")
-					result += "\n** Dataset for statistical method: " + stat_method + " was a false positive.**\n"
+					logger.debug("Skip dataset because method is not used on the paper.")
+					result += "\n** Dataset for statistical method: " + stat_method + " is not used on the paper.**\n"
+				}
+			} else if(datasetConverged.answer == "" && datasetConverged.is_method_used == true){
+				this.synchronized {
+					logger.debug("Skip dataset because not found on the paper.")
+					result += "\n** Dataset for statistical method: " + stat_method + " could not be identified in the paper.**\n"
 				}
 			}
 

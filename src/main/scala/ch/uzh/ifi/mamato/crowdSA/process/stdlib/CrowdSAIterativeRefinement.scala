@@ -26,7 +26,7 @@ class CrowdSAIterativeRefinementProcess(params: Map[String, Any] = Map.empty) ex
     val driver = new CrowdSAIRDefaultHCompDriver(portal, query.getQuery().question, query.getQuery().title, query.getProperties().paper_id, CrowdSAIterativeRefinementProcess.VOTING_PROCESS_TYPE.get, 10, query.hashCode.toString)
 
     // Create an empty answer (will be used to get the paper Id)
-    val initAnswer = new Answer(-1, "", new Date().getTime, None, None, None, -1)
+    val initAnswer = new Answer(-1, "", new Date().getTime, true, None, None, None, -1)
     initAnswer.receivedTime = new DateTime()
 
     val exec = new CrowdSAIterativeRefinementExecutor(initAnswer, query, driver, 20, memoizer, query.hashCode.toString)
