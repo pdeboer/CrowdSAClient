@@ -41,7 +41,7 @@ class CrowdSAContestWithBeatByKVotingProcess(params: Map[String, Any] = Map.empt
       val choices = if (DefaultParameters.SHUFFLE_CHOICES.get) Random.shuffle(data.map{_.answer}) else data.map{_.answer}
 
       val termsHighlight = new mutable.MutableList[String]
-      choices.foreach(a => termsHighlight += a.replace("#", ","))
+      choices.foreach(a => termsHighlight += a)
 
       val query = new CrowdSAQuery(
         new HCompQuery {
@@ -51,7 +51,7 @@ class CrowdSAContestWithBeatByKVotingProcess(params: Map[String, Any] = Map.empt
 
           override def suggestedPaymentCents: Int = 10
         },
-        new CrowdSAQueryProperties(paperId, "Voting", HighlightDAO.create("Dataset", termsHighlight.mkString(","), -1), 10, 1000 * 60 * 60 * 24 * 365, 100, Some(data.map{_.answer}.mkString("$$")), null)
+        new CrowdSAQueryProperties(paperId, "Voting", HighlightDAO.create("Dataset", termsHighlight.mkString("#"), "", -1), 10, 1000 * 60 * 60 * 24 * 365, 100, Some(data.map{_.answer}.mkString("$$")), null)
       )
 
       val tmpAnswers = new mutable.MutableList[String]

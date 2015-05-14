@@ -11,7 +11,8 @@ object HighlightDAO extends SQLSyntaxSupport[Highlight] {
   override val tableName = "highlights"
 
   def apply(p: SyntaxProvider[Highlight])(rs: WrappedResultSet): Highlight = apply(p.resultName)(rs)
-  def apply(p: ResultName[Highlight])(rs: WrappedResultSet): Highlight = new Highlight(rs.long(p.id), rs.string(p.assumption), rs.string(p.terms), rs.long(p.remoteQuestionId))
+  def apply(p: ResultName[Highlight])(rs: WrappedResultSet): Highlight = new Highlight(rs.long(p.id),
+    rs.string(p.assumption), rs.string(p.terms), rs.string(p.dataset), rs.long(p.remoteQuestionId))
 
   val p = HighlightDAO.syntax("p")
 
@@ -44,11 +45,12 @@ object HighlightDAO extends SQLSyntaxSupport[Highlight] {
     select(sqls.count).from(HighlightDAO as p).where.append(sqls"${where}")//.and.append(isNotDeleted)
   }.map(_.long(1)).single.apply().get
 
-  def create(assumption: String, terms: String, remoteQuestionId: Long)(implicit session: DBSession = autoSession): Highlight = {
+  def create(assumption: String, terms: String, dataset: String, remoteQuestionId: Long)(implicit session: DBSession = autoSession): Highlight = {
     val id = withSQL {
       insert.into(HighlightDAO).namedValues(
         column.assumption -> assumption,
         column.terms -> terms,
+        column.dataset -> dataset,
         column.remoteQuestionId -> remoteQuestionId)
     }.updateAndReturnGeneratedKey.apply()
     find(id).get

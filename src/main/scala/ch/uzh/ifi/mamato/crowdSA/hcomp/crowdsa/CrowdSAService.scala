@@ -201,6 +201,7 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
             params += new BasicNameValuePair("questionId", remote_question_id.toString)
             params += new BasicNameValuePair("assumption", properties.highlight.assumption)
             params += new BasicNameValuePair("terms", properties.highlight.terms)
+            params += new BasicNameValuePair("dataset", properties.highlight.dataset)
             logger.debug("Adding highlight returned: " + post("/highlight", params.toList))
             HighlightDAO.save(properties.highlight.id, remote_question_id)
           }

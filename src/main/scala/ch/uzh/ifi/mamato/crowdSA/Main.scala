@@ -84,7 +84,7 @@ object Main extends App with LazyLogger {
             override def suggestedPaymentCents: Int = 10
           }
 
-          val highlight = HighlightDAO.create("Discovery", m._2, -1)
+          val highlight = HighlightDAO.create("Discovery", m._2, "", -1)
           val properties = new CrowdSAQueryProperties(remote_id, "Discovery", highlight, 10,
             ((new Date().getTime() / 1000) + 60 * 60 * 24 * 365),
             100, Some(""), null)

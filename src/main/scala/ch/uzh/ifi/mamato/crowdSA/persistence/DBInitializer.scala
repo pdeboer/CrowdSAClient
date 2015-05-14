@@ -58,7 +58,7 @@ object DBInitializer extends LazyLogger {
       catch {
         case e: java.sql.SQLException =>
           DB autoCommit { implicit s =>
-            sql"CREATE TABLE highlights (id BIGINT NOT NULL AUTO_INCREMENT, assumption VARCHAR(255) NOT NULL, terms VARCHAR(10000) NOT NULL,remote_question_id BIGINT NOT NULL, PRIMARY KEY(id));".execute().apply()
+            sql"CREATE TABLE highlights (id BIGINT NOT NULL AUTO_INCREMENT, assumption VARCHAR(255) NOT NULL, terms VARCHAR(10000) NOT NULL, dataset VARCHAR(10000) NOT NULL, remote_question_id BIGINT NOT NULL, PRIMARY KEY(id));".execute().apply()
           }
           logger.debug("Table Highlights created!")
       }

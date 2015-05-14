@@ -81,7 +81,7 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any])
             override def suggestedPaymentCents: Int = 10
           },
           new CrowdSAQueryProperties(paperId, "Voting",
-            HighlightDAO.create("Dataset", toHighlight, -1),
+            HighlightDAO.create("Dataset", toHighlight, "", -1),
             10, ((new Date().getTime()/1000) + 60*60*24*365),
             100, Some(answersText.mkString("$$")), Some(teams.toList))
         )

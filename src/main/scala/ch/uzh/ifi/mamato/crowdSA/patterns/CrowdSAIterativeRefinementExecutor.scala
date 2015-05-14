@@ -60,8 +60,8 @@ class CrowdSAIRDefaultHCompDriver(portal: HCompPortalAdapter, quest: String, sta
 
   override def refine(originalTextToRefine: Answer, currentRefinementState: Answer, iterationId: Int): Answer = {
 
-    var toHighlight = currentRefinementState.answer.replaceAll("#", ",")
-    toHighlight = toHighlight+","+stat_method
+    var toHighlight = currentRefinementState.answer
+    toHighlight = toHighlight+"#"+stat_method
 
     val toRefine = currentRefinementState.answer
     val query = new CrowdSAQuery(
@@ -72,7 +72,7 @@ class CrowdSAIRDefaultHCompDriver(portal: HCompPortalAdapter, quest: String, sta
 
         override def suggestedPaymentCents: Int = 10
       },
-      new CrowdSAQueryProperties(paperId, "Discovery", HighlightDAO.create("Dataset", toHighlight, -1), 10, 1000*60*60*24*365, 100, Some(toRefine), null)
+      new CrowdSAQueryProperties(paperId, "Discovery", HighlightDAO.create("Dataset", toHighlight, "", -1), 10, 1000*60*60*24*365, 100, Some(toRefine), null)
     )
 
     val answer = portal.sendQueryAndAwaitResult(query.getQuery(), query.getProperties()).get.is[Answer]

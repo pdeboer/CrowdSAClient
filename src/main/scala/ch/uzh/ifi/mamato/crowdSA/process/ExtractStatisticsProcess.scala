@@ -169,7 +169,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
 						override def suggestedPaymentCents: Int = 10
 					}, new CrowdSAQueryProperties(paper_id, "Boolean",
 						HighlightDAO.create("DatasetWithAssumptionTest",
-							datasetConverged.answer + "#" + b.test_names.replaceAll(",", "#"), -1),
+							b.test_names.replaceAll(",", "#"), datasetConverged.answer, -1),
 						10, ((new Date().getTime() / 1000) + 60 * 60 * 24 * 365),
 						100, Some(""), null)))
 
@@ -222,7 +222,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
 					override def suggestedPaymentCents: Int = 10
 				}, new CrowdSAQueryProperties(paper_id, "Boolean",
 					HighlightDAO.create("DatasetWithGeneralAssumption",
-						datasetConverged.answer + "#" + assumption, -1), 10,
+						assumption, datasetConverged.answer, -1), 10,
 					((new Date().getTime() / 1000) + 60 * 60 * 24 * 365), 100, Some(""), null)))
 
 			//Update the list of assumption to test with the generic converged answer
