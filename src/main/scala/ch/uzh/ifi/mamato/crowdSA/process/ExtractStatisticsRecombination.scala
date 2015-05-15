@@ -59,6 +59,12 @@ object ExtractStatisticsRecombination {
           .addVariation(AssessmentProcess.ASSESSMENT_PROCESS, collectDecide)
           .generatePassableProcesses()
       )
+    ,
+      (
+        "missingProcess", new TypedParameterVariantGenerator[MissingProcess]()
+        .addVariation(MissingProcess.MISSING_PROCESS, createCollectionProcesses())
+        .generatePassableProcesses()
+      )
     )
 
     val candidateProcesses: Map[String, List[PassableProcessParam[_ <: ProcessStub[_, _]]]] =

@@ -4,6 +4,7 @@ import java.util.Date
 
 import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAQuery, CrowdSAQueryProperties, CrowdSAPortalAdapter}
 import ch.uzh.ifi.mamato.crowdSA.persistence._
+import ch.uzh.ifi.mamato.crowdSA.process.stdlib.CrowdSACollection
 import ch.uzh.ifi.mamato.crowdSA.process.{ExtractStatisticsRecombination, ExtractStatisticsProcess}
 import ch.uzh.ifi.mamato.crowdSA.util.{PdfUtils, LazyLogger}
 import ch.uzh.ifi.pdeboer.pplib.hcomp.{HCompQuery, HComp}
@@ -71,10 +72,23 @@ object Main extends App with LazyLogger {
 
       val discoveryQuestions = new mutable.MutableList[CrowdSAQuery]
 
-      // create DISCOVERY questions for each statistical method that matched
+      // create MISSING question
+      var findMissingMethods: CrowdSAQuery = null
+      val missingMethodsQuery = new HCompQuery {
+        override def question: String = "Please find all the methods which are not highlighted on the paper"
 
+        override def title: String = "MissingMethods"
+
+        override def suggestedPaymentCents: Int = 10
+      }
+
+      var missingMethodsTerms = ""
+
+      // create DISCOVERY questions for each statistical method that matched
       statMethod2ContextStatMethod.foreach {
         m =>
+          missingMethodsTerms += m._2 + "#"
+
           logger.debug("Creating DISCOVERY question for match: " + m._1)
           val query = new HCompQuery {
             override def question: String = "Method: <u><i> " + m._1 + " </i></u>"
@@ -88,8 +102,15 @@ object Main extends App with LazyLogger {
           val properties = new CrowdSAQueryProperties(remote_id, "Discovery", highlight, 10,
             ((new Date().getTime() / 1000) + 60 * 60 * 24 * 365),
             100, Some(""), null)
+
+          // Add to the data structure: the question as well as the properties
           discoveryQuestions += new CrowdSAQuery(query, properties)
       }
+
+
+      findMissingMethods = new CrowdSAQuery(missingMethodsQuery, new CrowdSAQueryProperties(remote_id, "Missing",
+        HighlightDAO.create("Missing",missingMethodsTerms, "", -1), 10,
+        ((new Date().getTime()/1000 ) + 60*60*24*365), 100, Some(""), null))
 
       def getXML(r: RecombinationVariant) = new SimpleRecombinationVariantXMLExporter(r).xml.toString
       val recombinations: List[RecombinationVariant] = ExtractStatisticsRecombination.recombinations
@@ -102,7 +123,7 @@ object Main extends App with LazyLogger {
       }
 
       //Create the process for the extraction of statistical means
-      val extractStatisticsProcess = new ExtractStatisticsProcess(crowdSA, discoveryQuestions.toList)
+      val extractStatisticsProcess = new ExtractStatisticsProcess(crowdSA, discoveryQuestions.toList, findMissingMethods)
 
       //For each candidate process execute the process
       while (nextCandidate.isDefined) {

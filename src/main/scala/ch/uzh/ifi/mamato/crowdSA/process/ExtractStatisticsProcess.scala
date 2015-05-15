@@ -20,7 +20,7 @@ import scala.collection.mutable
  * one, the second phase starts.
  * Created by mattia on 27.02.15.
  */
-class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuestion: List[CrowdSAQuery])
+class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion: List[CrowdSAQuery], val missingQuestion: CrowdSAQuery)
 	extends Recombinable[String] with LazyLogger {
 
 	/**
@@ -50,7 +50,17 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, val discoveryQuest
 		// From each discovery question we will get at the end only one answer.
 		// Parallel ask all the discovery questions
 		discoveryQuestion.mpar.foreach(d => {
+
 			val paper_id = d.getProperties().paper_id
+
+      // FIXME: Before asking last discovery question, ask the missing question
+      if(d == discoveryQuestion.last){
+        // Create missing question
+        val missingMethods = v.createProcess[CrowdSAQuery, Answer]("missingProcess").process(missingQuestion)
+        this.synchronized{
+          result = "* Methods which were not automatically identified:\n " + missingMethods.answer.replaceAll("#", "\n* - ")
+        }
+      }
 			val datasetConverged = v.createProcess[CrowdSAQuery, Answer]("discoveryProcess").process(d)
 
 			// FIXME: ugly! - used to identify the statistical method of the discovery question
