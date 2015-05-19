@@ -132,9 +132,6 @@ class CrowdSAContestWithStatisticalReductionProcess(params: Map[String, Any] = M
 
   protected def confidence = CrowdSAContestWithStatisticalReductionProcess.CONFIDENCE_PARAMETER.get
 
-  override val processCategoryNames: List[String] = List("selectbest.statistical")
-
-
   override def optionalParameters: List[ProcessParameter[_]] =
     List(CrowdSAContestWithStatisticalReductionProcess.CONFIDENCE_PARAMETER,
       DefaultParameters.SHUFFLE_CHOICES,

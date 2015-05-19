@@ -37,7 +37,8 @@ class CrowdSACollection(params: Map[String, Any] = Map.empty)
             e.postTime = postTime
             e.receivedTime = new DateTime()
             AnswersDAO.create(e)
-            answerSoFar.+=(e)
+            answerSoFar += e
+
 
             // Accept all the answers which are not empty
             if(e.answer!= null && e.answer != ""){
