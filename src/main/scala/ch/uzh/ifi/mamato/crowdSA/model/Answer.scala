@@ -18,7 +18,8 @@ case class Answer(id: Long, answer: String, created_at: Long, is_method_used: Bo
 
   override def query: HCompQuery = null
 
-  override def processingTimeMillis: Long = submitTime.getOrElse(receivedTime).getMillis - acceptTime.getOrElse(new DateTime(created_at)).getMillis
+  override def processingTimeMillis: Long = submitTime.getOrElse(receivedTime).getMillis -
+    acceptTime.getOrElse(new DateTime(created_at)).getMillis
 
   override def prunableDouble = processingTimeMillis.toDouble
 

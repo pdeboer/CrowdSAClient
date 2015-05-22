@@ -76,14 +76,7 @@ class CrowdSAContestWithStatisticalReductionProcess(params: Map[String, Any] = M
 
     val service = CrowdSAPortalAdapter.service
     val paperId = service.getPaperIdFromAnswerId(answerId)
-    val query = new CrowdSAQuery(
-      new HCompQuery {
-        override def question: String = "Please select the answer that best represent the dataset"
-
-        override def title: String = "Voting"
-
-        override def suggestedPaymentCents: Int = 10
-      },
+    val query = new CrowdSAQuery("Please select the answer that best represent the dataset",10,
       new CrowdSAQueryProperties(paperId, "Voting",
         null,
         10, 1000 * 60 * 60 * 24 * 365, 100, Some(alternatives.mkString("$$")), null)
@@ -98,7 +91,7 @@ class CrowdSAContestWithStatisticalReductionProcess(params: Map[String, Any] = M
     val answers: List[Answer] = memoizer.mem("voting_" + tmpAnswers2.hashCode()) {
 
       logger.info("started first iteration ")
-      val firstAnswer = portal.sendQueryAndAwaitResult(query.getQuery(), query.getProperties()).get.is[Answer]
+      val firstAnswer = portal.sendQueryAndAwaitResult(query, query.properties).get.is[Answer]
       firstAnswer.receivedTime = new DateTime()
       tmpAnswers2 += firstAnswer
       firstAnswer.answer.split("$$").foreach(b => {

@@ -159,7 +159,7 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
    */
   def CreateQuestion(query: CrowdSAQuery): Long = {
 
-    val properties = query.getProperties()
+    val properties = query.properties
     //check if paper exists
     val isUploaded = get("/checkPaper/"+properties.paper_id).toBoolean
 
@@ -169,9 +169,9 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
         //post the question and get remote id
         val date = (new Date()).getTime/1000
         val params = new collection.mutable.MutableList[NameValuePair]
-        params += new BasicNameValuePair("question", query.getQuery().question)
+        params += new BasicNameValuePair("question", query.question)
         params += new BasicNameValuePair("question_type", properties.question_type)
-        params += new BasicNameValuePair("reward_cts", properties.reward_cts.toString)
+        params += new BasicNameValuePair("reward_cts", properties.paymentCents.toString)
         params += new BasicNameValuePair("created_at", date.toString)
         params += new BasicNameValuePair("papers_id", properties.paper_id.toString)
         params += new BasicNameValuePair("expiration_time_sec", properties.expiration_time_sec.toString)
@@ -187,7 +187,7 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
           logger.debug("Question posted with remote id: " + remote_question_id)
 
           //create question object and store it in the local DB
-          val qId = QuestionDAO.create(query.getQuery().question, properties.question_type, properties.reward_cts, date,
+          val qId = QuestionDAO.create(query.question, properties.question_type, properties.paymentCents, date,
             properties.paper_id, remote_question_id, properties.maximal_assignments, properties.expiration_time_sec, null)
 
           if(qId > 0) {

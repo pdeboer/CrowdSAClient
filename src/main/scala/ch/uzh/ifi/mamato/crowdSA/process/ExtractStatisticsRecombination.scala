@@ -11,7 +11,7 @@ object ExtractStatisticsRecombination {
 
   def createVotingProcesses() =
     new TypedParameterVariantGenerator[CrowdSAContest]()
-    .addVariation(CrowdSAContest.WORKER_COUNT, List(1))
+    .addVariation(CrowdSAContest.WORKER_COUNT, List(2))
     .generatePassableProcesses() /* :::
     new TypedParameterVariantGenerator[CrowdSAContestWithBeatByKVotingProcess]()
       .generatePassableProcesses[List[Answer], Answer] :::
@@ -22,7 +22,7 @@ object ExtractStatisticsRecombination {
     */
 
   def createCollectionProcesses() = new TypedParameterVariantGenerator[CrowdSACollection]()
-    .addVariation(CrowdSACollection.WORKER_COUNT, List(1))
+    .addVariation(CrowdSACollection.WORKER_COUNT, List(2))
     .generatePassableProcesses()/* ::: new TypedParameterVariantGenerator[CrowdSACollectionWithSigmaPruning]()
     .addVariation(CrowdSACollectionWithSigmaPruning.PRUNE_TEXT_LENGTH, List(false))
     .addVariation(DefaultParameters.WORKER_COUNT, List(2))
@@ -33,8 +33,8 @@ object ExtractStatisticsRecombination {
 
     val collectDecide =
       new TypedParameterVariantGenerator[CrowdSACollectDecideProcess]()
-      .addVariation(CrowdSACollectDecideProcess.FORWARD_PARAMS_TO_COLLECT, List(false))
-      .addVariation(CrowdSACollectDecideProcess.FORWARD_PARAMS_TO_DECIDE, List(false))
+      .addVariation(CrowdSACollectDecideProcess.FORWARD_PARAMS_TO_COLLECT, List(true))
+      .addVariation(CrowdSACollectDecideProcess.FORWARD_PARAMS_TO_DECIDE, List(true))
       .addVariation(CrowdSACollectDecideProcess.FORWARD_ANSWER_TO_DECIDE_PARAMETER, List(None))
       .addVariation(CrowdSACollectDecideProcess.COLLECT, createCollectionProcesses())
       .addVariation(CrowdSACollectDecideProcess.DECIDE, createVotingProcesses())

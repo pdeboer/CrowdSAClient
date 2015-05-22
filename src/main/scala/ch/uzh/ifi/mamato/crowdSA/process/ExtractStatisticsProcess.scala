@@ -8,7 +8,7 @@ import ch.uzh.ifi.mamato.crowdSA.model._
 import ch.uzh.ifi.mamato.crowdSA.persistence._
 import ch.uzh.ifi.mamato.crowdSA.util.{LazyLogger, PdfUtils}
 import ch.uzh.ifi.pdeboer.pplib.hcomp.HCompQuery
-import ch.uzh.ifi.pdeboer.pplib.process.entities.ProcessStub
+import ch.uzh.ifi.pdeboer.pplib.process.entities.{Patch, ProcessStub}
 import ch.uzh.ifi.pdeboer.pplib.process.recombination.{Recombinable, RecombinationVariant, SimpleRecombinationVariantXMLExporter}
 import ch.uzh.ifi.pdeboer.pplib.util.CollectionUtils._
 
@@ -20,7 +20,7 @@ import scala.collection.mutable
  * one, the second phase starts.
  * Created by mattia on 27.02.15.
  */
-class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion: List[CrowdSAQuery], val missingQuestion: CrowdSAQuery)
+class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion: List[Patch])
 	extends Recombinable[String] with LazyLogger {
 
 	/**
@@ -35,7 +35,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 		val processes = new ProcessVariant(v)
 
 		// Complex datastructure to store [dataset, statistical method, assumption, List[converged answers]]
-		val datasetAssumptionTested = new mutable.MutableList[(Long, String, String, mutable.MutableList[Answer])]
+		val datasetAssumptionTested = new mutable.MutableList[(Long, String, String, mutable.MutableList[Patch])]
 
 		var result = ""
 		this.synchronized {
@@ -51,93 +51,99 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 		// Parallel ask all the discovery questions
 		discoveryQuestion.mpar.foreach(d => {
 
-			val paper_id = d.getProperties().paper_id
+			val paper_id = d.auxiliaryInformation("paperId").asInstanceOf[Long]
 
-      // FIXME: Before asking last discovery question, ask the missing question
-      if(d == discoveryQuestion.last){
-        // Create missing question
-        val missingMethods = v.createProcess[CrowdSAQuery, Answer]("missingProcess").process(missingQuestion)
+      if(d.auxiliaryInformation("type").asInstanceOf[String].equalsIgnoreCase("Missing")){
+        val missingMethods = v.createProcess[Patch, Patch]("missingProcess").process(d)
         this.synchronized{
-          result = "* Methods which were not automatically identified:\n " + missingMethods.answer.replaceAll("#", "\n* - ")
+          result = "* Methods which were not automatically identified are found in:\n " +
+            missingMethods.auxiliaryInformation.get("answer").asInstanceOf[Answer].answer.replaceAll("#", "\n* - ")
         }
+      } else {
+        val datasetConverged = v.createProcess[Patch, Patch]("discoveryProcess").process(d)
+
+        // FIXME: ugly! - used to identify the statistical method of the discovery question
+        var stat_method = ""
+        var statMethod: Option[StatMethod] = None
+        this.synchronized {
+          val question = d.auxiliaryInformation("question").asInstanceOf[String]
+          stat_method = question.substring(question.indexOf("<i> ") + 4, question.indexOf(" </i>"))
+          statMethod = StatMethodsDAO.findByStatMethod(stat_method)
+        }
+
+        // If the dataset exists, the statistical method is NOT a false positive
+        val answer = AnswersDAO.find(datasetConverged.auxiliaryInformation("id").asInstanceOf[Long]).get
+        if (answer.answer != "" && answer.is_method_used == true) {
+          logger.debug("***** result DISCOVERY STEP")
+          // Try to create the dataset if it doesn't yet exists!
+          var datasetId: Long = -1
+          this.synchronized {
+            datasetId = CrowdSAPortalAdapter.service.createDataset(answer.id)
+          }
+
+          // **** Start the second phase of the process ****
+          // Once we have defined a dataset we can start to ask the questions for the assumptions.
+          // get the questions to be asked (assumption for each statistical method that has a match)
+
+          // Search if the assumption phase was already started for the actual statistical method and the dataset id
+          if (datasetStatMethod.filter(_._1 == datasetId).filter(_._2 == stat_method).length == 0) {
+            this.synchronized {
+              // Store in the map so that we know this statistical method
+              // was already tested for the assumption on the dataset id
+              datasetStatMethod.+=:(datasetId, stat_method)
+            }
+            // Getting assumptions for statistical method
+            StatMethod2AssumptionDAO.findByStatMethodId(statMethod.get.id).mpar.foreach(e => {
+              // Check if the assumption test name is present in the pdf.
+              val assumption = AssumptionsDAO.find(e.assumption_id).get.assumption
+              logger.info("Running assumption step")
+              checkAssumption(assumption, e, paper_id, answer,
+                datasetAssumptionTested,
+                v, datasetId, stat_method, answer.answer)
+            })
+
+            // Evaluate the results once the process is ended
+            this.synchronized {
+              var allFalse = true
+              result += "\n* Dataset id: " + datasetId + "\n"
+              result += "* - Method: " + stat_method + "\n"
+              datasetAssumptionTested.foreach(elem => {
+                if (elem._1 == datasetId && elem._2 == stat_method) {
+                  result += "* -- Assumption: " + elem._3 + "\n"
+                  elem._4.foreach(assump => {
+                    if (assump.auxiliaryInformation("answer").asInstanceOf[String] == "true") {
+                      allFalse = false
+                    }
+                  })
+                  if (allFalse) {
+                    result += "* --- FAIL\n"
+                  } else {
+                    result += "* --- OK\n"
+                  }
+                }
+              })
+            }
+          }
+        } else if (answer.answer == "" && answer.is_method_used == false) {
+          this.synchronized {
+            logger.debug("Skip dataset because method is not used on the paper.")
+            result += "\n** Dataset for statistical method: " + stat_method + " is not used on the paper.**\n"
+          }
+        } else if (answer.answer == "" && answer.is_method_used == true) {
+          this.synchronized {
+            logger.debug("Skip dataset because not found on the paper.")
+            result += "\n** Dataset for statistical method: " + stat_method + " could not be identified in the paper.**\n"
+          }
+        }
+
       }
-			val datasetConverged = v.createProcess[CrowdSAQuery, Answer]("discoveryProcess").process(d)
 
-			// FIXME: ugly! - used to identify the statistical method of the discovery question
-			var stat_method = ""
-			var statMethod: Option[StatMethod] = None
-			this.synchronized {
-				stat_method = d.query.question.substring(d.query.question.indexOf("<i> ") + 4, d.query.question.indexOf(" </i>"))
-				statMethod = StatMethodsDAO.findByStatMethod(stat_method)
-			}
+    })
 
-			// If the dataset exists, the statistical method is NOT a false positive
-			if (datasetConverged.answer != "" && datasetConverged.is_method_used == true) {
-				logger.debug("***** result DISCOVERY STEP")
-				// Try to create the dataset if it doesn't yet exists!
-				var datasetId: Long = -1
-				this.synchronized {
-					datasetId = CrowdSAPortalAdapter.service.createDataset(datasetConverged.id)
-				}
+    result += "\n\n**** End of recombination."
+    logger.info(result)
+    result
 
-				// **** Start the second phase of the process ****
-				// Once we have defined a dataset we can start to ask the questions for the assumptions.
-				// get the questions to be asked (assumption for each statistical method that has a match)
-
-				// Search if the assumption phase was already started for the actual statistical method and the dataset id
-				if (datasetStatMethod.filter(_._1 == datasetId).filter(_._2 == stat_method).length == 0) {
-					this.synchronized {
-						// Store in the map so that we know this statistical method
-						// was already tested for the assumption on the dataset id
-						datasetStatMethod.+=:(datasetId, stat_method)
-					}
-					// Getting assumptions for statistical method
-					StatMethod2AssumptionDAO.findByStatMethodId(statMethod.get.id).mpar.foreach(e => {
-						// Check if the assumption test name is present in the pdf.
-						val assumption = AssumptionsDAO.find(e.assumption_id).get.assumption
-						logger.info("Running assumption step")
-						checkAssumption(assumption, e, paper_id, datasetConverged, datasetAssumptionTested, v, datasetId, stat_method)
-					})
-
-					// Evaluate the results once the process is ended
-					this.synchronized {
-						var allFalse = true
-						result += "\n* Dataset id: " + datasetId + "\n"
-						result += "* - Method: " + stat_method + "\n"
-						datasetAssumptionTested.foreach(elem => {
-							if (elem._1 == datasetId && elem._2 == stat_method) {
-								result += "* -- Assumption: " + elem._3 + "\n"
-								elem._4.foreach(assump => {
-									if (assump.answer == "true") {
-										allFalse = false
-									}
-								})
-								if (allFalse) {
-									result += "* --- FAIL\n"
-								} else {
-									result += "* --- OK\n"
-								}
-							}
-						})
-					}
-				}
-			} else if(datasetConverged.answer == "" && datasetConverged.is_method_used == false) {
-				this.synchronized {
-					logger.debug("Skip dataset because method is not used on the paper.")
-					result += "\n** Dataset for statistical method: " + stat_method + " is not used on the paper.**\n"
-				}
-			} else if(datasetConverged.answer == "" && datasetConverged.is_method_used == true){
-				this.synchronized {
-					logger.debug("Skip dataset because not found on the paper.")
-					result += "\n** Dataset for statistical method: " + stat_method + " could not be identified in the paper.**\n"
-				}
-			}
-
-		})
-
-		result += "\n\n**** End of recombination."
-		logger.info(result)
-		result
 	}
 
 	/**
@@ -153,8 +159,8 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 	 */
 	def checkAssumption(assumption: String, e: StatMethod2Assumption,
 						paper_id: Long, datasetConverged: Answer,
-						datasetAssumptionTested: mutable.MutableList[(Long, String, String, mutable.MutableList[Answer])],
-						v: RecombinationVariant, dataset_id: Long, statMethod: String) = {
+						datasetAssumptionTested: mutable.MutableList[(Long, String, String, mutable.MutableList[Patch])],
+						v: RecombinationVariant, dataset_id: Long, statMethod: String, dataset: String) = {
 		logger.debug("Analyzing paper for assumption: " + assumption)
 
 		var pdfContainsAssumption = false
@@ -169,19 +175,21 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 				this.synchronized {
 					pdfContainsAssumption = true
 				}
+				val p = new Patch(b.question)
+        p.auxiliaryInformation += (
+          "question" -> b.question,
+          "type" -> "Boolean",
+          "dataset" -> datasetConverged.answer,
+          "terms" -> (b.test_names.replaceAll(",", "#")+dataset),
+          "paperId" -> paper_id,
+          "rewardCts" -> 10,
+          "expirationTimeSec" -> ((new Date().getTime() / 1000) + 60 * 60 * 24 * 365),
+          "assumption" -> "DatasetWithAssumptionTest",
+          "maxAssignments" -> 100
+          )
+
 				// If a match is found for the assumption ask the question!
-				val converged = v.createProcess[CrowdSAQuery, Answer]("assessmentProcess").process(
-					new CrowdSAQuery(new HCompQuery {
-						override def question: String = b.question
-
-						override def title: String = b.id.toString
-
-						override def suggestedPaymentCents: Int = 10
-					}, new CrowdSAQueryProperties(paper_id, "Boolean",
-						HighlightDAO.create("DatasetWithAssumptionTest",
-							b.test_names.replaceAll(",", "#"), datasetConverged.answer, -1),
-						10, ((new Date().getTime() / 1000) + 60 * 60 * 24 * 365),
-						100, Some(""), null)))
+				val converged = v.createProcess[Patch, Patch]("assessmentProcess").process(p)
 
 				// Add converged answer to the assumption to test
 				this.synchronized {
@@ -194,13 +202,14 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 						}
 					})
 					if (!found) {
-						val list = new mutable.MutableList[Answer]
-						list.+=(converged)
+						val list = new mutable.MutableList[Patch]
+						list += converged
 						datasetAssumptionTested.+=:((dataset_id, statMethod, assumption, list))
 					}
 				}
 
-				logger.debug("Assessment step for question: " + b.question + " converged to answer: " + converged.answer)
+				logger.debug("Assessment step for question: " + b.question + " converged to answer: " +
+          converged.auxiliaryInformation("answer").asInstanceOf[String])
 			}
 		})
 
@@ -209,7 +218,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 			datasetAssumptionTested.foreach(a => {
 				if (a._1 == dataset_id && a._2 == statMethod && a._3 == assumption) {
 					a._4.foreach(ans => {
-						if (ans.answer.equalsIgnoreCase("true")) {
+						if (ans.auxiliaryInformation("answer").asInstanceOf[String].equalsIgnoreCase("true")) {
 							allFalse = false
 						}
 					})
@@ -223,17 +232,22 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 			logger.debug("No match found for assumption: " + assumption)
 
 			logger.debug("Asking general question for assumption: " + assumption)
-			val converged = v.createProcess[CrowdSAQuery, Answer]("assessmentProcess").process(
-				new CrowdSAQuery(new HCompQuery {
-					override def question: String = "Is the dataset highlighted in the paper tested for the assumption: <i>" + assumption + "</i>?"
 
-					override def title: String = assumption
+      val question = "Is the dataset highlighted in the paper tested for the assumption: <i>" + assumption + "</i>?"
+			val pp = new Patch(question)
+      pp.auxiliaryInformation += (
+        "question" -> question,
+        "type" -> "Boolean",
+        "dataset" -> datasetConverged.answer,
+        "terms" -> assumption,
+        "paperId" -> paper_id,
+        "rewardCts" -> 10,
+        "expirationTimeSec" -> ((new Date().getTime() / 1000) + 60 * 60 * 24 * 365),
+        "assumption" -> "DatasetWithGeneralAssumption",
+        "maxAssignments" -> 100
+        )
 
-					override def suggestedPaymentCents: Int = 10
-				}, new CrowdSAQueryProperties(paper_id, "Boolean",
-					HighlightDAO.create("DatasetWithGeneralAssumption",
-						assumption, datasetConverged.answer, -1), 10,
-					((new Date().getTime() / 1000) + 60 * 60 * 24 * 365), 100, Some(""), null)))
+			val converged = v.createProcess[Patch, Patch]("assessmentProcess").process(pp)
 
 			//Update the list of assumption to test with the generic converged answer
 			this.synchronized {
@@ -241,23 +255,24 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 				datasetAssumptionTested.foreach(a => {
 					if (a._1 == dataset_id && a._2 == statMethod && a._3 == assumption) {
 						found = true
-						a._4.+=:(converged)
+						a._4 += converged
 					}
 				})
 				if (!found) {
-					val list = new mutable.MutableList[Answer]
-					list.+=(converged)
+					val list = new mutable.MutableList[Patch]
+					list += converged
 					datasetAssumptionTested.+=:((dataset_id, statMethod, assumption, list))
 				}
 			}
-			logger.debug("Assessment step for general question about: " + assumption + " converged to answer: " + converged.answer)
+			logger.debug("Assessment step for general question about: " + assumption + " converged to answer: " +
+				converged.auxiliaryInformation("answer").asInstanceOf[String])
 		}
 	}
 
 	def allRecombinationKeys: List[String] = List("discoveryProcess")
 
 	private class ProcessVariant(decorated: RecombinationVariant) extends RecombinationVariant(decorated.stubs) {
-		def createDiscovery = decorated.createProcess[CrowdSAQuery, Answer]("discoveryProcess")
+		def createDiscovery = decorated.createProcess[Patch, Patch]("discoveryProcess")
 	}
 
   override def requiredProcessDefinitions: Map[String, Class[_ <: ProcessStub[_, _]]] = Map.empty

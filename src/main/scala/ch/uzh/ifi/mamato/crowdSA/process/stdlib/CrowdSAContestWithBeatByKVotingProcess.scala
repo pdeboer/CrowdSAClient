@@ -14,14 +14,15 @@ import scala.util.Random
  * This class is based on the example (Summarize Application) provided by Patrick de Boer
  */
 @PPLibProcess
-class CrowdSAContestWithBeatByKVotingProcess(params: Map[String, Any] = Map.empty[String, Any]) extends DecideProcess[List[Answer], Answer](params) with HCompPortalAccess with InstructionHandler {
+class CrowdSAContestWithBeatByKVotingProcess(params: Map[String, Any] = Map.empty[String, Any])
+  extends DecideProcess[List[Patch], Patch](params) with HCompPortalAccess with InstructionHandler {
 
   import ch.uzh.ifi.pdeboer.pplib.process.stdlib.ContestWithBeatByKVotingProcess._
   import scala.collection.mutable
 
   protected var votes = mutable.HashMap.empty[String, Int]
 
-  override protected def run(data: List[Answer]): Answer = {
+  override protected def run(data: List[Patch]): Patch = {
     if (data.size == 1) data(0)
     else if (data.size == 0) null
     else {
@@ -30,46 +31,41 @@ class CrowdSAContestWithBeatByKVotingProcess(params: Map[String, Any] = Map.empt
 
       //TODO: Ugly need a fix
       var paperId: Long = -1
-      if(data.head.answer != "") {
-        paperId = CrowdSAPortalAdapter.service.getPaperIdFromAnswerId(data.head.id)
+      if(data.head.auxiliaryInformation.get("answer").asInstanceOf[String] != "") {
+        paperId = CrowdSAPortalAdapter.service.getPaperIdFromAnswerId(data.head.auxiliaryInformation.get("id").asInstanceOf[Long])
       } else {
-        paperId = CrowdSAPortalAdapter.service.getPaperIdFromAnswerId(data(1).id)
+        paperId = CrowdSAPortalAdapter.service.getPaperIdFromAnswerId(data(1).auxiliaryInformation.get("id").asInstanceOf[Long])
       }
 
-      data.foreach(d => votes += (d.answer -> 0))
+      data.foreach(d => votes += (d.auxiliaryInformation.get("answer").asInstanceOf[String] -> 0))
 
-      val choices = if (DefaultParameters.SHUFFLE_CHOICES.get) Random.shuffle(data.map{_.answer}) else data.map{_.answer}
+      val choices = if (DefaultParameters.SHUFFLE_CHOICES.get) Random.shuffle(data.map{_.auxiliaryInformation.get("answer").asInstanceOf[String]}) else data.map{_.auxiliaryInformation.get("answer").asInstanceOf[String]}
 
       val termsHighlight = new mutable.MutableList[String]
       choices.foreach(a => termsHighlight += a)
 
-      val query = new CrowdSAQuery(
-        new HCompQuery {
-          override def question: String = "Please select the best answer"
-
-          override def title: String = "Voting"
-
-          override def suggestedPaymentCents: Int = 10
-        },
-        new CrowdSAQueryProperties(paperId, "Voting", HighlightDAO.create("Dataset", termsHighlight.mkString("#"), "", -1), 10, 1000 * 60 * 60 * 24 * 365, 100, Some(data.map{_.answer}.mkString("$$")), null)
+      val query = new CrowdSAQuery("Please select the best answer", 10,
+        new CrowdSAQueryProperties(paperId, "Voting",
+          HighlightDAO.create("Dataset", termsHighlight.mkString("#"), "", -1), 10, 1000 * 60 * 60 * 24 * 365, 100,
+          Some(data.map{_.auxiliaryInformation.get("answer").asInstanceOf[String]}.mkString("$$")), null)
       )
 
       val tmpAnswers = new mutable.MutableList[String]
-      val tmpAnswers2 = new mutable.MutableList[Answer]
+      val tmpAnswers2 = new mutable.MutableList[Patch]
       var globalIteration: Int = 0
 
-      val answers: List[Answer] = memoizer.mem("voting_" + tmpAnswers2.hashCode()) {
+      val answers: List[Patch] = memoizer.mem("voting_" + tmpAnswers2.hashCode()) {
 
         logger.info("started first iteration ")
-        val firstAnswer = portal.sendQueryAndAwaitResult(query.getQuery(), query.getProperties()).get.is[Answer]
-        firstAnswer.receivedTime = new DateTime()
+        val firstAnswer = portal.sendQueryAndAwaitResult(query, query.properties).get.is[Patch]
+        firstAnswer.auxiliaryInformation += ("receivedTime" -> new DateTime())
         tmpAnswers2 += firstAnswer
-        firstAnswer.answer.split("$$").foreach(b => {
+        firstAnswer.auxiliaryInformation.get("answer").asInstanceOf[String].split("$$").foreach(b => {
           tmpAnswers += b
           votes += b -> votes.getOrElse(b, 0)
         })
 
-        val question_id = CrowdSAPortalAdapter.service.getAssignmentForAnswerId(firstAnswer.id).remote_question_id
+        val question_id = CrowdSAPortalAdapter.service.getAssignmentForAnswerId(firstAnswer.auxiliaryInformation.get("id").asInstanceOf[Long]).remote_question_id
 
         CrowdSAContestWithBeatByKVotingProcess.WORKER_COUNT.get.foreach( w =>
           while (shouldStartAnotherIteration) {
@@ -78,10 +74,14 @@ class CrowdSAContestWithBeatByKVotingProcess(params: Map[String, Any] = Map.empt
             Thread.sleep(5000)
             val answerzz = CrowdSAPortalAdapter.service.GetAnswersForQuestion(question_id)
             answerzz.foreach(e => {
-              if (tmpAnswers2.filter(_.id == e.id).length == 0 && w >= tmpAnswers.length + 1) {
+              if (tmpAnswers2.filter(_.auxiliaryInformation.get("id").asInstanceOf[Long] == e.id).length == 0 && w >= tmpAnswers.length + 1) {
                 println("Adding answer: " + e)
                 e.receivedTime = new DateTime()
-                tmpAnswers2 += e
+                val p = new Patch("")
+                p.auxiliaryInformation += ("answer" -> e.answer)
+                p.auxiliaryInformation += ("receivedTime" -> e.receivedTime)
+
+                tmpAnswers2 += p
                 e.answer.split("$$").foreach(b => {
                   tmpAnswers += b
                   votes += b -> votes.getOrElse(b, 0)
@@ -95,11 +95,11 @@ class CrowdSAContestWithBeatByKVotingProcess(params: Map[String, Any] = Map.empt
       }
 
       //Adding answers that had 0 votes
-      tmpAnswers2.foreach(d => votes += (d.answer -> 0))
+      tmpAnswers2.foreach(d => votes += (d.auxiliaryInformation.get("answer").asInstanceOf[String] -> 0))
 
       val winner = bestAndSecondBest._1._1
       logger.info(s"beat-by-k finished after $globalIteration rounds. Winner: " + winner)
-      data.find(_.answer == winner).get
+      data.find(_.auxiliaryInformation.get("answer").asInstanceOf[String] == winner).get
     }
   }
 

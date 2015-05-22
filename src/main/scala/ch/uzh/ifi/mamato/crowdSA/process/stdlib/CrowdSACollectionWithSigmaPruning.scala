@@ -2,6 +2,7 @@ package ch.uzh.ifi.mamato.crowdSA.process.stdlib
 
 import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAQuery, CrowdSAPortalAdapter}
 import ch.uzh.ifi.mamato.crowdSA.model.Answer
+import ch.uzh.ifi.pdeboer.pplib.hcomp.HCompAnswer
 import ch.uzh.ifi.pdeboer.pplib.patterns.pruners.{SigmaCalculator, SigmaPruner}
 import ch.uzh.ifi.pdeboer.pplib.process.entities._
 import org.joda.time.DateTime
@@ -14,19 +15,22 @@ import scala.collection.mutable
  */
 
 @PPLibProcess
-class CrowdSACollectionWithSigmaPruning(params: Map[String, Any] = Map.empty) extends CreateProcess[CrowdSAQuery, List[Answer]](params) with HCompPortalAccess with InstructionHandler {
+class CrowdSACollectionWithSigmaPruning(params: Map[String, Any] = Map.empty)
+  extends CreateProcess[Patch, List[Patch]](params) with HCompPortalAccess with InstructionHandler {
 
   import ch.uzh.ifi.pdeboer.pplib.process.stdlib.CollectionWithSigmaPruning._
-  override protected def run(query: CrowdSAQuery): List[Answer] = {
+  override protected def run(query: Patch): List[Patch] = {
     val memoizer: ProcessMemoizer = getProcessMemoizer(query.hashCode() + "").getOrElse(new NoProcessMemoizer())
     logger.info("running contest with sigma pruning for patch " + query)
 
     val tmpAnswers = new mutable.MutableList[Answer]
 
-    val answers: List[Answer] = memoizer.mem("answer_line_" + query) {
-      val firstAnswer = portal.sendQueryAndAwaitResult(query.getQuery(), query.getProperties()).get.is[Answer]
+    val answers: List[Patch] = memoizer.mem("answer_line_" + query) {
+      val q = query.auxiliaryInformation.get("CrowdSAQuery").asInstanceOf[CrowdSAQuery]
+      val firstAnswer = portal.sendQueryAndAwaitResult(q, q.properties).get.is[Answer]
 
-      val question_id = CrowdSAPortalAdapter.service.getAssignmentForAnswerId(firstAnswer.id).remote_question_id
+      val question_id = CrowdSAPortalAdapter.service.getAssignmentForAnswerId(
+        firstAnswer.id).remote_question_id
       tmpAnswers += firstAnswer
       CrowdSACollectionWithSigmaPruning.WORKER_COUNT.get.foreach(w => {
         while (w > tmpAnswers.length) {
@@ -43,21 +47,30 @@ class CrowdSACollectionWithSigmaPruning(params: Map[String, Any] = Map.empty) ex
         }
         tmpAnswers.toList
       })
-      tmpAnswers.toList
+      var res = new mutable.MutableList[Patch]
+      tmpAnswers.foreach(an => {
+        val p = new Patch("")
+        p.auxiliaryInformation += ("answer" -> an.answer)
+        p.auxiliaryInformation += ("id" -> an.id)
+        res += p
+      })
+      res.toList
     }
 
     val timeWithinSigma: List[Answer] = new SigmaPruner(CrowdSACollectionWithSigmaPruning.NUM_SIGMAS.get).prune(tmpAnswers.toList)
       logger.info(s"TIME MEASURE: pruned ${answers.size - timeWithinSigma.size} answers for patch " + query)
 
       val withinSigma = if (CrowdSACollectionWithSigmaPruning.PRUNE_TEXT_LENGTH.get) {
-        val calc = new SigmaCalculator(timeWithinSigma.map(_.is[Answer].answer.length.toDouble), NUM_SIGMAS.get)
+        val calc = new SigmaCalculator(timeWithinSigma.map(
+          _.asInstanceOf[Patch].auxiliaryInformation.get("answer").asInstanceOf[String].length.toDouble),
+          NUM_SIGMAS.get)
         timeWithinSigma.filter(a => {
-          val fta = a.is[Answer].answer.length.toDouble
+          val fta = a.asInstanceOf[Patch].auxiliaryInformation.get("answer").asInstanceOf[String].length.toDouble
           fta >= calc.minAllowedValue && fta <= calc.maxAllowedValue
         })
       } else timeWithinSigma
 
-      withinSigma.map(a => a.is[Answer]).toSet.toList
+      withinSigma.map(a => a.asInstanceOf[Patch]).toSet.toList
   }
 
   override def optionalParameters: List[ProcessParameter[_]] = List(

@@ -7,7 +7,8 @@ import ch.uzh.ifi.mamato.crowdSA.persistence._
 import ch.uzh.ifi.mamato.crowdSA.process.stdlib.CrowdSACollection
 import ch.uzh.ifi.mamato.crowdSA.process.{ExtractStatisticsRecombination, ExtractStatisticsProcess}
 import ch.uzh.ifi.mamato.crowdSA.util.{PdfUtils, LazyLogger}
-import ch.uzh.ifi.pdeboer.pplib.hcomp.{HCompQuery, HComp}
+import ch.uzh.ifi.pdeboer.pplib.hcomp.{FreetextQuery, HCompQuery, HComp}
+import ch.uzh.ifi.pdeboer.pplib.process.entities.Patch
 import ch.uzh.ifi.pdeboer.pplib.process.recombination.{RecombinationVariant, SimpleRecombinationVariantXMLExporter}
 import org.joda.time.DateTime
 
@@ -70,47 +71,46 @@ object Main extends App with LazyLogger {
     }
     else {
 
-      val discoveryQuestions = new mutable.MutableList[CrowdSAQuery]
+      val discoveryQuestions = new mutable.MutableList[Patch]
 
       // create MISSING question
-      var findMissingMethods: CrowdSAQuery = null
-      val missingMethodsQuery = new HCompQuery {
-        override def question: String = "Please find all the methods which are not highlighted on the paper"
-
-        override def title: String = "MissingMethods"
-
-        override def suggestedPaymentCents: Int = 10
-      }
-
+      val findMissingMethods = new Patch("Please find all the methods which are not highlighted on the paper")
       var missingMethodsTerms = ""
 
       // create DISCOVERY questions for each statistical method that matched
       statMethod2ContextStatMethod.foreach {
         m =>
           missingMethodsTerms += m._2 + "#"
-
           logger.debug("Creating DISCOVERY question for match: " + m._1)
-          val query = new HCompQuery {
-            override def question: String = "Method: <u><i> " + m._1 + " </i></u>"
-
-            override def title: String = m._2
-
-            override def suggestedPaymentCents: Int = 10
-          }
-
-          val highlight = HighlightDAO.create("Discovery", m._2, "", -1)
-          val properties = new CrowdSAQueryProperties(remote_id, "Discovery", highlight, 10,
-            ((new Date().getTime() / 1000) + 60 * 60 * 24 * 365),
-            100, Some(""), null)
-
           // Add to the data structure: the question as well as the properties
-          discoveryQuestions += new CrowdSAQuery(query, properties)
+          val question = "Method: <u><i> " + m._1 + " </i></u>"
+          val p = new Patch(question)
+          p.auxiliaryInformation += (
+            "question" -> question,
+            "type" -> "Discovery",
+            "terms" -> m._2,
+            "paperId" -> remote_id,
+            "rewardCts" -> 10,
+            "expirationTimeSec" -> ((new Date().getTime() / 1000) + 60 * 60 * 24 * 365),
+            "assumption" -> new String("Discovery"),
+            "maxAssignments" -> 100
+          )
+          discoveryQuestions += p
       }
 
 
-      findMissingMethods = new CrowdSAQuery(missingMethodsQuery, new CrowdSAQueryProperties(remote_id, "Missing",
-        HighlightDAO.create("Missing",missingMethodsTerms, "", -1), 10,
-        ((new Date().getTime()/1000 ) + 60*60*24*365), 100, Some(""), null))
+      findMissingMethods.auxiliaryInformation += (
+        "question" -> "Please find all the methods which are not highlighted on the paper",
+        "type" -> "Missing",
+        "terms" -> missingMethodsTerms,
+        "paperId" -> remote_id,
+        "rewardCts" -> 10,
+        "expirationTimeSec" -> ((new Date().getTime() / 1000) + 60 * 60 * 24 * 365),
+        "assumption" -> new String("Missing"),
+        "maxAssignments" -> 100
+        )
+
+      discoveryQuestions += findMissingMethods
 
       def getXML(r: RecombinationVariant) = new SimpleRecombinationVariantXMLExporter(r).xml.toString
       val recombinations: List[RecombinationVariant] = ExtractStatisticsRecombination.recombinations
@@ -123,7 +123,7 @@ object Main extends App with LazyLogger {
       }
 
       //Create the process for the extraction of statistical means
-      val extractStatisticsProcess = new ExtractStatisticsProcess(crowdSA, discoveryQuestions.toList, findMissingMethods)
+      val extractStatisticsProcess = new ExtractStatisticsProcess(crowdSA, discoveryQuestions.toList)
 
       //For each candidate process execute the process
       while (nextCandidate.isDefined) {

@@ -13,9 +13,9 @@ import org.joda.time.DateTime
  * Created by mattia on 23.03.15.
  * This class is based on the example (Summarize Application) provided by Patrick de Boer
  */
-class CrowdSAIterativeRefinementExecutor(val datasetToRefine: Answer,
-                                        val query: CrowdSAQuery,
-                                        val driver: CrowdSAIterativeRefinementDriver[Answer],
+class CrowdSAIterativeRefinementExecutor(val datasetToRefine: Patch,
+                                        val query: Patch,
+                                        val driver: CrowdSAIterativeRefinementDriver[Patch],
                                         val maxIterations: Int = 5,
                                         val memoizer: ProcessMemoizer = new NoProcessMemoizer(),
                                         val memoizerPrefix: String = "",
@@ -23,18 +23,19 @@ class CrowdSAIterativeRefinementExecutor(val datasetToRefine: Answer,
                                         val toleratedNumberOfIterationsBelowThreshold: Int = 2) extends LazyLogger {
   assert(maxIterations > 0)
 
-  var currentState: Answer = datasetToRefine
-  protected val iterationWatcher = new IterationWatcher(datasetToRefine.answer, stringDifferenceThreshold, toleratedNumberOfIterationsBelowThreshold)
+  var currentState: Patch = datasetToRefine
+  protected val iterationWatcher = new IterationWatcher(datasetToRefine.auxiliaryInformation.get("answer").asInstanceOf[String],
+    stringDifferenceThreshold, toleratedNumberOfIterationsBelowThreshold)
 
   def step(stepNumber: Int): Unit = {
-    val newState : Answer = memoizer.mem(memoizerPrefix + "refinement" + stepNumber)(driver.refine(datasetToRefine, currentState, stepNumber))
+    val newState : Patch = memoizer.mem(memoizerPrefix + "refinement" + stepNumber)(driver.refine(datasetToRefine, currentState, stepNumber))
     logger.info(s"asked crowd workers to refine '$currentState'. Answer was $newState <--")
     currentState = memoizer.mem(memoizerPrefix + "bestRefinement" + stepNumber)(driver.selectBestRefinement(List(currentState, newState)))
-    iterationWatcher.addIteration(currentState.answer)
+    iterationWatcher.addIteration(currentState.auxiliaryInformation.get("answer").asInstanceOf[String])
     logger.info("crowd workers determined the following state to be better: " + currentState)
   }
 
-  lazy val refinedAnswer: Answer = {
+  lazy val refinedAnswer: Patch = {
     for (i <- 1 to maxIterations) {
       if (iterationWatcher.shouldRunAnotherIteration)
         step(i)
@@ -50,37 +51,30 @@ object CrowdSAIterativeRefinementExecutor {
   val DEFAULT_TOLERATED_NUMBER_OF_ITERATIONS_BELOW_THRESHOLD = 2
 }
 
-trait CrowdSAIterativeRefinementDriver[Answer] {
-  def refine(originalToRefine: Answer, refinementState: Answer, iterationId: Int): Answer
+trait CrowdSAIterativeRefinementDriver[Patch] {
+  def refine(originalToRefine: Patch, refinementState: Patch, iterationId: Int): Patch
 
-  def selectBestRefinement(candidates: List[Answer]): Answer
+  def selectBestRefinement(candidates: List[Patch]): Patch
 }
 
-class CrowdSAIRDefaultHCompDriver(portal: HCompPortalAdapter, quest: String, stat_method: String, paperId: Long, votingProcessParam: PassableProcessParam[DecideProcess[List[Answer], Answer]], questionPricing: Int = 10, memoizerPrefix: String = "") extends CrowdSAIterativeRefinementDriver[Answer] {
+class CrowdSAIRDefaultHCompDriver(portal: HCompPortalAdapter, quest: String, stat_method: String, paperId: Long, votingProcessParam: PassableProcessParam[DecideProcess[List[Patch], Patch]], questionPricing: Int = 10, memoizerPrefix: String = "") extends CrowdSAIterativeRefinementDriver[Patch] {
 
-  override def refine(originalTextToRefine: Answer, currentRefinementState: Answer, iterationId: Int): Answer = {
+  override def refine(originalTextToRefine: Patch, currentRefinementState: Patch, iterationId: Int): Patch = {
 
-    var toHighlight = currentRefinementState.answer
+    var toHighlight = currentRefinementState.auxiliaryInformation.get("answer").asInstanceOf[String]
     toHighlight = toHighlight+"#"+stat_method
 
-    val toRefine = currentRefinementState.answer
-    val query = new CrowdSAQuery(
-      new HCompQuery {
-        override def question: String = quest.replace("Identify", "Identify or refine")
-
-        override def title: String = stat_method
-
-        override def suggestedPaymentCents: Int = 10
-      },
+    val toRefine = currentRefinementState.auxiliaryInformation.get("answer").asInstanceOf[String]
+    val query = new CrowdSAQuery(quest.replace("Identify", "Identify or refine"), 10,
       new CrowdSAQueryProperties(paperId, "Discovery", HighlightDAO.create("Dataset", toHighlight, "", -1), 10, 1000*60*60*24*365, 100, Some(toRefine), null)
     )
 
-    val answer = portal.sendQueryAndAwaitResult(query.getQuery(), query.getProperties()).get.is[Answer]
-    answer.receivedTime = new DateTime()
+    val answer = portal.sendQueryAndAwaitResult(query, query.properties).get.is[Patch]
+    answer.auxiliaryInformation += ("receivedTime" -> new DateTime())
     answer
   }
 
-  override def selectBestRefinement(candidates: List[Answer]): Answer = {
+  override def selectBestRefinement(candidates: List[Patch]): Patch = {
     val candidatesDistinct = candidates.distinct
 
     val memPrefixInParams: String = votingProcessParam.getParam[Option[String]](

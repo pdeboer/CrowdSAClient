@@ -19,11 +19,12 @@ import scala.collection.mutable
  */
 @PPLibProcess
 class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any])
-  extends DecideProcess[List[Answer], Answer](params) with HCompPortalAccess with InstructionHandler {
+  extends DecideProcess[List[Patch], Patch](params) with HCompPortalAccess with InstructionHandler {
 
   protected var votes = mutable.HashMap.empty[String, Int]
 
-  override def run(alternatives: List[Answer]): Answer = {
+  override def run(alternatives: List[Patch]): Patch = {
+
       if (alternatives.size == 0) null
       else if (alternatives.size == 1) alternatives.head
       else {
@@ -32,33 +33,33 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any])
         var paperId: Long = -1
 
         // Special case for iterative refinement
-        if(alternatives.head.answer != ""){
-          paperId = CrowdSAPortalAdapter.service.getPaperIdFromAnswerId(alternatives.head.id)
+        if(alternatives.head.auxiliaryInformation("answer").asInstanceOf[String] != ""){
+          paperId = CrowdSAPortalAdapter.service.getPaperIdFromAnswerId(
+            alternatives.head.auxiliaryInformation("id").asInstanceOf[Long])
         } else {
-          paperId = CrowdSAPortalAdapter.service.getPaperIdFromAnswerId(alternatives(1).id)
+          paperId = CrowdSAPortalAdapter.service.getPaperIdFromAnswerId(
+            alternatives(1).auxiliaryInformation("id").asInstanceOf[Long])
         }
 
         // Get all distinct answers and the teams id which created this answer.
         // These teams will not be able to answer the voting question.
         var answersText = new mutable.MutableList[String]
         val teams = new mutable.MutableList[Long]
+
         alternatives.foreach(a => {
-          if(!answersText.contains(a.answer)){
-            answersText += a.answer
+          if(!answersText.contains(a.auxiliaryInformation("answer").asInstanceOf[String])){
+            answersText += a.auxiliaryInformation("answer").asInstanceOf[String]
             // Get the teams which participated to the create the answers
             // (used to exclude them from the voting process)
-            teams += CrowdSAPortalAdapter.service.getAssignmentForAnswerId(a.id).remote_team_id
+            teams += CrowdSAPortalAdapter.service.getAssignmentForAnswerId(
+              a.auxiliaryInformation("id").asInstanceOf[Long]).remote_team_id
+
           }
         })
 
-        val termsHighlight = new mutable.MutableList[String]
-        // Add each answer present in the voting list to the highlighting terms list
-        answersText.foreach(a => {
-          termsHighlight += a
-        })
-
         // get assignment of the first alternative (All the alternatives belongs to the same question)
-        val assignment = CrowdSAPortalAdapter.service.getAssignmentForAnswerId(alternatives.head.id)
+        val assignment = CrowdSAPortalAdapter.service.getAssignmentForAnswerId(
+          alternatives.head.auxiliaryInformation("id").asInstanceOf[Long])
         // get question id of the first alternative
         val quest_id = assignment.remote_question_id
         // get original question to check if was a discovery or boolean question
@@ -68,18 +69,30 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any])
 
         // Ugly - check if the question which generates the alternatives was a discovery question
         val wasDiscoveryQuestion = originalQuestion.get.question contains "Method: "
-        val toHighlight = originalQuestionHighlight.get.terms.replaceAll(",", "#")+"#"+termsHighlight.mkString("#")
+        val toHighlight = originalQuestionHighlight.get.terms+"#"+answersText.mkString("#")
 
-        val query = new CrowdSAQuery(
-          new HCompQuery {
-            override def question: String = if(wasDiscoveryQuestion){
-              "The answers below were submitted by other crowd workers when asking to identify the dataset of '" + originalQuestion.get.question+ "'. Please chose the answer which you think best identifies the data used by this method."
-            } else {
-              "The answers below were submitted by other crowd workers when asking to answer the Yes/No question: '<i><u>"+ originalQuestion.get.question+ "</u></i>'. Please chose the answer which you think is the right one."
-            }
-            override def title: String = "Voting"
-            override def suggestedPaymentCents: Int = 10
-          },
+        val question = if(wasDiscoveryQuestion){
+          "The answers below were submitted by other crowd workers when asking to identify the dataset of '" + originalQuestion.get.question+ "'. Please chose the answer which you think best identifies the data used by this method."
+        } else {
+          "The answers below were submitted by other crowd workers when asking to answer the Yes/No question: '<i><u>"+ originalQuestion.get.question+ "</u></i>'. Please chose the answer which you think is the right one."
+        }
+
+       /* val p = new Patch(question)
+        p.auxiliaryInformation += (
+          "question" -> question,
+          "type" -> "Voting",
+          "terms" -> toHighlight,
+          "paperId" -> paperId,
+          "rewardCts" -> 10,
+          "expirationTimeSec" -> ((new Date().getTime() / 1000) + 60 * 60 * 24 * 365),
+          "assumption" -> "Voting",
+          "possibleAnswers" -> Some(answersText.mkString("$$")),
+          "maxAssignments" -> 100,
+          "maxAssignments" -> Some(teams.toList)
+          )
+          */
+
+        val query = new CrowdSAQuery(question, 10,
           new CrowdSAQueryProperties(paperId, "Voting",
             HighlightDAO.create("Dataset", toHighlight, "", -1),
             10, ((new Date().getTime()/1000) + 60*60*24*365),
@@ -114,7 +127,7 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any])
                 }
                 // Keep track of the cost. This should be done by PPLib.
                 // PDB: It's done by PPLib. Check out CostCountingEnabledHCompPortal
-                Main.crowdSA.setBudget(Some(Main.crowdSA.budget.get-query.getQuery().suggestedPaymentCents))
+                Main.crowdSA.setBudget(Some(Main.crowdSA.budget.get-query.suggestedPaymentCents))
               }
             })
             logger.debug("Needed answers: " + CrowdSAContest.WORKER_COUNT.get + " - Got so far: " + answersSoFar.toList.length)
@@ -127,7 +140,7 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any])
 
         val valueOfAnswer: String = votes.maxBy(s => s._2)._1
         logger.info("***** WINNER CONTEST " + valueOfAnswer)
-        alternatives.find(_.answer == valueOfAnswer).get
+        alternatives.find(_.auxiliaryInformation("answer").asInstanceOf[String] == valueOfAnswer).get
       }
 
     }
