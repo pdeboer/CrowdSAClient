@@ -2,9 +2,11 @@ package ch.uzh.ifi.mamato.crowdSA.process.stdlib
 
 import java.util.Date
 
-import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.CrowdSAQuery
+import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.CrowdSAQueryProperties
 import ch.uzh.ifi.mamato.crowdSA.model.Answer
 import ch.uzh.ifi.mamato.crowdSA.patterns.{CrowdSAIRDefaultHCompDriver, CrowdSAIterativeRefinementExecutor}
+import ch.uzh.ifi.mamato.crowdSA.persistence.HighlightDAO
+import ch.uzh.ifi.pdeboer.pplib.hcomp.FreetextQuery
 import ch.uzh.ifi.pdeboer.pplib.process.entities._
 import org.joda.time.DateTime
 
@@ -24,9 +26,24 @@ class CrowdSAIterativeRefinementProcess(params: Map[String, Any] = Map.empty)
     logger.info("started refinement process for query " + query)
     VOTING_PROCESS_TYPE.get.setParams(params, replace = false)
 
-    val q = query.auxiliaryInformation.get("CrowdSAQuery").asInstanceOf[CrowdSAQuery]
+    val q = FreetextQuery(query.auxiliaryInformation("question").asInstanceOf[String],
+      query.auxiliaryInformation.getOrElse("possibleAnswers", Some("")).asInstanceOf[Option[String]].get
+    )
+    val prop = new CrowdSAQueryProperties(
+      query.auxiliaryInformation("paperId").asInstanceOf[Long],
+      query.auxiliaryInformation("type").asInstanceOf[String],
+      HighlightDAO.create(query.auxiliaryInformation("assumption").asInstanceOf[String],
+        query.auxiliaryInformation("terms").asInstanceOf[String],
+        query.auxiliaryInformation.getOrElse("dataset", "").asInstanceOf[String],
+        query.auxiliaryInformation.getOrElse("remoteQuestionId", "-1".toLong).asInstanceOf[Long]),
+      query.auxiliaryInformation("rewardCts").asInstanceOf[Int],
+      query.auxiliaryInformation("expirationTimeSec").asInstanceOf[Long],
+      query.auxiliaryInformation("maxAssignments").asInstanceOf[Int],
+      query.auxiliaryInformation.getOrElse("possibleAnswers", Some("")).asInstanceOf[Option[String]],
+      query.auxiliaryInformation.getOrElse("deniedTurkers", null).asInstanceOf[Option[List[Long]]]
+    )
 
-    val driver = new CrowdSAIRDefaultHCompDriver(portal, q.question, q.title, q.properties.paper_id,
+    val driver = new CrowdSAIRDefaultHCompDriver(portal, q.question, q.title, prop.paper_id,
       CrowdSAIterativeRefinementProcess.VOTING_PROCESS_TYPE.get, 10, query.hashCode.toString)
 
     // Create an empty answer (will be used to get the paper Id)

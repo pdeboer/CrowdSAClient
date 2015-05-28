@@ -1,7 +1,7 @@
 package ch.uzh.ifi.mamato.crowdSA.process.stdlib
 
 
-import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAPortalAdapter, CrowdSAQueryProperties, CrowdSAQuery}
+import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAPortalAdapter, CrowdSAQueryProperties}
 import ch.uzh.ifi.mamato.crowdSA.model.Answer
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
 import ch.uzh.ifi.pdeboer.pplib.process.entities._
@@ -76,11 +76,11 @@ class CrowdSAContestWithStatisticalReductionProcess(params: Map[String, Any] = M
 
     val service = CrowdSAPortalAdapter.service
     val paperId = service.getPaperIdFromAnswerId(answerId)
-    val query = new CrowdSAQuery("Please select the answer that best represent the dataset",10,
-      new CrowdSAQueryProperties(paperId, "Voting",
+    val query = FreetextQuery("Please select the answer that best represent the dataset", alternatives.mkString("$$"))
+
+    val prop = new CrowdSAQueryProperties(paperId, "Voting",
         null,
         10, 1000 * 60 * 60 * 24 * 365, 100, Some(alternatives.mkString("$$")), null)
-    )
 
     val tmpAnswers = new mutable.MutableList[String]
     val tmpAnswers2 = new mutable.MutableList[Answer]
@@ -91,7 +91,7 @@ class CrowdSAContestWithStatisticalReductionProcess(params: Map[String, Any] = M
     val answers: List[Answer] = memoizer.mem("voting_" + tmpAnswers2.hashCode()) {
 
       logger.info("started first iteration ")
-      val firstAnswer = portal.sendQueryAndAwaitResult(query, query.properties).get.is[Answer]
+      val firstAnswer = portal.sendQueryAndAwaitResult(query, prop).get.is[Answer]
       firstAnswer.receivedTime = new DateTime()
       tmpAnswers2 += firstAnswer
       firstAnswer.answer.split("$$").foreach(b => {

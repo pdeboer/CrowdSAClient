@@ -1,9 +1,9 @@
 package ch.uzh.ifi.mamato.crowdSA.process.stdlib
 
-import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAQueryProperties, CrowdSAPortalAdapter, CrowdSAQuery}
+import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAQueryProperties, CrowdSAPortalAdapter}
 import ch.uzh.ifi.mamato.crowdSA.model.Answer
 import ch.uzh.ifi.mamato.crowdSA.persistence.HighlightDAO
-import ch.uzh.ifi.pdeboer.pplib.hcomp.HCompQuery
+import ch.uzh.ifi.pdeboer.pplib.hcomp.{FreetextQuery, HCompQuery}
 import ch.uzh.ifi.pdeboer.pplib.process.entities._
 import org.joda.time.DateTime
 
@@ -44,11 +44,13 @@ class CrowdSAContestWithBeatByKVotingProcess(params: Map[String, Any] = Map.empt
       val termsHighlight = new mutable.MutableList[String]
       choices.foreach(a => termsHighlight += a)
 
-      val query = new CrowdSAQuery("Please select the best answer", 10,
-        new CrowdSAQueryProperties(paperId, "Voting",
+      val query = FreetextQuery("Please select the best answer",
+        data.map{_.auxiliaryInformation.get("answer").asInstanceOf[String]}.mkString("$$"))
+
+      val prop = new CrowdSAQueryProperties(paperId, "Voting",
           HighlightDAO.create("Dataset", termsHighlight.mkString("#"), "", -1), 10, 1000 * 60 * 60 * 24 * 365, 100,
           Some(data.map{_.auxiliaryInformation.get("answer").asInstanceOf[String]}.mkString("$$")), null)
-      )
+
 
       val tmpAnswers = new mutable.MutableList[String]
       val tmpAnswers2 = new mutable.MutableList[Patch]
@@ -57,7 +59,7 @@ class CrowdSAContestWithBeatByKVotingProcess(params: Map[String, Any] = Map.empt
       val answers: List[Patch] = memoizer.mem("voting_" + tmpAnswers2.hashCode()) {
 
         logger.info("started first iteration ")
-        val firstAnswer = portal.sendQueryAndAwaitResult(query, query.properties).get.is[Patch]
+        val firstAnswer = portal.sendQueryAndAwaitResult(query, prop).get.is[Patch]
         firstAnswer.auxiliaryInformation += ("receivedTime" -> new DateTime())
         tmpAnswers2 += firstAnswer
         firstAnswer.auxiliaryInformation.get("answer").asInstanceOf[String].split("$$").foreach(b => {

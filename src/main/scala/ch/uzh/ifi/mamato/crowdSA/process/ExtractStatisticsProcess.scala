@@ -3,7 +3,7 @@ package ch.uzh.ifi.mamato.crowdSA.process
 import java.util.Date
 
 import ch.uzh.ifi.mamato.crowdSA.Main
-import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAPortalAdapter, CrowdSAQuery, CrowdSAQueryProperties}
+import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAPortalAdapter, CrowdSAQueryProperties}
 import ch.uzh.ifi.mamato.crowdSA.model._
 import ch.uzh.ifi.mamato.crowdSA.persistence._
 import ch.uzh.ifi.mamato.crowdSA.util.{LazyLogger, PdfUtils}

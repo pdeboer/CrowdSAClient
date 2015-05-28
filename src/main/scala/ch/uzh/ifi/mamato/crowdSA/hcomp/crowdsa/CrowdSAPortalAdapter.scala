@@ -39,30 +39,25 @@ class CrowdSAPortalAdapter extends HCompPortalAdapter with LazyLogger {
    */
   override def processQuery(query: HCompQuery, properties: HCompQueryProperties): Option[Answer] = {
     try {
-      val queryCrowdSA= new CrowdSAQuery(query.question, 10, properties.asInstanceOf[CrowdSAQueryProperties])
-      processCrowdSAQuery(queryCrowdSA)
+      if (properties.qualifications.length > 0)
+        logger.error("CrowdPDF implementation doesn't support Worker Qualifications yet. Executing query without them..")
+
+      val manager: CrowdSAManager = new CrowdSAManager(CrowdSAPortalAdapter.service, query, properties)
+      map += query.identifier -> map.getOrElse(query.identifier, new CrowdSAQueries()).add(manager)
+      val res: Long = manager.createQuestion()
+
+      logger.debug("CreateQuestion returned id: " + res)
+      if(res > 0) {
+        manager.waitForResponse()
+      } else {
+        logger.error("Error while creating the question.")
+        None
+      }
     } catch {
       case e: Exception => {
         e.printStackTrace()
         None
       }
-    }
-  }
-
-  def processCrowdSAQuery(query: CrowdSAQuery): Option[Answer] = {
-    if (query.properties.qualifications.length > 0)
-      logger.error("CrowdPDF implementation doesn't support Worker Qualifications yet. Executing query without them..")
-
-    val manager: CrowdSAManager = new CrowdSAManager(CrowdSAPortalAdapter.service, query)
-    map += query.identifier -> map.getOrElse(query.identifier, new CrowdSAQueries()).add(manager)
-    val res: Long = manager.createQuestion()
-
-    logger.debug("CreateQuestion returned id: " + res)
-    if(res > 0) {
-      manager.waitForResponse()
-    } else {
-      logger.error("Error while creating the question.")
-      None
     }
   }
 

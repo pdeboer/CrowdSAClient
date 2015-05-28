@@ -7,6 +7,7 @@ import java.util.Date
 import ch.uzh.ifi.mamato.crowdSA.model.{Answer, Assignment, Dataset, Question}
 import ch.uzh.ifi.mamato.crowdSA.persistence.{HighlightDAO, PaperDAO, QuestionDAO}
 import ch.uzh.ifi.mamato.crowdSA.util.{HttpRestClient, LazyLogger}
+import ch.uzh.ifi.pdeboer.pplib.hcomp.{HCompQueryProperties, HCompQuery}
 import com.typesafe.config.ConfigFactory
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpPost}
@@ -157,11 +158,12 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
    * @param query
    * @return -1 if error occurs, id of remote question otherwise
    */
-  def CreateQuestion(query: CrowdSAQuery): Long = {
+  def CreateQuestion(query: HCompQuery, properties: HCompQueryProperties): Long = {
 
-    val properties = query.properties
+    val p = properties.asInstanceOf[CrowdSAQueryProperties]
+
     //check if paper exists
-    val isUploaded = get("/checkPaper/"+properties.paper_id).toBoolean
+    val isUploaded = get("/checkPaper/"+p.paper_id).toBoolean
 
     try {
       if(isUploaded) {
@@ -170,13 +172,13 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
         val date = (new Date()).getTime/1000
         val params = new collection.mutable.MutableList[NameValuePair]
         params += new BasicNameValuePair("question", query.question)
-        params += new BasicNameValuePair("question_type", properties.question_type)
-        params += new BasicNameValuePair("reward_cts", properties.paymentCents.toString)
+        params += new BasicNameValuePair("question_type", p.question_type)
+        params += new BasicNameValuePair("reward_cts", p.paymentCents.toString)
         params += new BasicNameValuePair("created_at", date.toString)
-        params += new BasicNameValuePair("papers_id", properties.paper_id.toString)
-        params += new BasicNameValuePair("expiration_time_sec", properties.expiration_time_sec.toString)
-        params += new BasicNameValuePair("maximal_assignments", properties.maximal_assignments.toString)
-        params += new BasicNameValuePair("possible_answers", properties.possible_answers.getOrElse(""))
+        params += new BasicNameValuePair("papers_id", p.paper_id.toString)
+        params += new BasicNameValuePair("expiration_time_sec", p.expiration_time_sec.toString)
+        params += new BasicNameValuePair("maximal_assignments", p.maximal_assignments.toString)
+        params += new BasicNameValuePair("possible_answers", p.possible_answers.getOrElse(""))
 
         val resp = post("/addQuestion", params.toList)
         if(resp.startsWith("Error")){
@@ -187,8 +189,8 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
           logger.debug("Question posted with remote id: " + remote_question_id)
 
           //create question object and store it in the local DB
-          val qId = QuestionDAO.create(query.question, properties.question_type, properties.paymentCents, date,
-            properties.paper_id, remote_question_id, properties.maximal_assignments, properties.expiration_time_sec, null)
+          val qId = QuestionDAO.create(query.question, p.question_type, p.paymentCents, date,
+            p.paper_id, remote_question_id, p.maximal_assignments, p.expiration_time_sec, null)
 
           if(qId > 0) {
             logger.debug("Question stored in local DB with id: " + qId)
@@ -196,20 +198,20 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
             logger.error("Cannot store question in the local database.")
           }
           //Create highlight entry for the question if properties.highlightedTerms is not empty
-          if(properties.highlight != null) {
+          if(p.highlight != null) {
             val params = new collection.mutable.MutableList[NameValuePair]
             params += new BasicNameValuePair("questionId", remote_question_id.toString)
-            params += new BasicNameValuePair("assumption", properties.highlight.assumption)
-            params += new BasicNameValuePair("terms", properties.highlight.terms)
-            params += new BasicNameValuePair("dataset", properties.highlight.dataset)
+            params += new BasicNameValuePair("assumption", p.highlight.assumption)
+            params += new BasicNameValuePair("terms", p.highlight.terms)
+            params += new BasicNameValuePair("dataset", p.highlight.dataset)
             logger.debug("Adding highlight returned: " + post("/highlight", params.toList))
-            HighlightDAO.save(properties.highlight.id, remote_question_id)
+            HighlightDAO.save(p.highlight.id, remote_question_id)
           }
 
-          if(properties.deniedTurkers != null){
+          if(p.deniedTurkers != null){
             val params = new collection.mutable.MutableList[NameValuePair]
             params += new BasicNameValuePair("question_id", remote_question_id.toString)
-            params += new BasicNameValuePair("teams", properties.deniedTurkers.get.mkString(","))
+            params += new BasicNameValuePair("teams", p.deniedTurkers.get.mkString(","))
             logger.debug("Adding qualifications: " + post("/qualification", params.toList))
           }
 
@@ -219,7 +221,7 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
 
       } else {
         //The paper doesn't exist in the server
-        logger.error("There is no paper with id: " + properties.paper_id + " stored in the server")
+        logger.error("There is no paper with id: " + p.paper_id + " stored in the server")
         -1
       }
     } catch {

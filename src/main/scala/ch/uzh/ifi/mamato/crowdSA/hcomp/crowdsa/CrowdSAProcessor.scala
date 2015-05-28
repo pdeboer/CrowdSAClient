@@ -5,6 +5,7 @@ import java.util.Date
 import ch.uzh.ifi.mamato.crowdSA.model.Answer
 import ch.uzh.ifi.mamato.crowdSA.persistence.StatMethodsDAO
 import ch.uzh.ifi.mamato.crowdSA.util.LazyLogger
+import ch.uzh.ifi.pdeboer.pplib.hcomp.{HCompQueryProperties, HCompQuery}
 import com.typesafe.config.ConfigFactory
 import org.joda.time.DateTime
 
@@ -14,7 +15,7 @@ import scala.util.Random
 /**
  * Created by Mattia on 20.01.2015.
  */
-class CrowdSAManager(val service: CrowdSAService, val qu: CrowdSAQuery) extends LazyLogger {
+class CrowdSAManager(val service: CrowdSAService, val qu: HCompQuery, val prop: HCompQueryProperties) extends LazyLogger {
 
 	var questionId: Long = 0
 	var cancelled: Boolean = false
@@ -56,7 +57,7 @@ class CrowdSAManager(val service: CrowdSAService, val qu: CrowdSAQuery) extends 
 	  * @return question id
 	  */
 	def createQuestion(): Long = {
-		questionId = service.CreateQuestion(qu)
+		questionId = service.CreateQuestion(qu, prop)
 		questionId
 	}
 

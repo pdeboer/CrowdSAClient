@@ -1,9 +1,10 @@
 package ch.uzh.ifi.mamato.crowdSA.process.stdlib
 
 import ch.uzh.ifi.mamato.crowdSA.Main
-import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAPortalAdapter, CrowdSAQuery, CrowdSAQueryProperties}
+import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAPortalAdapter, CrowdSAQueryProperties}
 import ch.uzh.ifi.mamato.crowdSA.model.Answer
 import ch.uzh.ifi.mamato.crowdSA.persistence.{HighlightDAO, AnswersDAO}
+import ch.uzh.ifi.pdeboer.pplib.hcomp.FreetextQuery
 import ch.uzh.ifi.pdeboer.pplib.process.entities._
 import com.typesafe.config.ConfigFactory
 import org.joda.time.DateTime
@@ -24,9 +25,9 @@ class CrowdSACollection(params: Map[String, Any] = Map.empty)
     val answers: List[Patch] = memoizer.mem("answer_line_" + query) {
 
       val question_id = CrowdSAPortalAdapter.service.CreateQuestion(
-        new CrowdSAQuery(query.auxiliaryInformation("question").asInstanceOf[String],
-          query.auxiliaryInformation("rewardCts").asInstanceOf[Int],
-        new CrowdSAQueryProperties(
+      FreetextQuery(query.auxiliaryInformation("question").asInstanceOf[String],
+        query.auxiliaryInformation.getOrElse("possibleAnswers", Some("")).asInstanceOf[Option[String]].get
+      ),new CrowdSAQueryProperties(
           query.auxiliaryInformation("paperId").asInstanceOf[Long],
           query.auxiliaryInformation("type").asInstanceOf[String],
           HighlightDAO.create(query.auxiliaryInformation("assumption").asInstanceOf[String],
@@ -38,13 +39,14 @@ class CrowdSACollection(params: Map[String, Any] = Map.empty)
           query.auxiliaryInformation("maxAssignments").asInstanceOf[Int],
           query.auxiliaryInformation.getOrElse("possibleAnswers", Some("")).asInstanceOf[Option[String]],
           query.auxiliaryInformation.getOrElse("deniedTurkers", null).asInstanceOf[Option[List[Long]]]
-          ))
+          )
       )
       val postTime = new DateTime()
       var answerSoFar = new mutable.MutableList[Patch]
 
-      //FIXME: This should be done by PPLib
+      //FIXME: This should be done by the PORTAL ADAPTER & manager
       while (CrowdSACollection.WORKER_COUNT.get > answerSoFar.length){
+
         Thread.sleep(ConfigFactory.load("application.conf").getInt("pollTimeMS"))
         val allAnswers = CrowdSAPortalAdapter.service.GetAnswersForQuestion(question_id)
 

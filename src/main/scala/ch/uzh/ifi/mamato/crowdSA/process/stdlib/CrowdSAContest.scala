@@ -3,10 +3,10 @@ package ch.uzh.ifi.mamato.crowdSA.process.stdlib
 import java.util.Date
 
 import ch.uzh.ifi.mamato.crowdSA.Main
-import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAPortalAdapter, CrowdSAQuery, CrowdSAQueryProperties}
+import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAPortalAdapter, CrowdSAQueryProperties}
 import ch.uzh.ifi.mamato.crowdSA.model.Answer
 import ch.uzh.ifi.mamato.crowdSA.persistence.{HighlightDAO, AnswersDAO, QuestionDAO}
-import ch.uzh.ifi.pdeboer.pplib.hcomp.HCompQuery
+import ch.uzh.ifi.pdeboer.pplib.hcomp.{FreetextQuery, HCompQuery}
 import ch.uzh.ifi.pdeboer.pplib.process.entities._
 import com.typesafe.config.ConfigFactory
 import org.joda.time.DateTime
@@ -92,18 +92,18 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any])
           )
           */
 
-        val query = new CrowdSAQuery(question, 10,
-          new CrowdSAQueryProperties(paperId, "Voting",
-            HighlightDAO.create("Dataset", toHighlight, "", -1),
-            10, ((new Date().getTime()/1000) + 60*60*24*365),
-            100, Some(answersText.mkString("$$")), Some(teams.toList))
-        )
+        val query = FreetextQuery(question, answersText.mkString("$$"))
+        val prop = new CrowdSAQueryProperties(paperId, "Voting",
+          HighlightDAO.create("Dataset", toHighlight, "", -1),
+          10,((new Date().getTime() / 1000) + 60 * 60 * 24 * 365), 100,
+          Some(answersText.mkString("$$")), Some(teams.toList))
+
 
         val allAnswers = new mutable.MutableList[Answer]
 
         memoizer.mem("voting_"+allAnswers.hashCode()) {
 
-          val question_id = CrowdSAPortalAdapter.service.CreateQuestion(query)
+          val question_id = CrowdSAPortalAdapter.service.CreateQuestion(query, prop)
           val postTime = new DateTime()
 
           //FIXME: should be done by PPLib and not here

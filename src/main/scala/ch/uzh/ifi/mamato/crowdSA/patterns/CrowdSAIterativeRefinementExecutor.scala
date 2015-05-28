@@ -1,10 +1,10 @@
 package ch.uzh.ifi.mamato.crowdSA.patterns
 
-import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAQueryProperties, CrowdSAQuery}
+import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.CrowdSAQueryProperties
 import ch.uzh.ifi.mamato.crowdSA.model.Answer
 import ch.uzh.ifi.mamato.crowdSA.persistence.HighlightDAO
 import ch.uzh.ifi.mamato.crowdSA.util.LazyLogger
-import ch.uzh.ifi.pdeboer.pplib.hcomp.{HCompQuery, HCompPortalAdapter}
+import ch.uzh.ifi.pdeboer.pplib.hcomp.{FreetextQuery, HCompQuery, HCompPortalAdapter}
 import ch.uzh.ifi.pdeboer.pplib.patterns.IterationWatcher
 import ch.uzh.ifi.pdeboer.pplib.process.entities._
 import org.joda.time.DateTime
@@ -65,11 +65,12 @@ class CrowdSAIRDefaultHCompDriver(portal: HCompPortalAdapter, quest: String, sta
     toHighlight = toHighlight+"#"+stat_method
 
     val toRefine = currentRefinementState.auxiliaryInformation.get("answer").asInstanceOf[String]
-    val query = new CrowdSAQuery(quest.replace("Identify", "Identify or refine"), 10,
-      new CrowdSAQueryProperties(paperId, "Discovery", HighlightDAO.create("Dataset", toHighlight, "", -1), 10, 1000*60*60*24*365, 100, Some(toRefine), null)
-    )
 
-    val answer = portal.sendQueryAndAwaitResult(query, query.properties).get.is[Patch]
+    val query = FreetextQuery(quest.replace("Identify", "Identify or refine"), toRefine)
+    val prop = new CrowdSAQueryProperties(paperId, "Discovery", HighlightDAO.create("Dataset", toHighlight, "", -1),
+      10, 1000*60*60*24*365, 100, Some(toRefine), null)
+
+    val answer = portal.sendQueryAndAwaitResult(query, prop).get.is[Patch]
     answer.auxiliaryInformation += ("receivedTime" -> new DateTime())
     answer
   }

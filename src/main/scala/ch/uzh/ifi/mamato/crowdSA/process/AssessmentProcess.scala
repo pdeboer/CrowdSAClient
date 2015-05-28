@@ -1,6 +1,5 @@
 package ch.uzh.ifi.mamato.crowdSA.process
 
-import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.CrowdSAQuery
 import ch.uzh.ifi.mamato.crowdSA.model.Answer
 import ch.uzh.ifi.pdeboer.pplib.process.entities._
 

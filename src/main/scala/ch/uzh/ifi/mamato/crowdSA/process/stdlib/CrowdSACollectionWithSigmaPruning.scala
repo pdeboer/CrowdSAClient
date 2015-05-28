@@ -1,8 +1,9 @@
 package ch.uzh.ifi.mamato.crowdSA.process.stdlib
 
-import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAQuery, CrowdSAPortalAdapter}
+import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAQueryProperties, CrowdSAPortalAdapter}
 import ch.uzh.ifi.mamato.crowdSA.model.Answer
-import ch.uzh.ifi.pdeboer.pplib.hcomp.HCompAnswer
+import ch.uzh.ifi.mamato.crowdSA.persistence.HighlightDAO
+import ch.uzh.ifi.pdeboer.pplib.hcomp.{FreetextQuery, HCompAnswer}
 import ch.uzh.ifi.pdeboer.pplib.patterns.pruners.{SigmaCalculator, SigmaPruner}
 import ch.uzh.ifi.pdeboer.pplib.process.entities._
 import org.joda.time.DateTime
@@ -26,8 +27,23 @@ class CrowdSACollectionWithSigmaPruning(params: Map[String, Any] = Map.empty)
     val tmpAnswers = new mutable.MutableList[Answer]
 
     val answers: List[Patch] = memoizer.mem("answer_line_" + query) {
-      val q = query.auxiliaryInformation.get("CrowdSAQuery").asInstanceOf[CrowdSAQuery]
-      val firstAnswer = portal.sendQueryAndAwaitResult(q, q.properties).get.is[Answer]
+      val q = FreetextQuery(query.auxiliaryInformation("question").asInstanceOf[String],
+        query.auxiliaryInformation.getOrElse("possibleAnswers", Some("")).asInstanceOf[Option[String]].get
+      )
+      val prop = new CrowdSAQueryProperties(
+        query.auxiliaryInformation("paperId").asInstanceOf[Long],
+        query.auxiliaryInformation("type").asInstanceOf[String],
+        HighlightDAO.create(query.auxiliaryInformation("assumption").asInstanceOf[String],
+          query.auxiliaryInformation("terms").asInstanceOf[String],
+          query.auxiliaryInformation.getOrElse("dataset", "").asInstanceOf[String],
+          query.auxiliaryInformation.getOrElse("remoteQuestionId", "-1".toLong).asInstanceOf[Long]),
+        query.auxiliaryInformation("rewardCts").asInstanceOf[Int],
+        query.auxiliaryInformation("expirationTimeSec").asInstanceOf[Long],
+        query.auxiliaryInformation("maxAssignments").asInstanceOf[Int],
+        query.auxiliaryInformation.getOrElse("possibleAnswers", Some("")).asInstanceOf[Option[String]],
+        query.auxiliaryInformation.getOrElse("deniedTurkers", null).asInstanceOf[Option[List[Long]]]
+      )
+      val firstAnswer = portal.sendQueryAndAwaitResult(q, prop).get.is[Answer]
 
       val question_id = CrowdSAPortalAdapter.service.getAssignmentForAnswerId(
         firstAnswer.id).remote_question_id
