@@ -27,7 +27,9 @@ class CrowdSAPortalAdapter extends HCompPortalAdapter with LazyLogger {
 
   val serviceURL = ConfigFactory.load("application.conf").getString("crowdSAHost")
 
-  CrowdSAPortalAdapter.service = new CrowdSAService(new Server(serviceURL))
+  val service = new CrowdSAService(new Server(serviceURL))
+
+  CrowdSAPortalAdapter.service = service
 
   var map = mutable.HashMap.empty[Int, CrowdSAQueries]
 
@@ -42,12 +44,14 @@ class CrowdSAPortalAdapter extends HCompPortalAdapter with LazyLogger {
       if (properties.qualifications.length > 0)
         logger.error("CrowdPDF implementation doesn't support Worker Qualifications yet. Executing query without them..")
 
-      val manager: CrowdSAManager = new CrowdSAManager(CrowdSAPortalAdapter.service, query, properties)
+      val manager: CrowdSAManager = new CrowdSAManager(service, query, properties)
       map += query.identifier -> map.getOrElse(query.identifier, new CrowdSAQueries()).add(manager)
       val res: Long = manager.createQuestion()
 
       logger.debug("CreateQuestion returned id: " + res)
       if(res > 0) {
+        //TODO: remove wait for response and wait for multiple response in the process
+        // (each process may have a different number of answer needed)
         manager.waitForResponse()
       } else {
         logger.error("Error while creating the question.")
@@ -100,7 +104,7 @@ object CrowdSAPortalAdapter {
   val CONFIG_SECRET_ACCESS_KEY = "hcomp.crowdsa.secretAccessKey"
   val CONFIG_SANDBOX_KEY = "hcomp.crowdsa.sandbox"
   val PORTAL_KEY = "crowdSA"
-  var service : CrowdSAService = null
+  var service: CrowdSAService = null
 }
 
 class CrowdSAPortalBuilder extends HCompPortalBuilder {

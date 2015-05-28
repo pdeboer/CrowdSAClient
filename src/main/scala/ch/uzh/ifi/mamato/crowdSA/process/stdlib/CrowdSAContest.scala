@@ -47,8 +47,18 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any])
         val teams = new mutable.MutableList[Long]
 
         alternatives.foreach(a => {
-          if(!answersText.contains(a.auxiliaryInformation("answer").asInstanceOf[String])){
-            answersText += a.auxiliaryInformation("answer").asInstanceOf[String]
+          var currentAns = a.auxiliaryInformation("answer").asInstanceOf[String]
+
+          // Case: Method not used
+          if(a.auxiliaryInformation("answer").asInstanceOf[String].equals("")){
+            val ans = AnswersDAO.find(a.auxiliaryInformation("id").asInstanceOf[Long]).get
+            if(!ans.is_method_used){
+              currentAns = "Method is not used"
+            }
+          }
+
+          if(!answersText.contains(currentAns)){
+            answersText += currentAns
             // Get the teams which participated to the create the answers
             // (used to exclude them from the voting process)
             teams += CrowdSAPortalAdapter.service.getAssignmentForAnswerId(
@@ -140,7 +150,20 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any])
 
         val valueOfAnswer: String = votes.maxBy(s => s._2)._1
         logger.info("***** WINNER CONTEST " + valueOfAnswer)
-        alternatives.find(_.auxiliaryInformation("answer").asInstanceOf[String] == valueOfAnswer).get
+        if(valueOfAnswer.equalsIgnoreCase("Method is not used")){
+          alternatives.find(a => {
+            a.auxiliaryInformation("answer").asInstanceOf[String].equalsIgnoreCase("") &&
+              !AnswersDAO.find(a.auxiliaryInformation("id").asInstanceOf[Long]).get.is_method_used
+          }).get
+        } else if(valueOfAnswer.equals("")){
+          alternatives.find(a => {
+            a.auxiliaryInformation("answer").asInstanceOf[String].equalsIgnoreCase("") &&
+              AnswersDAO.find(a.auxiliaryInformation("id").asInstanceOf[Long]).get.is_method_used
+          }).get
+        }
+        else {
+          alternatives.find(_.auxiliaryInformation("answer").asInstanceOf[String].equalsIgnoreCase(valueOfAnswer)).get
+        }
       }
 
     }

@@ -24,23 +24,25 @@ class CrowdSACollection(params: Map[String, Any] = Map.empty)
 
     val answers: List[Patch] = memoizer.mem("answer_line_" + query) {
 
-      val question_id = CrowdSAPortalAdapter.service.CreateQuestion(
-      FreetextQuery(query.auxiliaryInformation("question").asInstanceOf[String],
+      val q = FreetextQuery(query.auxiliaryInformation("question").asInstanceOf[String],
         query.auxiliaryInformation.getOrElse("possibleAnswers", Some("")).asInstanceOf[Option[String]].get
-      ),new CrowdSAQueryProperties(
-          query.auxiliaryInformation("paperId").asInstanceOf[Long],
-          query.auxiliaryInformation("type").asInstanceOf[String],
-          HighlightDAO.create(query.auxiliaryInformation("assumption").asInstanceOf[String],
-            query.auxiliaryInformation("terms").asInstanceOf[String],
-            query.auxiliaryInformation.getOrElse("dataset", "").asInstanceOf[String],
-            query.auxiliaryInformation.getOrElse("remoteQuestionId", "-1".toLong).asInstanceOf[Long]),
-            query.auxiliaryInformation("rewardCts").asInstanceOf[Int],
-          query.auxiliaryInformation("expirationTimeSec").asInstanceOf[Long],
-          query.auxiliaryInformation("maxAssignments").asInstanceOf[Int],
-          query.auxiliaryInformation.getOrElse("possibleAnswers", Some("")).asInstanceOf[Option[String]],
-          query.auxiliaryInformation.getOrElse("deniedTurkers", null).asInstanceOf[Option[List[Long]]]
-          )
       )
+
+      val prop = new CrowdSAQueryProperties(
+        query.auxiliaryInformation("paperId").asInstanceOf[Long],
+        query.auxiliaryInformation("type").asInstanceOf[String],
+        HighlightDAO.create(query.auxiliaryInformation("assumption").asInstanceOf[String],
+          query.auxiliaryInformation("terms").asInstanceOf[String],
+          query.auxiliaryInformation.getOrElse("dataset", "").asInstanceOf[String],
+          query.auxiliaryInformation.getOrElse("remoteQuestionId", "-1".toLong).asInstanceOf[Long]),
+        query.auxiliaryInformation("rewardCts").asInstanceOf[Int],
+        query.auxiliaryInformation("expirationTimeSec").asInstanceOf[Long],
+        query.auxiliaryInformation("maxAssignments").asInstanceOf[Int],
+        query.auxiliaryInformation.getOrElse("possibleAnswers", Some("")).asInstanceOf[Option[String]],
+        query.auxiliaryInformation.getOrElse("deniedTurkers", null).asInstanceOf[Option[List[Long]]]
+      )
+
+      val question_id = CrowdSAPortalAdapter.service.CreateQuestion(q, prop)
       val postTime = new DateTime()
       var answerSoFar = new mutable.MutableList[Patch]
 
@@ -62,11 +64,11 @@ class CrowdSACollection(params: Map[String, Any] = Map.empty)
               p.auxiliaryInformation += ("answer" -> e.answer, "id" -> id)
               answerSoFar += p
 
-
               // Accept all the answers which are not empty
               if(e.answer!= null && e.answer != ""){
                 CrowdSAPortalAdapter.service.ApproveAnswer(e)
               } else if(e.answer != null && e.answer == "" && !e.is_method_used) {
+                // Approve answers which have "no method used" marked
                 CrowdSAPortalAdapter.service.ApproveAnswer(e)
               } else {
                 // Reject only if the answer is empty and the method is known to be used
