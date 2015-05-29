@@ -57,7 +57,7 @@ object Main extends App with LazyLogger {
 
           mapp.foreach {
             p =>
-              statMethod2ContextStatMethod.+=:(sm.stat_method, p)
+              statMethod2ContextStatMethod += sm.stat_method -> p
           }
       }
     } catch {
@@ -77,9 +77,18 @@ object Main extends App with LazyLogger {
       val findMissingMethods = new Patch("Please find all the methods which are not highlighted on the paper")
       var missingMethodsTerms = ""
 
+      val mmm = new mutable.HashMap[String, mutable.MutableList[String]]
+
       // create DISCOVERY questions for each statistical method that matched
       statMethod2ContextStatMethod.foreach {
         m =>
+
+          if(!mmm.get(m._1).isDefined){
+            mmm += m._1 -> new mutable.MutableList[String]
+          }
+
+          mmm.get(m._1).get += m._2
+
           missingMethodsTerms += m._2 + "#"
           logger.debug("Creating DISCOVERY question for match: " + m._1)
           // Add to the data structure: the question as well as the properties
@@ -106,8 +115,9 @@ object Main extends App with LazyLogger {
         "paperId" -> remote_id,
         "rewardCts" -> 10,
         "expirationTimeSec" -> ((new Date().getTime() / 1000) + 60 * 60 * 24 * 365),
-        "assumption" -> new String("Missing"),
-        "maxAssignments" -> 100
+        "assumption" -> "Missing",
+        "maxAssignments" -> 100,
+        "methodList" -> mmm
         )
 
       discoveryQuestions += findMissingMethods

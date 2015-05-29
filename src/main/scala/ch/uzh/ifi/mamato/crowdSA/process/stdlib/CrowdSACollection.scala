@@ -28,11 +28,26 @@ class CrowdSACollection(params: Map[String, Any] = Map.empty)
         query.auxiliaryInformation.getOrElse("possibleAnswers", Some("")).asInstanceOf[Option[String]].get
       )
 
+      var terms = ""
+      if(query.auxiliaryInformation("type").asInstanceOf[String].equalsIgnoreCase("Missing")){
+        val mmm = query.auxiliaryInformation("methodList").asInstanceOf[mutable.HashMap[String, mutable.MutableList[String]]]
+        terms += "["
+        mmm.foreach(m => {
+          terms += "{\"method\":\""+m._1+"\",\"matches\":[\""+m._2.mkString("\",\"")+"\"]}"
+          if(mmm.last != m){
+            terms += ","
+          }
+        })
+        terms += "]"
+      } else {
+        terms += query.auxiliaryInformation("terms").asInstanceOf[String]
+      }
+
       val prop = new CrowdSAQueryProperties(
         query.auxiliaryInformation("paperId").asInstanceOf[Long],
         query.auxiliaryInformation("type").asInstanceOf[String],
         HighlightDAO.create(query.auxiliaryInformation("assumption").asInstanceOf[String],
-          query.auxiliaryInformation("terms").asInstanceOf[String],
+          terms,
           query.auxiliaryInformation.getOrElse("dataset", "").asInstanceOf[String],
           query.auxiliaryInformation.getOrElse("remoteQuestionId", "-1".toLong).asInstanceOf[Long]),
         query.auxiliaryInformation("rewardCts").asInstanceOf[Int],
