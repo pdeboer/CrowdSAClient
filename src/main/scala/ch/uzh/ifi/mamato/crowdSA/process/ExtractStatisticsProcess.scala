@@ -99,7 +99,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
               logger.info("Running assumption step")
               checkAssumption(assumption, e, paper_id, answer,
                 datasetAssumptionTested,
-                v, datasetId, stat_method, answer.answer)
+                v, datasetId, stat_method)
             })
 
             // Evaluate the results once the process is ended
@@ -160,7 +160,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 	def checkAssumption(assumption: String, e: StatMethod2Assumption,
 						paper_id: Long, datasetConverged: Answer,
 						datasetAssumptionTested: mutable.MutableList[(Long, String, String, mutable.MutableList[Patch])],
-						v: RecombinationVariant, dataset_id: Long, statMethod: String, dataset: String) = {
+						v: RecombinationVariant, dataset_id: Long, statMethod: String) = {
 		logger.debug("Analyzing paper for assumption: " + assumption)
 
 		var pdfContainsAssumption = false
@@ -180,7 +180,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
           "question" -> b.question,
           "type" -> "Boolean",
           "dataset" -> datasetConverged.answer,
-          "terms" -> (b.test_names.replaceAll(",", "#")+dataset),
+          "terms" -> (b.test_names.replaceAll(",", "#")),
           "paperId" -> paper_id,
           "rewardCts" -> 10,
           "expirationTimeSec" -> ((new Date().getTime() / 1000) + 60 * 60 * 24 * 365),
