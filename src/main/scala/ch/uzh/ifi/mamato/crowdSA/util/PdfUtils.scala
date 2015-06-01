@@ -50,7 +50,7 @@ object PdfUtils {
       val pattern = ("(?i)("+toMatch+")").r
       for(m <- toMatch.r.findAllMatchIn(source)){
         val contextAfter = m.after.toString
-        mut += toMatch+ contextAfter.substring(0, 20)
+        mut += toMatch+ contextAfter.substring(0, 22)
       }
       mut.toList
     }catch {

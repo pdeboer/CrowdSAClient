@@ -54,10 +54,13 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 			val paper_id = d.auxiliaryInformation("paperId").asInstanceOf[Long]
 
       if(d.auxiliaryInformation("type").asInstanceOf[String].equalsIgnoreCase("Missing")){
-        val missingMethods = v.createProcess[Patch, Patch]("missingProcess").process(d)
+        val missingMethods = v.createProcess[Patch, List[Patch]]("missingProcess").process(d)
         this.synchronized{
-          result = "* Methods which were not automatically identified are found in:\n " +
-            missingMethods.auxiliaryInformation.get("answer").asInstanceOf[Answer].answer.replaceAll("#", "\n* - ")
+          var ss = ""
+          missingMethods.foreach(mm => {
+            ss += mm.auxiliaryInformation.getOrElse("answer","No method found").asInstanceOf[String].replaceAll("#", "\n* - ")
+          })
+          result = "* Methods which were not automatically identified:\n " + ss
         }
       } else {
         val datasetConverged = v.createProcess[Patch, Patch]("discoveryProcess").process(d)
@@ -179,7 +182,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
         p.auxiliaryInformation += (
           "question" -> b.question,
           "type" -> "Boolean",
-          "dataset" -> datasetConverged.answer,
+          "dataset" -> datasetConverged.answer.replaceAll("’", "'"),//.replaceAll("'","\'"),
           "terms" -> (b.test_names.replaceAll(",", "#")),
           "paperId" -> paper_id,
           "rewardCts" -> 10,

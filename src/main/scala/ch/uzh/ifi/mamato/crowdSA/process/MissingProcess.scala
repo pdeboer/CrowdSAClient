@@ -8,14 +8,14 @@ import ch.uzh.ifi.pdeboer.pplib.process.entities._
 
 @PPLibProcess
 class MissingProcess(_params: Map[String, Any] = Map.empty)
-  extends CreateProcess[Patch, Patch](_params) with HCompPortalAccess with InstructionHandler{
+  extends CreateProcess[Patch, List[Patch]](_params) with HCompPortalAccess with InstructionHandler{
 
   /**
    * Run the Missing Process which ask to identify the non-automatically identified methods.
    * @param data
    * @return The converged answer
    */
-  override protected def run(data: Patch): Patch = {
+  override protected def run(data: Patch): List[Patch] = {
 
     val processType = MissingProcess.MISSING_PROCESS.get
 
@@ -29,5 +29,5 @@ class MissingProcess(_params: Map[String, Any] = Map.empty)
 }
 
 object MissingProcess {
-  val MISSING_PROCESS = new ProcessParameter[PassableProcessParam[CreateProcess[Patch, Patch]]]("MissingProcess", None)
+  val MISSING_PROCESS = new ProcessParameter[PassableProcessParam[CreateProcess[Patch, List[Patch]]]]("missingProcess", None)
 }
