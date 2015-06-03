@@ -56,16 +56,22 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
       if(d.auxiliaryInformation("type").asInstanceOf[String].equalsIgnoreCase("Missing")){
         val missingMethods = v.createProcess[Patch, List[Patch]]("missingProcess").process(d)
         this.synchronized{
-          var ss = "\n* - "
+          var ss = ""
           missingMethods.foreach(mm => {
-            if(mm.auxiliaryInformation.getOrElse("answer", "").asInstanceOf[String].equalsIgnoreCase("")){
-              ss += "\n* - No method found"
-            }
-            else {
-              ss += mm.auxiliaryInformation.get("answer").asInstanceOf[String].replaceAll("#", "\n* - ")
+            try{
+              val a = mm.auxiliaryInformation("answer").asInstanceOf[String]
+              if(a.isEmpty){
+                ss += "\n* - No method found"
+              } else {
+                ss += a.replaceAll("#", "\n* - ")
+              }
+            } catch {
+              case e: Exception => {
+                ss += "\n* - No method found"
+              }
             }
           })
-          result = "* Methods which were not automatically identified:\n " + ss + "\n\n"
+          result = "* Methods which were not automatically identified: " + ss + "\n\n"
         }
       } else {
         val datasetConverged = v.createProcess[Patch, Patch]("discoveryProcess").process(d)

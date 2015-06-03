@@ -50,7 +50,7 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any])
           var currentAns = a.auxiliaryInformation("answer").asInstanceOf[String]
 
           // Case: Method not used
-          if(a.auxiliaryInformation("answer").asInstanceOf[String].equals("")){
+          if(currentAns.equals("")){
             val ans = AnswersDAO.find(a.auxiliaryInformation("id").asInstanceOf[Long]).get
             if(!ans.is_method_used){
               currentAns = "Method is not used"
@@ -70,6 +70,7 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any])
         // get assignment of the first alternative (All the alternatives belongs to the same question)
         val assignment = CrowdSAPortalAdapter.service.getAssignmentForAnswerId(
           alternatives.head.auxiliaryInformation("id").asInstanceOf[Long])
+
         // get question id of the first alternative
         val quest_id = assignment.remote_question_id
         // get original question to check if was a discovery or boolean question
@@ -116,7 +117,7 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any])
           val question_id = CrowdSAPortalAdapter.service.CreateQuestion(query, prop)
           val postTime = new DateTime()
 
-          //FIXME: should be done by PPLib and not here
+          //FIXME: should be done by PortalAdapter and not here
           while (CrowdSAContest.WORKER_COUNT.get > allAnswers.length){
             Thread.sleep(ConfigFactory.load("application.conf").getInt("pollTimeMS"))
             val answersSoFar = CrowdSAPortalAdapter.service.GetAnswersForQuestion(question_id)

@@ -22,7 +22,7 @@ object ExtractStatisticsRecombination {
     */
 
   def createCollectionProcesses() = new TypedParameterVariantGenerator[CrowdSACollection]()
-    .addVariation(CrowdSACollection.WORKER_COUNT, List(3))
+    .addVariation(CrowdSACollection.WORKER_COUNT, List(2))
     .generatePassableProcesses()/* ::: new TypedParameterVariantGenerator[CrowdSACollectionWithSigmaPruning]()
     .addVariation(CrowdSACollectionWithSigmaPruning.PRUNE_TEXT_LENGTH, List(false))
     .addVariation(DefaultParameters.WORKER_COUNT, List(2))
