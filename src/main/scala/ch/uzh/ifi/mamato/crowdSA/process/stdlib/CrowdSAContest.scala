@@ -64,6 +64,8 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any])
             teams += CrowdSAPortalAdapter.service.getAssignmentForAnswerId(
               a.auxiliaryInformation("id").asInstanceOf[Long]).remote_team_id
 
+            // Init votes
+            votes += currentAns -> 0
           }
         })
 
@@ -127,9 +129,11 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any])
                 answer.postTime = postTime
                 answer.receivedTime = new DateTime()
                 AnswersDAO.create(answer)
-                votes.+=(answer.answer -> votes.getOrElse(answer.answer, 0))
 
-                allAnswers.+=(answer)
+                // Get the vote value for the answer choosen and add 1 vote
+                votes += answer.answer -> (votes.getOrElse(answer.answer, 0)+1)
+
+                allAnswers += answer
                 // Accept all the answers which are not empty
                 if(answer.answer!= null && answer.answer != ""){
                   CrowdSAPortalAdapter.service.ApproveAnswer(answer)
@@ -149,6 +153,7 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any])
           allAnswers.toList
         }
 
+        logger.info(votes.toList.toString())
         val valueOfAnswer: String = votes.maxBy(s => s._2)._1
         logger.info("***** WINNER CONTEST " + valueOfAnswer)
         if(valueOfAnswer.equalsIgnoreCase("Method is not used")){
