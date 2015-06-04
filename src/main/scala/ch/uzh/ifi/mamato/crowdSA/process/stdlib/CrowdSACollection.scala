@@ -94,8 +94,8 @@ class CrowdSACollection(params: Map[String, Any] = Map.empty)
                 query.auxiliaryInformation("rewardCts").asInstanceOf[Int]))
             }
           })
+          logger.debug("COMPLETED: All answers to question: "+query.value+" correctly stored")
         }
-        logger.debug("Needed answers: " + CrowdSACollection.WORKER_COUNT.get + " - Got so far: " + answerSoFar.length)
       }
 
       logger.debug("Disabling question because got enough answers")

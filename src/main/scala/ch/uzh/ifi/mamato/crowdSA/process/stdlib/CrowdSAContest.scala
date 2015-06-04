@@ -143,8 +143,9 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any])
                 Main.crowdSA.setBudget(Some(Main.crowdSA.budget.get-query.suggestedPaymentCents))
               }
             })
-            logger.debug("Needed answers: " + CrowdSAContest.WORKER_COUNT.get + " - Got so far: " + answersSoFar.toList.length)
           }
+          logger.debug("COMPLETED: All answers to question: "+question_id+" correctly stored")
+
 
           logger.debug("Disabling question because got enough answers")
           CrowdSAPortalAdapter.service.DisableQuestion(question_id)
