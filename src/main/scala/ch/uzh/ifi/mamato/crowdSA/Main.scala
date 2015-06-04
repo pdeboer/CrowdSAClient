@@ -101,9 +101,8 @@ object Main extends App with LazyLogger {
             "paperId" -> remote_id,
             "rewardCts" -> 10,
             "expirationTimeSec" -> ((new Date().getTime() / 1000) + 60 * 60 * 24 * 365),
-            "assumption" -> new String("Discovery"),
-            "maxAssignments" -> 100
-          )
+            "assumption" -> new String("Discovery")
+            )
           discoveryQuestions += p
       }
 
@@ -116,7 +115,6 @@ object Main extends App with LazyLogger {
         "rewardCts" -> 10,
         "expirationTimeSec" -> ((new Date().getTime() / 1000) + 60 * 60 * 24 * 365),
         "assumption" -> "Missing",
-        "maxAssignments" -> 100,
         "methodList" -> mmm
         )
 

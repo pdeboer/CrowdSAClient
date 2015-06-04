@@ -99,16 +99,14 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any])
           "rewardCts" -> 10,
           "expirationTimeSec" -> ((new Date().getTime() / 1000) + 60 * 60 * 24 * 365),
           "assumption" -> "Voting",
-          "possibleAnswers" -> Some(answersText.mkString("$$")),
-          "maxAssignments" -> 100,
-          "maxAssignments" -> Some(teams.toList)
+          "possibleAnswers" -> Some(answersText.mkString("$$"))
           )
           */
 
         val query = FreetextQuery(question, answersText.mkString("$$"))
         val prop = new CrowdSAQueryProperties(paperId, "Voting",
           HighlightDAO.create("Dataset", toHighlight, "", -1),
-          10,((new Date().getTime() / 1000) + 60 * 60 * 24 * 365), 100,
+          10,((new Date().getTime() / 1000) + 60 * 60 * 24 * 365), CrowdSAContest.WORKER_COUNT.get,
           Some(answersText.mkString("$$")), Some(teams.toList))
 
 

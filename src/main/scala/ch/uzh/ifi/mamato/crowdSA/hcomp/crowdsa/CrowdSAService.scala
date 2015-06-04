@@ -145,10 +145,11 @@ private[crowdSA]class CrowdSAService (val server: Server) extends LazyLogger{
     try {
       val jsonAnswer: JsValue = Json.parse(get("/answers/"+question_id))
       val a = jsonAnswer.validate[List[Answer]]
+      logger.debug("*- Got: " + a.get.size + " answers.")
       a.get.toIterable
     } catch {
       case e: Exception =>
-        logger.debug("No answer given yet")
+        logger.debug("Cannot correctly cast the answers. Is server up?")
         None
     }
   }

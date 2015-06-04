@@ -198,8 +198,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
           "paperId" -> paper_id,
           "rewardCts" -> 10,
           "expirationTimeSec" -> ((new Date().getTime() / 1000) + 60 * 60 * 24 * 365),
-          "assumption" -> "DatasetWithAssumptionTest",
-          "maxAssignments" -> 100
+          "assumption" -> "DatasetWithAssumptionTest"
           )
 
 				// If a match is found for the assumption ask the question!
@@ -257,8 +256,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
         "paperId" -> paper_id,
         "rewardCts" -> 10,
         "expirationTimeSec" -> ((new Date().getTime() / 1000) + 60 * 60 * 24 * 365),
-        "assumption" -> "DatasetWithGeneralAssumption",
-        "maxAssignments" -> 100
+        "assumption" -> "DatasetWithGeneralAssumption"
         )
 
 			val converged = v.createProcess[Patch, Patch]("assessmentProcess").process(pp)

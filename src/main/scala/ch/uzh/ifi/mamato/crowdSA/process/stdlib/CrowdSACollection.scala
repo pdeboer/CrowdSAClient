@@ -52,7 +52,7 @@ class CrowdSACollection(params: Map[String, Any] = Map.empty)
           query.auxiliaryInformation.getOrElse("remoteQuestionId", "-1".toLong).asInstanceOf[Long]),
         query.auxiliaryInformation("rewardCts").asInstanceOf[Int],
         query.auxiliaryInformation("expirationTimeSec").asInstanceOf[Long],
-        query.auxiliaryInformation("maxAssignments").asInstanceOf[Int],
+        CrowdSACollection.WORKER_COUNT.get,
         query.auxiliaryInformation.getOrElse("possibleAnswers", Some("")).asInstanceOf[Option[String]],
         query.auxiliaryInformation.getOrElse("deniedTurkers", null).asInstanceOf[Option[List[Long]]]
       )
@@ -67,7 +67,8 @@ class CrowdSACollection(params: Map[String, Any] = Map.empty)
         Thread.sleep(ConfigFactory.load("application.conf").getInt("pollTimeMS"))
         val allAnswers = CrowdSAPortalAdapter.service.GetAnswersForQuestion(question_id)
 
-        if(allAnswers.size == CrowdSACollection.WORKER_COUNT.get){
+        // If we got enough answers we can start adding them to the client database.
+        if(allAnswers.size >= CrowdSACollection.WORKER_COUNT.get){
           allAnswers.foreach(e => {
             if(CrowdSACollection.WORKER_COUNT.get >= answerSoFar.length+1){
               logger.debug("Adding answer: " + e)
@@ -94,7 +95,6 @@ class CrowdSACollection(params: Map[String, Any] = Map.empty)
             }
           })
         }
-
         logger.debug("Needed answers: " + CrowdSACollection.WORKER_COUNT.get + " - Got so far: " + answerSoFar.length)
       }
 
