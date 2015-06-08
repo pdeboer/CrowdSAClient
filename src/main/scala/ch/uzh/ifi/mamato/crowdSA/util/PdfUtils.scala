@@ -46,27 +46,27 @@ object PdfUtils {
     try {
       toMatch.foreach(m => {
         val pattern = ("(?i)((\\b"+m+"\\b))").r
-        for(mm <- pattern.findAllMatchIn(source)){
+        for(mm <- pattern.findAllMatchIn("\\Q"+source+"\\E")){
           val contextAfter = mm.after.toString
           val contextBefore = mm.before.toString
           var start = contextBefore.length
           var end = 0
           // Iterate until a unique match is found
-          var pattern1 = ("(?i)("+contextBefore.substring(start, contextBefore.length) + m +
-            contextAfter.substring(0, end)+")").r
-          do{
+          var pattern1 = ("(?i)(\\Q"+contextBefore.substring(start, contextBefore.length) + m +
+            contextAfter.substring(0, end)+"\\E)").r
+          while(
+            contextBefore.length >= start &&
+              contextAfter.length >= end &&
+              pattern1.findAllMatchIn("\\Q"+source+"\\E").length>1){
             if(start >0) {
               start -= 1
             }
             if(end < contextAfter.length) {
               end += 1
             }
-            pattern1 = ("(?i)("+contextBefore.substring(start, contextBefore.length) + m +
-              contextAfter.substring(0, end)+")").r
-          }while(
-            contextBefore.length >= start &&
-              contextAfter.length >= end &&
-              pattern1.findAllMatchIn(source).length>1)
+            pattern1 = ("(?i)(\\Q"+contextBefore.substring(start, contextBefore.length) + m +
+              contextAfter.substring(0, end)+"\\E)").r
+          }
 
           mut += m -> (contextBefore.substring(start, contextBefore.length)
             + m +

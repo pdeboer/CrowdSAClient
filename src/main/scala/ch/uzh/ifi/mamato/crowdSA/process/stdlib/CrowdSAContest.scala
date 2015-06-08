@@ -6,6 +6,7 @@ import ch.uzh.ifi.mamato.crowdSA.Main
 import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAPortalAdapter, CrowdSAQueryProperties}
 import ch.uzh.ifi.mamato.crowdSA.model.Answer
 import ch.uzh.ifi.mamato.crowdSA.persistence.{HighlightDAO, AnswersDAO, QuestionDAO}
+import ch.uzh.ifi.mamato.crowdSA.process.entities.CrowdSAPatch
 import ch.uzh.ifi.pdeboer.pplib.hcomp.{FreetextQuery, HCompQuery}
 import ch.uzh.ifi.pdeboer.pplib.process.entities._
 import com.typesafe.config.ConfigFactory
@@ -19,11 +20,11 @@ import scala.collection.mutable
  */
 @PPLibProcess
 class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any])
-  extends DecideProcess[List[Patch], Patch](params) with HCompPortalAccess with InstructionHandler {
+  extends DecideProcess[List[CrowdSAPatch], CrowdSAPatch](params) with HCompPortalAccess with InstructionHandler {
 
   protected var votes = mutable.HashMap.empty[String, Int]
 
-  override def run(alternatives: List[Patch]): Patch = {
+  override def run(alternatives: List[CrowdSAPatch]): CrowdSAPatch = {
 
       if (alternatives.size == 0) null
       else if (alternatives.size == 1) alternatives.head
@@ -33,12 +34,12 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any])
         var paperId: Long = -1
 
         // Special case for iterative refinement
-        if(alternatives.head.auxiliaryInformation("answer").asInstanceOf[String] != ""){
+        if(alternatives.head.answer != ""){
           paperId = CrowdSAPortalAdapter.service.getPaperIdFromAnswerId(
-            alternatives.head.auxiliaryInformation("id").asInstanceOf[Long])
+            alternatives.head.answerId)
         } else {
           paperId = CrowdSAPortalAdapter.service.getPaperIdFromAnswerId(
-            alternatives(1).auxiliaryInformation("id").asInstanceOf[Long])
+            alternatives(1).answerId)
         }
 
         // Get all distinct answers and the teams id which created this answer.
@@ -47,11 +48,11 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any])
         val teams = new mutable.MutableList[Long]
 
         alternatives.foreach(a => {
-          var currentAns = a.auxiliaryInformation("answer").asInstanceOf[String]
+          var currentAns = a.answer
 
           // Case: Method not used
           if(currentAns.equals("")){
-            val ans = AnswersDAO.find(a.auxiliaryInformation("id").asInstanceOf[Long]).get
+            val ans = AnswersDAO.find(a.answerId).get
             if(!ans.is_method_used){
               currentAns = "Method is not used"
             }
@@ -62,7 +63,7 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any])
             // Get the teams which participated to the create the answers
             // (used to exclude them from the voting process)
             teams += CrowdSAPortalAdapter.service.getAssignmentForAnswerId(
-              a.auxiliaryInformation("id").asInstanceOf[Long]).remote_team_id
+              a.answerId).remote_team_id
 
             // Init votes
             votes += currentAns -> 0
@@ -71,7 +72,7 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any])
 
         // get assignment of the first alternative (All the alternatives belongs to the same question)
         val assignment = CrowdSAPortalAdapter.service.getAssignmentForAnswerId(
-          alternatives.head.auxiliaryInformation("id").asInstanceOf[Long])
+          alternatives.head.answerId)
 
         // get question id of the first alternative
         val quest_id = assignment.remote_question_id
@@ -89,19 +90,6 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any])
         } else {
           "The answers below were submitted by other crowd workers when asking to answer the Yes/No question: '<i><u>"+ originalQuestion.get.question+ "</u></i>'. Please chose the answer which you think is the right one."
         }
-
-       /* val p = new Patch(question)
-        p.auxiliaryInformation += (
-          "question" -> question,
-          "type" -> "Voting",
-          "terms" -> toHighlight,
-          "paperId" -> paperId,
-          "rewardCts" -> 10,
-          "expirationTimeSec" -> ((new Date().getTime() / 1000) + 60 * 60 * 24 * 365),
-          "assumption" -> "Voting",
-          "possibleAnswers" -> Some(answersText.mkString("$$"))
-          )
-          */
 
         val query = FreetextQuery(question, answersText.mkString("$$"))
         val prop = new CrowdSAQueryProperties(paperId, "Voting",
@@ -157,17 +145,17 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any])
         logger.info("***** WINNER CONTEST " + valueOfAnswer)
         if(valueOfAnswer.equalsIgnoreCase("Method is not used")){
           alternatives.find(a => {
-            a.auxiliaryInformation("answer").asInstanceOf[String].equalsIgnoreCase("") &&
-              !AnswersDAO.find(a.auxiliaryInformation("id").asInstanceOf[Long]).get.is_method_used
+            a.answer.equalsIgnoreCase("") &&
+              !AnswersDAO.find(a.answerId).get.is_method_used
           }).get
         } else if(valueOfAnswer.equals("")){
           alternatives.find(a => {
-            a.auxiliaryInformation("answer").asInstanceOf[String].equalsIgnoreCase("") &&
-              AnswersDAO.find(a.auxiliaryInformation("id").asInstanceOf[Long]).get.is_method_used
+            a.answer.equalsIgnoreCase("") &&
+              AnswersDAO.find(a.answerId).get.is_method_used
           }).get
         }
         else {
-          alternatives.find(_.auxiliaryInformation("answer").asInstanceOf[String].equalsIgnoreCase(valueOfAnswer)).get
+          alternatives.find(_.answer.equalsIgnoreCase(valueOfAnswer)).get
         }
       }
 

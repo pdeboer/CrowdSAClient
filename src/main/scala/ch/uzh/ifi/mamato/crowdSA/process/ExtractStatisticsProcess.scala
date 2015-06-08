@@ -3,12 +3,12 @@ package ch.uzh.ifi.mamato.crowdSA.process
 import java.util.Date
 
 import ch.uzh.ifi.mamato.crowdSA.Main
-import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.{CrowdSAPortalAdapter, CrowdSAQueryProperties}
+import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.CrowdSAPortalAdapter
 import ch.uzh.ifi.mamato.crowdSA.model._
 import ch.uzh.ifi.mamato.crowdSA.persistence._
+import ch.uzh.ifi.mamato.crowdSA.process.entities.CrowdSAPatch
 import ch.uzh.ifi.mamato.crowdSA.util.{LazyLogger, PdfUtils}
-import ch.uzh.ifi.pdeboer.pplib.hcomp.HCompQuery
-import ch.uzh.ifi.pdeboer.pplib.process.entities.{Patch, ProcessStub}
+import ch.uzh.ifi.pdeboer.pplib.process.entities.ProcessStub
 import ch.uzh.ifi.pdeboer.pplib.process.recombination.{Recombinable, RecombinationVariant, SimpleRecombinationVariantXMLExporter}
 import ch.uzh.ifi.pdeboer.pplib.util.CollectionUtils._
 
@@ -20,7 +20,7 @@ import scala.collection.mutable
  * one, the second phase starts.
  * Created by mattia on 27.02.15.
  */
-class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion: List[Patch])
+class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion: List[CrowdSAPatch])
 	extends Recombinable[String] with LazyLogger {
 
 	/**
@@ -35,7 +35,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 		val processes = new ProcessVariant(v)
 
 		// Complex datastructure to store [dataset, statistical method, assumption, List[converged answers]]
-		val datasetAssumptionTested = new mutable.MutableList[(Long, String, String, mutable.MutableList[Patch])]
+		val datasetAssumptionTested = new mutable.MutableList[(Long, String, String, mutable.MutableList[CrowdSAPatch])]
 
 		var result = ""
 		this.synchronized {
@@ -51,19 +51,21 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 		// Parallel ask all the discovery questions
 		discoveryQuestion.mpar.foreach(d => {
 
-			val paper_id = d.auxiliaryInformation("paperId").asInstanceOf[Long]
+			val paper_id = d.paperId
 
-      if(d.auxiliaryInformation("type").asInstanceOf[String].equalsIgnoreCase("Missing")){
-        val missingMethods = v.createProcess[Patch, List[Patch]]("missingProcess").process(d)
+      if(d.questionType.equalsIgnoreCase("Missing")){
+        val missingMethods = v.createProcess[CrowdSAPatch, List[CrowdSAPatch]]("missingProcess").process(d)
         this.synchronized{
           var ss = ""
           missingMethods.foreach(mm => {
             try{
-              val a = mm.auxiliaryInformation("answer").asInstanceOf[String]
+              val a = mm.answer
               if(a.isEmpty){
                 ss += "\n* - No method found"
-              } else {
+              } else if(a.contains("#")) {
                 ss += a.replaceAll("#", "\n* - ")
+              } else {
+                ss += ("\n* - " + a)
               }
             } catch {
               case e: Exception => {
@@ -71,22 +73,22 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
               }
             }
           })
-          result = "* Methods which were not automatically identified: " + ss + "\n\n"
+          result = "\n* Methods which were not automatically identified: " + ss + "\n\n"
         }
       } else {
-        val datasetConverged = v.createProcess[Patch, Patch]("discoveryProcess").process(d)
+        val datasetConverged = v.createProcess[CrowdSAPatch, CrowdSAPatch]("discoveryProcess").process(d)
 
         // FIXME: ugly! - used to identify the statistical method of the discovery question
         var stat_method = ""
         var statMethod: Option[StatMethod] = None
         this.synchronized {
-          val question = d.auxiliaryInformation("question").asInstanceOf[String]
+          val question = d.question
           stat_method = question.substring(question.indexOf("<i> ") + 4, question.indexOf(" </i>"))
           statMethod = StatMethodsDAO.findByStatMethod(stat_method)
         }
 
         // If the dataset exists, the statistical method is NOT a false positive
-        val answer = AnswersDAO.find(datasetConverged.auxiliaryInformation("id").asInstanceOf[Long]).get
+        val answer = AnswersDAO.find(datasetConverged.answerId).get
         if (answer.answer != "" && answer.is_method_used == true) {
           logger.debug("***** result DISCOVERY STEP")
           // Try to create the dataset if it doesn't yet exists!
@@ -125,7 +127,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
                 if (elem._1 == datasetId && elem._2 == stat_method) {
                   result += "* -- Assumption: " + elem._3 + "\n"
                   elem._4.foreach(assump => {
-                    if (assump.auxiliaryInformation("answer").asInstanceOf[String] == "true") {
+                    if (assump.answer.equalsIgnoreCase("true")) {
                       allFalse = false
                     }
                   })
@@ -173,7 +175,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 	 */
 	def checkAssumption(assumption: String, e: StatMethod2Assumption,
 						paper_id: Long, datasetConverged: Answer,
-						datasetAssumptionTested: mutable.MutableList[(Long, String, String, mutable.MutableList[Patch])],
+						datasetAssumptionTested: mutable.MutableList[(Long, String, String, mutable.MutableList[CrowdSAPatch])],
 						v: RecombinationVariant, dataset_id: Long, statMethod: String) = {
 		logger.debug("Analyzing paper for assumption: " + assumption)
 
@@ -189,20 +191,12 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 				this.synchronized {
 					pdfContainsAssumption = true
 				}
-				val p = new Patch(b.question)
-        p.auxiliaryInformation += (
-          "question" -> b.question,
-          "type" -> "Boolean",
-          "dataset" -> datasetConverged.answer.replaceAll("’", "'"),//.replaceAll("'","\'"),
-          "terms" -> (b.test_names.replaceAll(",", "#")),
-          "paperId" -> paper_id,
-          "rewardCts" -> 10,
-          "expirationTimeSec" -> ((new Date().getTime() / 1000) + 60 * 60 * 24 * 365),
-          "assumption" -> "DatasetWithAssumptionTest"
-          )
+				val p = new CrowdSAPatch(b.question, "Boolean", (b.test_names.replaceAll(",", "#")), paper_id,"DatasetWithAssumptionTest")
+        p.dataset = datasetConverged.answer.replaceAll("’", "'")//.replaceAll("'","\'"),
+
 
 				// If a match is found for the assumption ask the question!
-				val converged = v.createProcess[Patch, Patch]("assessmentProcess").process(p)
+				val converged = v.createProcess[CrowdSAPatch, CrowdSAPatch]("assessmentProcess").process(p)
 
 				// Add converged answer to the assumption to test
 				this.synchronized {
@@ -215,14 +209,13 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 						}
 					})
 					if (!found) {
-						val list = new mutable.MutableList[Patch]
+						val list = new mutable.MutableList[CrowdSAPatch]
 						list += converged
 						datasetAssumptionTested.+=:((dataset_id, statMethod, assumption, list))
 					}
 				}
 
-				logger.debug("Assessment step for question: " + b.question + " converged to answer: " +
-          converged.auxiliaryInformation("answer").asInstanceOf[String])
+				logger.debug("Assessment step for question: " + b.question + " converged to answer: " + converged.answer)
 			}
 		})
 
@@ -231,7 +224,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 			datasetAssumptionTested.foreach(a => {
 				if (a._1 == dataset_id && a._2 == statMethod && a._3 == assumption) {
 					a._4.foreach(ans => {
-						if (ans.auxiliaryInformation("answer").asInstanceOf[String].equalsIgnoreCase("true")) {
+						if (ans.answer.equalsIgnoreCase("true")) {
 							allFalse = false
 						}
 					})
@@ -246,20 +239,11 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 
 			logger.debug("Asking general question for assumption: " + assumption)
 
-      val question = "Is the dataset highlighted in the paper tested for the assumption: <i>" + assumption + "</i>?"
-			val pp = new Patch(question)
-      pp.auxiliaryInformation += (
-        "question" -> question,
-        "type" -> "Boolean",
-        "dataset" -> datasetConverged.answer,
-        "terms" -> assumption,
-        "paperId" -> paper_id,
-        "rewardCts" -> 10,
-        "expirationTimeSec" -> ((new Date().getTime() / 1000) + 60 * 60 * 24 * 365),
-        "assumption" -> "DatasetWithGeneralAssumption"
-        )
+			val pp = new CrowdSAPatch("Is the dataset highlighted in the paper tested for the assumption: <i>" + assumption + "</i>?",
+      "Boolean", assumption, paper_id, "DatasetWithGeneralAssumption")
+      pp.dataset = datasetConverged.answer
 
-			val converged = v.createProcess[Patch, Patch]("assessmentProcess").process(pp)
+			val converged = v.createProcess[CrowdSAPatch, CrowdSAPatch]("assessmentProcess").process(pp)
 
 			//Update the list of assumption to test with the generic converged answer
 			this.synchronized {
@@ -271,20 +255,19 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 					}
 				})
 				if (!found) {
-					val list = new mutable.MutableList[Patch]
+					val list = new mutable.MutableList[CrowdSAPatch]
 					list += converged
 					datasetAssumptionTested.+=:((dataset_id, statMethod, assumption, list))
 				}
 			}
-			logger.debug("Assessment step for general question about: " + assumption + " converged to answer: " +
-				converged.auxiliaryInformation("answer").asInstanceOf[String])
+			logger.debug("Assessment step for general question about: " + assumption + " converged to answer: " + converged.answer)
 		}
 	}
 
 	def allRecombinationKeys: List[String] = List("discoveryProcess")
 
 	private class ProcessVariant(decorated: RecombinationVariant) extends RecombinationVariant(decorated.stubs) {
-		def createDiscovery = decorated.createProcess[Patch, Patch]("discoveryProcess")
+		def createDiscovery = decorated.createProcess[CrowdSAPatch, CrowdSAPatch]("discoveryProcess")
 	}
 
   override def requiredProcessDefinitions: Map[String, Class[_ <: ProcessStub[_, _]]] = Map.empty

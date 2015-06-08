@@ -1,6 +1,7 @@
 package ch.uzh.ifi.mamato.crowdSA.process
 
 import ch.uzh.ifi.mamato.crowdSA.model.Answer
+import ch.uzh.ifi.mamato.crowdSA.process.entities.CrowdSAPatch
 import ch.uzh.ifi.pdeboer.pplib.process.entities._
 
 /**
@@ -9,7 +10,7 @@ import ch.uzh.ifi.pdeboer.pplib.process.entities._
 
 @PPLibProcess
 class AssessmentProcess(_params: Map[String, Any] = Map.empty)
-  extends CreateProcess[Patch, Patch](_params) with HCompPortalAccess with InstructionHandler{
+  extends CreateProcess[CrowdSAPatch, CrowdSAPatch](_params) with HCompPortalAccess with InstructionHandler{
 
   /**
    * Run an Assessment Process. This process will create all the questions to test if an assumption hold for a certain
@@ -17,7 +18,7 @@ class AssessmentProcess(_params: Map[String, Any] = Map.empty)
    * @param data A query composed by HCompQuery and CrowdSAQueryProperties
    * @return The converged answer
    */
-  override protected def run(data: Patch): Patch = {
+  override protected def run(data: CrowdSAPatch): CrowdSAPatch = {
     val processType = AssessmentProcess.ASSESSMENT_PROCESS.get
 
     val lowerPriorityParams = params
@@ -30,5 +31,5 @@ class AssessmentProcess(_params: Map[String, Any] = Map.empty)
 }
 
 object AssessmentProcess {
-  val ASSESSMENT_PROCESS = new ProcessParameter[PassableProcessParam[CreateProcess[Patch, Patch]]]("assessmentProcess", None)
+  val ASSESSMENT_PROCESS = new ProcessParameter[PassableProcessParam[CreateProcess[CrowdSAPatch, CrowdSAPatch]]]("assessmentProcess", None)
 }
