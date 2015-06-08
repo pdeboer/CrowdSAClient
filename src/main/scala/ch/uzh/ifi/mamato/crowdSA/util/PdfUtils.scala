@@ -2,6 +2,7 @@ package ch.uzh.ifi.mamato.crowdSA.util
 
 import java.io._
 import java.util.regex.{Pattern, Matcher}
+import ch.uzh.ifi.mamato.crowdSA.model.StatMethod
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.util.PDFTextStripper
 
@@ -31,32 +32,52 @@ object PdfUtils {
   }
 
   def findContextMatchMutipleMatches(source: String, toMatch: List[String]): List[String] = {
-    val res = new mutable.MutableList[String]
-
-    toMatch.foreach(
-      m => {
-        findContextMatch(source, m).foreach(
-          c => {
-            res += c
-          })
-      }
-    )
-    res.toList
+    findContextMatch(source, toMatch).map(_._2).toList
   }
 
-  def findContextMatch(source: String, toMatch: String): List[String] = {
-    val mut = new mutable.MutableList[String]
+  /**
+   * Find a match in the PDF file and extract the shortest unique string that identifies it.
+   * @param source
+   * @param toMatch
+   * @return
+   */
+  def findContextMatch(source: String, toMatch: List[String]): mutable.MutableList[(String, String)] = {
+    val mut = new mutable.MutableList[(String, String)]
     try {
-      val pattern = ("(?i)("+toMatch+")").r
-      for(m <- toMatch.r.findAllMatchIn(source)){
-        val contextAfter = m.after.toString
-        mut += toMatch+ contextAfter.substring(0, 22)
-      }
-      mut.toList
+      toMatch.foreach(m => {
+        val pattern = ("(?i)((\\b"+m+"\\b))").r
+        for(mm <- pattern.findAllMatchIn(source)){
+          val contextAfter = mm.after.toString
+          val contextBefore = mm.before.toString
+          var start = contextBefore.length
+          var end = 0
+          // Iterate until a unique match is found
+          var pattern1 = ("(?i)("+contextBefore.substring(start, contextBefore.length) + m +
+            contextAfter.substring(0, end)+")").r
+          do{
+            if(start >0) {
+              start -= 1
+            }
+            if(end < contextAfter.length) {
+              end += 1
+            }
+            pattern1 = ("(?i)("+contextBefore.substring(start, contextBefore.length) + m +
+              contextAfter.substring(0, end)+")").r
+          }while(
+            contextBefore.length >= start &&
+              contextAfter.length >= end &&
+              pattern1.findAllMatchIn(source).length>1)
+
+          mut += m -> (contextBefore.substring(start, contextBefore.length)
+            + m +
+            contextAfter.substring(0, end))
+        }
+      })
+
+      mut
     }catch {
       case e: Exception => {
-        e.getStackTrace
-        (new mutable.MutableList[String]).toList
+        throw e
       }
     }
   }

@@ -43,23 +43,14 @@ object Main extends App with LazyLogger {
     val toMatch = StatMethodsDAO.findAll()
     logger.debug("Found " + toMatch.length + " statistical methods in the database")
 
-    // open pdf and convert it to text
-
     var statMethod2ContextStatMethod = new mutable.MutableList[(String, String)]
     try {
+      // open pdf and convert it to text
       val pdfToText = PdfUtils.getTextFromPdf(pathPdf).get
 
       // get context of statistical methods that correspond to the ones present in the database
-      val pdfTextInUpperCase: String = pdfToText.toUpperCase()
-      toMatch.foreach {
-        sm =>
-          val mapp = PdfUtils.findContextMatch(pdfTextInUpperCase, sm.stat_method.toUpperCase())
-
-          mapp.foreach {
-            p =>
-              statMethod2ContextStatMethod += sm.stat_method -> p
-          }
-      }
+      statMethod2ContextStatMethod = PdfUtils.findContextMatch(pdfToText, toMatch.map(_.stat_method).toList)
+      logger.debug("Found " + statMethod2ContextStatMethod.length + " matches in the paper")
     } catch {
       case e: Exception => e.printStackTrace()
     }
