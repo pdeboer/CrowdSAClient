@@ -195,29 +195,29 @@ object DBInitializer extends LazyLogger {
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (1,1);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (1,2);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (1,3);".execute.apply()
-            sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (1,4);".execute.apply()
+            /*sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (1,4);".execute.apply()
 
-            /*sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (2,1);".execute.apply()
+            sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (2,1);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (2,3);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (2,4);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (2,5);".execute.apply()
-*/
+
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (2,1);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (2,2);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (2,3);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (2,6);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (2,7);".execute.apply()
-/*
+
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (4,1);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (4,4);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (4,5);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (4,7);".execute.apply()
-*/
+
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (3,8);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (3,9);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (3,10);".execute.apply()
 
-/*
+
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (6,1);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (6,4);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (6,12);".execute.apply()
@@ -313,7 +313,7 @@ object DBInitializer extends LazyLogger {
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (1, 'Is the Pearsons chi-squared test used to test the normality?', 'Pearson,chi-squared,χ2');".execute.apply()
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (1, 'Is the Shapiro-Francia test used to test the normality?', 'Shapiro-Francia');".execute.apply()
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (1, 'Did they plot a histogram/graph and it looked normal distributed?', 'Histogram,plot,normal distribution');".execute.apply()
-
+/*
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (2, 'Is the correlation test used to test the linearity?', 'correlation coefficient,significance,Pearson');".execute.apply()
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (2, 'Did they mentioned that the relationships are linear?', 'linearity');".execute.apply()
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (2, 'Are r^2 tests executed?', 'coefficient of determination,R^2,r^2,R2,R squared');".execute.apply()
@@ -321,9 +321,9 @@ object DBInitializer extends LazyLogger {
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (2, 'Did they used a graphical method to test the linearity?', 'plot,diagram,histogram,diagram,chart,box plot,graph,heatmap,pie chart,plotting,scatterplot,skewplot,sparkline,stemplot,radar chart');".execute.apply()
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (2, 'Does the eta correlation ratio shows linearity?', 'eta,correlation ratio,statistical dispersion,standard deviations');".execute.apply()
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (2, 'Do the plot variables reveals linearity?', 'plot,diagram,histogram,diagram,chart,box plot,graph,heatmap,pie chart,plotting,scatterplot,skewplot,sparkline,stemplot,radar chart,linearity');".execute.apply()
-
-            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (3, 'Is the Box M test used to test the Homogeneity of variance?', 'Box M,Homogeneity,Covariance,Matrices');".execute.apply()
-
+*/
+            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (2, 'Is the Box M test used to test the Homogeneity of variance?', 'Box M,Homogeneity,Covariance,Matrices');".execute.apply()
+/*
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (4, 'Did they use some graphical methods to test the Homoscedasticity (AKA Constant Variance)?', 'plot,histogram,diagram,chart,box plot,graph,heatmap,pie chart,plotting,scatterplot,skewplot,sparkline,stemplot,radar chart');".execute.apply()
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (4, 'Is the WLS regression used to test the Homoscedasticity (AKA Constant Variance)?', 'least square,weighted least square,weighted linear least square,Ω,correlation matrix,residuals');".execute.apply()
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (4, 'Is the Goldfeld Quandt test used to test the Homoscedasticity (AKA Constant Variance)?', 'Goldfeld-Quandt,homoscedasticity');".execute.apply()
@@ -332,12 +332,12 @@ object DBInitializer extends LazyLogger {
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (4, 'Is the Breusch Pagan Godfrey test used to test the Homoscedasticity (AKA Constant Variance)?', 'Breusch-Pagan,Godfrey,linear regression,heteroscedasticity,variance,residuals,regression');".execute.apply()
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (4, 'Is the White test used to test the Homoscedasticity (AKA Constant Variance)?', 'White,residual variance,regression,homoscedasticity,heteroscedasticity');".execute.apply()
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (4, 'Is the Levene test used to test the Homoscedasticity (AKA Constant Variance)?', 'Levene,variance,homogenity of variance,homoscedasticity');".execute.apply()
-
-            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (5, 'Is the Fisher exact test used to test the Independence?', 'Fisher,exact test,Fisher-Yates,Fisher-Irwin,chi^2,chi-squared');".execute.apply()
-            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (5, 'Is the G-test used to test the Independence?', 'G-test,likelihood-ratio,maximum likelihood,statistical significance,chi-squared');".execute.apply()
-            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (5, 'Is the Hilbert-Schmidt independence criterion used to test the Independence?', 'Hilbert-Schmidt,independence criterion');".execute.apply()
-            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (5, 'Is the Schweizer-Wolff approach used to test the Independence?', 'Schweizer-wolff');".execute.apply()
-
+*/
+            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (3, 'Is the Fisher exact test used to test the Independence?', 'Fisher,exact test,Fisher-Yates,Fisher-Irwin,chi^2,chi-squared');".execute.apply()
+            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (3, 'Is the G-test used to test the Independence?', 'G-test,likelihood-ratio,maximum likelihood,statistical significance,chi-squared');".execute.apply()
+            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (3, 'Is the Hilbert-Schmidt independence criterion used to test the Independence?', 'Hilbert-Schmidt,independence criterion');".execute.apply()
+            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (3, 'Is the Schweizer-Wolff approach used to test the Independence?', 'Schweizer-wolff');".execute.apply()
+/*
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (6, 'Are the covariance and the independent variable completely separated?', 'covariance,independent variable');".execute.apply()
 
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (7, 'Is the Durbin-Watson test used to test the Independence of error terms?', 'Durbin-watson,autocorrelation,residuals,regression analysis');".execute.apply()
@@ -348,7 +348,7 @@ object DBInitializer extends LazyLogger {
 
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (10, 'Are the samples greater than 30 (N=30)?', 'sample,population');".execute.apply()
 
-            /*
+
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (12, 'Are the variables intervals or ratio measurements?', 'intervals,ratio');".execute.apply()
 
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (13, 'Are the outliers kept to a minimum or are removed entirely?', 'outliers,minimum,removed');".execute.apply()
