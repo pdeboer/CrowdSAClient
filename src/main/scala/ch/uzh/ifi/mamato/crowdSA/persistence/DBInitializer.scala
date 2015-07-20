@@ -202,20 +202,20 @@ object DBInitializer extends LazyLogger {
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (2,4);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (2,5);".execute.apply()
 */
-            sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (3,1);".execute.apply()
-            sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (3,2);".execute.apply()
-            sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (3,3);".execute.apply()
-            sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (3,6);".execute.apply()
-            sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (3,7);".execute.apply()
+            sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (2,1);".execute.apply()
+            sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (2,2);".execute.apply()
+            sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (2,3);".execute.apply()
+            sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (2,6);".execute.apply()
+            sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (2,7);".execute.apply()
 /*
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (4,1);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (4,4);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (4,5);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (4,7);".execute.apply()
 */
-            sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (5,8);".execute.apply()
-            sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (5,9);".execute.apply()
-            sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (5,10);".execute.apply()
+            sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (3,8);".execute.apply()
+            sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (3,9);".execute.apply()
+            sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (3,10);".execute.apply()
 
 /*
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (6,1);".execute.apply()
