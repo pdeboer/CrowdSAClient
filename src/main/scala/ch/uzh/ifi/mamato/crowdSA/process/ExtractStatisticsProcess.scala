@@ -181,22 +181,36 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 
 		var pdfContainsAssumption = false
 		// Find if in the text the assumption is present, otherwise ask only a single general question.
-		Assumption2QuestionsDAO.findByAssumptionId(e.assumption_id).mpar.foreach(b => {
+		Assumption2QuestionsDAO.findByAssumptionId(e.assumption_id).mpar.foreach(assumptionQuestion => {
 			// start the AssessmentProcess and wait for Answer for each question (this is also a collectDecide process)
 			logger.debug("Check if there is a match for the assumption: " + assumption)
 			val pdfToText = PdfUtils.getTextFromPdf(Main.pathPdf).get
 
-			if (PdfUtils.findContextMatchMutipleMatches(pdfToText, b.test_names.split(",").toList).length > 0) {
+      val termsList = assumptionQuestion.test_names.split(",").toList
+
+			if (PdfUtils.findContextMatchMutipleMatches(pdfToText, termsList).length > 0) {
 				logger.debug("Match found for assumption: " + assumption)
 				this.synchronized {
 					pdfContainsAssumption = true
 				}
-				val p = new CrowdSAPatch(b.question, "Boolean", (b.test_names.replaceAll(",", "#")), paper_id,"DatasetWithAssumptionTest")
-        p.dataset = datasetConverged.answer.replaceAll("’", "'")//.replaceAll("'","\'"),
+
+        var termsJson = "["
+        termsList.foreach(term => {
+          termsJson += ("\""+term+"\"")
+          if(termsList.last != term){
+            termsJson += ","
+          }
+        })
+        termsJson += "]"
+
+				val booleanQuery = new CrowdSAPatch(assumptionQuestion.question, "Boolean",
+          termsJson, paper_id, "DatasetWithAssumptionTest")
+
+        booleanQuery.dataset = "[\""+datasetConverged.answer.replaceAll("’", "'")+"\"]" //.replaceAll("'","\'"),
 
 
 				// If a match is found for the assumption ask the question!
-				val converged = v.createProcess[CrowdSAPatch, CrowdSAPatch]("assessmentProcess").process(p)
+				val converged = v.createProcess[CrowdSAPatch, CrowdSAPatch]("assessmentProcess").process(booleanQuery)
 
 				// Add converged answer to the assumption to test
 				this.synchronized {
@@ -205,7 +219,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 					datasetAssumptionTested.foreach(a => {
 						if (a._1 == dataset_id && a._2 == statMethod && a._3 == assumption) {
 							found = true
-							a._4.+=:(converged)
+							a._4 += converged
 						}
 					})
 					if (!found) {
@@ -215,7 +229,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 					}
 				}
 
-				logger.debug("Assessment step for question: " + b.question + " converged to answer: " + converged.answer)
+				logger.debug("Assessment step for question: " + assumptionQuestion.question + " converged to answer: " + converged.answer)
 			}
 		})
 
@@ -240,8 +254,8 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 			logger.debug("Asking general question for assumption: " + assumption)
 
 			val pp = new CrowdSAPatch("Is the dataset highlighted in the paper tested for the assumption: <i>" + assumption + "</i>?",
-      "Boolean", assumption, paper_id, "DatasetWithGeneralAssumption")
-      pp.dataset = datasetConverged.answer
+      "Boolean", "[\""+assumption+"\"]", paper_id, "DatasetWithGeneralAssumption")
+      pp.dataset = "[\""+datasetConverged.answer+"\"]"
 
 			val converged = v.createProcess[CrowdSAPatch, CrowdSAPatch]("assessmentProcess").process(pp)
 

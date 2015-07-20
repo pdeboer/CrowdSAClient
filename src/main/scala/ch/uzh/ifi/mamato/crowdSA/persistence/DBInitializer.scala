@@ -86,9 +86,9 @@ object DBInitializer extends LazyLogger {
           DB autoCommit { implicit s =>
             sql"CREATE TABLE stat_methods (id BIGINT NOT NULL AUTO_INCREMENT, stat_method VARCHAR(255) NOT NULL, PRIMARY KEY(id));".execute().apply()
 
-            sql"INSERT INTO stat_methods(stat_method) values ('MANOVA');".execute.apply()
+            //sql"INSERT INTO stat_methods(stat_method) values ('MANOVA');".execute.apply()
             sql"INSERT INTO stat_methods(stat_method) values ('ANOVA');".execute.apply()
-            sql"INSERT INTO stat_methods(stat_method) values ('ANCOVA');".execute.apply()
+            /*sql"INSERT INTO stat_methods(stat_method) values ('ANCOVA');".execute.apply()
             sql"INSERT INTO stat_methods(stat_method) values ('linear regression');".execute.apply()
             sql"INSERT INTO stat_methods(stat_method) values ('logistic regression');".execute.apply()
 
@@ -117,7 +117,7 @@ object DBInitializer extends LazyLogger {
             sql"INSERT INTO stat_methods(stat_method) values ('t-test of a correlation coefficient');".execute.apply()
             sql"INSERT INTO stat_methods(stat_method) values ('factor analysis');".execute.apply()
             sql"INSERT INTO stat_methods(stat_method) values ('cluster analysis');".execute.apply()
-            sql"INSERT INTO stat_methods(stat_method) values ('survival analysis');".execute.apply()
+            sql"INSERT INTO stat_methods(stat_method) values ('survival analysis');".execute.apply()*/
           }
           logger.debug("Table Stat_methods created!")
       }
@@ -133,11 +133,11 @@ object DBInitializer extends LazyLogger {
             sql"CREATE TABLE assumptions (id BIGINT NOT NULL AUTO_INCREMENT, assumption VARCHAR(255) NOT NULL, url VARCHAR(255) NULL, PRIMARY KEY(id));".execute().apply()
 
             sql"INSERT INTO assumptions(assumption, url) values ('Normality', 'http://en.wikipedia.org/wiki/Normality_test');".execute.apply()
-            sql"INSERT INTO assumptions(assumption, url) values ('Linearity', 'http://www.utexas.edu/courses/schwab/sw388r7/SolvingProblems/AssumptionOfLinearity.ppt');".execute.apply()
+            //sql"INSERT INTO assumptions(assumption, url) values ('Linearity', 'http://www.utexas.edu/courses/schwab/sw388r7/SolvingProblems/AssumptionOfLinearity.ppt');".execute.apply()
             sql"INSERT INTO assumptions(assumption, url) values ('Homogeneity of variances', 'http://en.wikipedia.org/wiki/Homogeneity_%28statistics%29');".execute.apply()
-            sql"INSERT INTO assumptions(assumption, url) values ('Constant Variance', 'https://www.statisticssolutions.com/homoscedasticity/');".execute.apply()
+            //sql"INSERT INTO assumptions(assumption, url) values ('Constant Variance', 'https://www.statisticssolutions.com/homoscedasticity/');".execute.apply()
             sql"INSERT INTO assumptions(assumption, url) values ('Independence', 'http://en.wikipedia.org/wiki/Independence_%28probability_theory%29');".execute.apply()
-            sql"INSERT INTO assumptions(assumption, url) values ('Homogeneity of regression slopes', null);".execute.apply()
+            /*sql"INSERT INTO assumptions(assumption, url) values ('Homogeneity of regression slopes', null);".execute.apply()
             sql"INSERT INTO assumptions(assumption, url) values ('Independence of Error terms', 'http://www.pages.drexel.edu/~tpm23/STAT902/DWTest.pdf');".execute.apply()
 
             sql"INSERT INTO assumptions(assumption, url) values ('Ordinal variables', null);".execute.apply()
@@ -178,6 +178,7 @@ object DBInitializer extends LazyLogger {
             sql"INSERT INTO assumptions(assumption, url) values ('Variables are not correlated', null);".execute.apply()
             sql"INSERT INTO assumptions(assumption, url) values ('Non-informative censoring', null);".execute.apply()
             sql"INSERT INTO assumptions(assumption, url) values ('Proportional hazards', null);".execute.apply()
+            */
           }
           logger.debug("Table Assumptions created!")
       }
@@ -196,27 +197,27 @@ object DBInitializer extends LazyLogger {
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (1,3);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (1,4);".execute.apply()
 
-            sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (2,1);".execute.apply()
+            /*sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (2,1);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (2,3);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (2,4);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (2,5);".execute.apply()
-
+*/
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (3,1);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (3,2);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (3,3);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (3,6);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (3,7);".execute.apply()
-
+/*
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (4,1);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (4,4);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (4,5);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (4,7);".execute.apply()
-
+*/
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (5,8);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (5,9);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (5,10);".execute.apply()
 
-
+/*
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (6,1);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (6,4);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (6,12);".execute.apply()
@@ -287,7 +288,7 @@ object DBInitializer extends LazyLogger {
 
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (27,39);".execute.apply()
             sql"INSERT INTO stat_method2assumptions(stat_method_id, assumption_id) values (27,40);".execute.apply()
-
+            */
           }
           logger.debug("Table Stat_methods created!")
       }
@@ -347,6 +348,7 @@ object DBInitializer extends LazyLogger {
 
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (10, 'Are the samples greater than 30 (N=30)?', 'sample,population');".execute.apply()
 
+            /*
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (12, 'Are the variables intervals or ratio measurements?', 'intervals,ratio');".execute.apply()
 
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (13, 'Are the outliers kept to a minimum or are removed entirely?', 'outliers,minimum,removed');".execute.apply()
@@ -385,6 +387,7 @@ object DBInitializer extends LazyLogger {
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (38, 'Are the variables not correlated?', 'correlation,correlated');".execute.apply()
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (39, 'Is the dataset non-informative censored?', 'non-informative,censored');".execute.apply()
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (40, 'Are the hazards proportional?', 'hazards,hazard,proportional');".execute.apply()
+            */
           }
           logger.debug("Table Stat_methods created!")
       }

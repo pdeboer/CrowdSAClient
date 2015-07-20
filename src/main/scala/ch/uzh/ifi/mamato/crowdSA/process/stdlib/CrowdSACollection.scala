@@ -24,7 +24,7 @@ class CrowdSACollection(params: Map[String, Any] = Map.empty)
 
     val answers: List[CrowdSAPatch] = memoizer.mem("answer_line_" + query) {
 
-      val q = FreetextQuery(query.question, query.possibleAnswers.get)
+      val q = FreetextQuery(query.question)
 
       var terms = ""
       if(query.questionType.equalsIgnoreCase("Missing")){
@@ -80,9 +80,9 @@ class CrowdSACollection(params: Map[String, Any] = Map.empty)
               answerSoFar += p
 
               // Accept all the answers which are not empty
-              if(e.answer!= null && e.answer != ""){
+              if(e.answer!= null && e.answer != "[]"){
                 CrowdSAPortalAdapter.service.ApproveAnswer(e)
-              } else if(e.answer != null && e.answer == "" && !e.is_method_used) {
+              } else if(e.answer != null && e.answer == "[]" && !e.is_method_used) {
                 // Approve answers which have "no method used" marked
                 CrowdSAPortalAdapter.service.ApproveAnswer(e)
               } else {

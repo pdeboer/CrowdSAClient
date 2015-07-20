@@ -63,30 +63,27 @@ object Main extends App with LazyLogger {
 
       val discoveryQuestions = new mutable.MutableList[CrowdSAPatch]
 
-      var missingMethodsTerms = ""
-
-      val mmm = new mutable.HashMap[String, mutable.MutableList[String]]
+      val allMethods = new mutable.HashMap[String, mutable.MutableList[String]]
 
       // create DISCOVERY questions for each statistical method that matched
       statMethod2ContextStatMethod.foreach {
         m =>
 
-          if(!mmm.get(m._1).isDefined){
-            mmm += m._1 -> new mutable.MutableList[String]
+          if(!allMethods.get(m._1).isDefined){
+            allMethods += m._1 -> new mutable.MutableList[String]
           }
 
-          mmm.get(m._1).get += m._2
+          allMethods.get(m._1).get += m._2
 
-          missingMethodsTerms += m._2 + "#"
           logger.debug("Creating DISCOVERY question for match: " + m._1)
           // Add to the data structure: the question as well as the properties
-          discoveryQuestions += new CrowdSAPatch("Method: <u><i> " + m._1 + " </i></u>", "Discovery", m._2, remote_id,
-            "Discovery")
+          discoveryQuestions += new CrowdSAPatch("Method: <u><i> " + m._1 + " </i></u>", "Discovery",
+            "[\""+m._2+"\"]", remote_id, "Discovery")
       }
 
       // create MISSING question
       val findMissingMethods = new CrowdSAPatch("Please find all the methods which are not highlighted on the paper",
-        "Missing", missingMethodsTerms, remote_id, "Missing", mmm)
+        "Missing", "[]", remote_id, "Missing", allMethods)
 
       discoveryQuestions += findMissingMethods
 

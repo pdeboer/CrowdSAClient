@@ -11,6 +11,7 @@ import ch.uzh.ifi.pdeboer.pplib.hcomp.{FreetextQuery, HCompQuery}
 import ch.uzh.ifi.pdeboer.pplib.process.entities._
 import com.typesafe.config.ConfigFactory
 import org.joda.time.DateTime
+import play.api.libs.json.Json
 
 import scala.collection.mutable
 
@@ -48,13 +49,14 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any])
         val teams = new mutable.MutableList[Long]
 
         alternatives.foreach(a => {
+          //currentAns is a JSON object ["first sentence selected","second sentence selected"] or ["boolean value"] or []
           var currentAns = a.answer
 
           // Case: Method not used
-          if(currentAns.equals("")){
+          if(currentAns.isEmpty){
             val ans = AnswersDAO.find(a.answerId).get
             if(!ans.is_method_used){
-              currentAns = "Method is not used"
+              currentAns = "[\"Method is not used\"]"
             }
           }
 
@@ -83,7 +85,39 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any])
 
         // Ugly - check if the question which generates the alternatives was a discovery question
         val wasDiscoveryQuestion = originalQuestion.get.question contains "Method: "
-        val toHighlight = originalQuestionHighlight.get.terms+"#"+answersText.mkString("#")
+
+        val originalTerms = originalQuestionHighlight.get.terms
+        var possibleAnswers = ""
+        var highlightToAdd = ""
+
+        answersText.foreach(ans => {
+          val p = Json.parse(ans).as[Seq[String]]
+          possibleAnswers += ",["
+          p.foreach(pp => {
+            if(pp != "" && pp != " " && pp.length > 2){
+              // If the answer should not be highlighted
+              if(!pp.equalsIgnoreCase("[\"Method is not used\"]") ||
+                !pp.equalsIgnoreCase("[\"There exists no dataset\"]") ){
+
+                highlightToAdd += ",\""+pp+"\""
+              }
+
+              possibleAnswers += "\""+pp+"\""
+
+              if(!p.last.equals(pp)){
+                possibleAnswers += ","
+              }else {
+                possibleAnswers += "]"
+              }
+            }
+          })
+        })
+
+        possibleAnswers += "]"
+        possibleAnswers = possibleAnswers.substring(1,possibleAnswers.length)
+        possibleAnswers = "["+possibleAnswers
+
+        val toHighlight = originalTerms.substring(0, originalTerms.length-1) + highlightToAdd+"]"
 
         val question = if(wasDiscoveryQuestion){
           "The answers below were submitted by other crowd workers when asking to identify the dataset of '" + originalQuestion.get.question+ "'. Please chose the answer which you think best identifies the data used by this method."
@@ -91,11 +125,12 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any])
           "The answers below were submitted by other crowd workers when asking to answer the Yes/No question: '<i><u>"+ originalQuestion.get.question+ "</u></i>'. Please chose the answer which you think is the right one."
         }
 
-        val query = FreetextQuery(question, answersText.mkString("$$"))
+        val query = FreetextQuery(question)
+
         val prop = new CrowdSAQueryProperties(paperId, "Voting",
-          HighlightDAO.create("Dataset", toHighlight, "", -1),
+          HighlightDAO.create("Dataset", toHighlight, "[]", -1),
           10,((new Date().getTime() / 1000) + 60 * 60 * 24 * 365), CrowdSAContest.WORKER_COUNT.get,
-          Some(answersText.mkString("$$")), Some(teams.toList))
+          Some(possibleAnswers), Some(teams.toList))
 
 
         val allAnswers = new mutable.MutableList[Answer]
@@ -121,7 +156,7 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any])
 
                 allAnswers += answer
                 // Accept all the answers which are not empty
-                if(answer.answer!= null && answer.answer != ""){
+                if(answer.answer!= null && answer.answer != "[]"){
                   CrowdSAPortalAdapter.service.ApproveAnswer(answer)
                 } else {
                   CrowdSAPortalAdapter.service.RejectAnswer(answer)
@@ -143,17 +178,22 @@ class CrowdSAContest(params: Map[String, Any] = Map.empty[String, Any])
         logger.info(votes.toList.toString())
         val valueOfAnswer: String = votes.maxBy(s => s._2)._1
         logger.info("***** WINNER CONTEST " + valueOfAnswer)
-        if(valueOfAnswer.equalsIgnoreCase("Method is not used")){
+        // find empty alternative which is method used = false => Method is not used
+        if(valueOfAnswer.equalsIgnoreCase("[\"Method is not used\"]")){
           alternatives.find(a => {
-            a.answer.equalsIgnoreCase("") &&
+            a.answer.equalsIgnoreCase("[]") &&
               !AnswersDAO.find(a.answerId).get.is_method_used
           }).get
-        } else if(valueOfAnswer.equals("")){
+        }
+        // find empty alternative with is method used = true => no dataset found
+          // FIXME: can this really happen???
+        else if(valueOfAnswer.equals("[]")){
           alternatives.find(a => {
-            a.answer.equalsIgnoreCase("") &&
+            a.answer.equalsIgnoreCase("[]") &&
               AnswersDAO.find(a.answerId).get.is_method_used
           }).get
         }
+        // default: Find the alternative with the same answer
         else {
           alternatives.find(_.answer.equalsIgnoreCase(valueOfAnswer)).get
         }
