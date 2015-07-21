@@ -5,8 +5,8 @@ import java.util.Date
 import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.CrowdSAPortalAdapter
 import ch.uzh.ifi.mamato.crowdSA.persistence._
 import ch.uzh.ifi.mamato.crowdSA.process.entities.CrowdSAPatch
-import ch.uzh.ifi.mamato.crowdSA.process.{ExtractStatisticsRecombination, ExtractStatisticsProcess}
-import ch.uzh.ifi.mamato.crowdSA.util.{PdfUtils, LazyLogger}
+import ch.uzh.ifi.mamato.crowdSA.process.{ExtractStatisticsProcess, ExtractStatisticsRecombination}
+import ch.uzh.ifi.mamato.crowdSA.util.{LazyLogger, PdfUtils}
 import ch.uzh.ifi.pdeboer.pplib.hcomp.HComp
 import ch.uzh.ifi.pdeboer.pplib.process.recombination.{RecombinationVariant, SimpleRecombinationVariantXMLExporter}
 import org.joda.time.DateTime
@@ -82,10 +82,8 @@ object Main extends App with LazyLogger {
       }
 
       // create MISSING question
-      val findMissingMethods = new CrowdSAPatch("Please find all the methods which are not highlighted on the paper",
-        "Missing", "[]", remote_id, "Missing", allMethods)
-
-      discoveryQuestions += findMissingMethods
+      //val findMissingMethods = new CrowdSAPatch("Please find all the methods which are not highlighted on the paper", "Missing", "[]", remote_id, "Missing", allMethods)
+      //discoveryQuestions += findMissingMethods
 
       def getXML(r: RecombinationVariant) = new SimpleRecombinationVariantXMLExporter(r).xml.toString
       val recombinations: List[RecombinationVariant] = ExtractStatisticsRecombination.recombinations
