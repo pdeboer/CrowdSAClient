@@ -1,11 +1,11 @@
 package ch.uzh.ifi.mamato.crowdSA.model
 
-import ch.uzh.ifi.pdeboer.pplib.hcomp.{HCompQuery, HCompAnswer}
+import ch.uzh.ifi.pdeboer.pplib.hcomp.{HCompAnswer, HCompQuery}
 import ch.uzh.ifi.pdeboer.pplib.patterns.pruners.Prunable
 import org.joda.time.DateTime
-import play.api.libs.json._
-import play.api.libs.json.Reads._
 import play.api.libs.functional.syntax._
+import play.api.libs.json.Reads._
+import play.api.libs.json._
 
 /**
  * Created by Mattia on 04.01.2015.
@@ -13,7 +13,7 @@ import play.api.libs.functional.syntax._
 
 case class Answer(id: Long, answer: String, created_at: Long, is_method_used: Boolean,
                   accepted: Option[Boolean], bonus_cts: Option[Int],
-                  rejected: Option[Boolean], assignments_id: Long) extends HCompAnswer with Serializable with Prunable {
+                  rejected: Option[Boolean], assignments_id: Long, accuracy: String) extends HCompAnswer with Serializable with Prunable {
   override def toString() = answer
 
   override def query: HCompQuery = null
@@ -38,7 +38,8 @@ object Answer {
         "accepted" -> a.accepted,
         "bonus_cts" -> a.bonus_cts,
         "rejected" -> a.rejected,
-        "assignments_id" -> a.assignments_id
+        "assignments_id" -> a.assignments_id,
+        "accuracy" -> a.accuracy
       )
     }
   }
@@ -51,7 +52,8 @@ object Answer {
       (JsPath \ "accepted").read[Option[Boolean]] and
       (JsPath \ "bonus_cts").read[Option[Int]] and
       (JsPath \ "rejected").read[Option[Boolean]] and
-      (JsPath \ "assignments_id").read[Long]
+      (JsPath \ "assignments_id").read[Long] and
+      (JsPath \ "accuracy").read[String]
 
   implicit val answerReads = answerReadsBuilder.apply(Answer.apply _)
 

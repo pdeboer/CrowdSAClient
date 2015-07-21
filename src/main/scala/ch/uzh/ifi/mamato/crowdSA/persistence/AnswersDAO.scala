@@ -12,7 +12,7 @@ object AnswersDAO extends SQLSyntaxSupport[Answer] {
   def apply(p: SyntaxProvider[Answer])(rs: WrappedResultSet): Answer = apply(p.resultName)(rs)
   def apply(p: ResultName[Answer])(rs: WrappedResultSet): Answer = new Answer(rs.long(p.id), rs.string(p.answer),
     rs.long(p.created_at), rs.boolean(p.is_method_used), rs.booleanOpt(p.accepted),rs.intOpt(p.bonus_cts),
-    rs.booleanOpt(p.rejected), rs.long(p.assignments_id))
+    rs.booleanOpt(p.rejected), rs.long(p.assignments_id), rs.string(p.accuracy))
 
   val p = AnswersDAO.syntax("p")
 
@@ -55,7 +55,8 @@ object AnswersDAO extends SQLSyntaxSupport[Answer] {
         column.accepted -> answer.accepted,
         column.bonus_cts -> answer.bonus_cts,
         column.rejected -> answer.rejected,
-        column.assignments_id -> answer.assignments_id)
+        column.assignments_id -> answer.assignments_id,
+        column.accuracy -> answer.accuracy)
     }.executeUpdate().apply()
     find(answer.id).get
   }

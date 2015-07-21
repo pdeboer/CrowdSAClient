@@ -71,7 +71,7 @@ object DBInitializer extends LazyLogger {
       catch {
         case e: java.sql.SQLException =>
           DB autoCommit { implicit s =>
-            sql"CREATE TABLE answers (id BIGINT NOT NULL UNIQUE, answer TEXT NOT NULL, created_at BIGINT NOT NULL, is_method_used BIT NOT NULL, accepted BIT NULL, bonus_cts INT NULL, rejected BIT NULL, assignments_id BIGINT NOT NULL, PRIMARY KEY(id));".execute().apply()
+            sql"CREATE TABLE answers (id BIGINT NOT NULL UNIQUE, answer TEXT NOT NULL, created_at BIGINT NOT NULL, is_method_used BIT NOT NULL, accepted BIT NULL, bonus_cts INT NULL, rejected BIT NULL, assignments_id BIGINT NOT NULL, accuracy VARCHAR(255), PRIMARY KEY(id));".execute().apply()
           }
           logger.debug("Table Answers created!")
       }
