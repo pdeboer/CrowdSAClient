@@ -1,7 +1,5 @@
 package ch.uzh.ifi.mamato.crowdSA.process
 
-import java.util.Date
-
 import ch.uzh.ifi.mamato.crowdSA.Main
 import ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa.CrowdSAPortalAdapter
 import ch.uzh.ifi.mamato.crowdSA.model._
@@ -206,7 +204,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 				val booleanQuery = new CrowdSAPatch(assumptionQuestion.question, "Boolean",
           termsJson, paper_id, "DatasetWithAssumptionTest")
 
-        booleanQuery.dataset = "[\""+datasetConverged.answer.replaceAll("’", "'")+"\"]" //.replaceAll("'","\'"),
+        booleanQuery.dataset = datasetConverged.answer//.replaceAll("’", "'") //.replaceAll("'","\'"),
 
 
 				// If a match is found for the assumption ask the question!
@@ -255,7 +253,8 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 
 			val pp = new CrowdSAPatch("Is the dataset highlighted in the paper tested for the assumption: <i>" + assumption + "</i>?",
       "Boolean", "[\""+assumption+"\"]", paper_id, "DatasetWithGeneralAssumption")
-      pp.dataset = "[\""+datasetConverged.answer+"\"]"
+
+      pp.dataset = datasetConverged.answer
 
 			val converged = v.createProcess[CrowdSAPatch, CrowdSAPatch]("assessmentProcess").process(pp)
 
