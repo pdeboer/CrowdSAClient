@@ -335,7 +335,7 @@ object DBInitializer extends LazyLogger {
 */
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (3, 'Is the Fisher exact test used to test the Independence?', 'Fisher,exact test,Fisher-Yates,Fisher-Irwin,chi^2,chi-squared');".execute.apply()
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (3, 'Is the G-test used to test the Independence?', 'G-test,likelihood-ratio,maximum likelihood,statistical significance,chi-squared');".execute.apply()
-            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (3, 'Is the Hilbert-Schmidt independence criterion used to test the Independence?', 'Hilbert-Schmidt,independence criterion');".execute.apply()
+            sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (3, 'Is the Hilbert-Schmidt independence criterion used to test the Independence?', 'Hilbert-Schmidt,independence criterion, independ');".execute.apply()
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (3, 'Is the Schweizer-Wolff approach used to test the Independence?', 'Schweizer-wolff');".execute.apply()
 /*
             sql"INSERT INTO assumption2questions(assumption_id, question, test_names) values (6, 'Are the covariance and the independent variable completely separated?', 'covariance,independent variable');".execute.apply()

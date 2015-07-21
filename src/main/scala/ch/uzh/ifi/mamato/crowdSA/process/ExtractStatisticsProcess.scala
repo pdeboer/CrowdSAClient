@@ -118,22 +118,18 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 
             // Evaluate the results once the process is ended
             this.synchronized {
-              var allFalse = true
               result += "\n* Dataset id: " + datasetId + "\n"
               result += "* - Method: " + stat_method + "\n"
               datasetAssumptionTested.foreach(elem => {
                 if (elem._1 == datasetId && elem._2 == stat_method) {
                   result += "* -- Assumption: " + elem._3 + "\n"
                   elem._4.foreach(assump => {
-                    if (assump.answer.equalsIgnoreCase("true")) {
-                      allFalse = false
+                    if (assump.answer.equalsIgnoreCase("[\"true\"]")) {
+                      result += "* --- TESTED\n"
+                    } else {
+                      result += "* --- NOT TESTED\n"
                     }
                   })
-                  if (allFalse) {
-                    result += "* --- FAIL\n"
-                  } else {
-                    result += "* --- OK\n"
-                  }
                 }
               })
             }
@@ -236,7 +232,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 			datasetAssumptionTested.foreach(a => {
 				if (a._1 == dataset_id && a._2 == statMethod && a._3 == assumption) {
 					a._4.foreach(ans => {
-						if (ans.answer.equalsIgnoreCase("true")) {
+						if (ans.answer.equalsIgnoreCase("[\"true\"]")) {
 							allFalse = false
 						}
 					})
