@@ -56,8 +56,10 @@ object ExtractStatisticsRecombination {
     ,
       (
         "assessmentProcess", new TypedParameterVariantGenerator[AssessmentProcess]()
-          .addVariation(AssessmentProcess.ASSESSMENT_PROCESS, collectDecide)
-          .generatePassableProcesses()
+        .addVariation(AssessmentProcess.ASSESSMENT_PROCESS, new TypedParameterVariantGenerator[CrowdSACollection]()
+          .addVariation(CrowdSACollection.WORKER_COUNT, List(3))
+          .generatePassableProcesses())
+        .generatePassableProcesses()
       )
     ,
       (

@@ -204,7 +204,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 
 
 				// If a match is found for the assumption ask the question!
-				val converged = v.createProcess[CrowdSAPatch, CrowdSAPatch]("assessmentProcess").process(booleanQuery)
+				val converged = v.createProcess[CrowdSAPatch, List[CrowdSAPatch]]("assessmentProcess").process(booleanQuery)
 
 				// Add converged answer to the assumption to test
 				this.synchronized {
@@ -213,17 +213,17 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 					datasetAssumptionTested.foreach(a => {
 						if (a._1 == dataset_id && a._2 == statMethod && a._3 == assumption) {
 							found = true
-							a._4 += converged
+							converged.foreach(ans => a._4 += ans)
 						}
 					})
 					if (!found) {
 						val list = new mutable.MutableList[CrowdSAPatch]
-						list += converged
+            converged.foreach(ans => list += ans)
 						datasetAssumptionTested.+=:((dataset_id, statMethod, assumption, list))
 					}
 				}
 
-				logger.debug("Assessment step for question: " + assumptionQuestion.question + " converged to answer: " + converged.answer)
+				//logger.debug("Assessment step for question: " + assumptionQuestion.question + " converged to answer: " + converged.answer)
 			}
 		})
 
@@ -252,7 +252,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 
       pp.dataset = datasetConverged.answer
 
-			val converged = v.createProcess[CrowdSAPatch, CrowdSAPatch]("assessmentProcess").process(pp)
+			val converged = v.createProcess[CrowdSAPatch, List[CrowdSAPatch]]("assessmentProcess").process(pp)
 
 			//Update the list of assumption to test with the generic converged answer
 			this.synchronized {
@@ -260,16 +260,16 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 				datasetAssumptionTested.foreach(a => {
 					if (a._1 == dataset_id && a._2 == statMethod && a._3 == assumption) {
 						found = true
-						a._4 += converged
+            converged.foreach(ans => a._4 += ans)
 					}
 				})
 				if (!found) {
 					val list = new mutable.MutableList[CrowdSAPatch]
-					list += converged
+          converged.foreach(ans => list += ans)
 					datasetAssumptionTested.+=:((dataset_id, statMethod, assumption, list))
 				}
 			}
-			logger.debug("Assessment step for general question about: " + assumption + " converged to answer: " + converged.answer)
+			//logger.debug("Assessment step for general question about: " + assumption + " converged to answer: " + converged.answer)
 		}
 	}
 
