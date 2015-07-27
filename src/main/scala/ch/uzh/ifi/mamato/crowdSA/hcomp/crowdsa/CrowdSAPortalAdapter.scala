@@ -2,17 +2,13 @@ package ch.uzh.ifi.mamato.crowdSA.hcomp.crowdsa
 
 
 import ch.uzh.ifi.mamato.crowdSA.model.Answer
-import com.typesafe.config.ConfigFactory
-
-import scala.concurrent.ExecutionContext.Implicits.global
+import ch.uzh.ifi.mamato.crowdSA.util.CollectionUtils._
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
 import ch.uzh.ifi.pdeboer.pplib.util.LazyLogger
+import com.typesafe.config.ConfigFactory
 import org.joda.time.DateTime
-import ch.uzh.ifi.mamato.crowdSA.util.CollectionUtils._
 
 import scala.collection.mutable
-import scala.concurrent.{Await, Future}
-import scala.concurrent.duration._
 
 /**
  * Created by Mattia on 14.01.2015.
@@ -121,5 +117,7 @@ class CrowdSAPortalBuilder extends HCompPortalBuilder {
   override def build: HCompPortalAdapter = new CrowdSAPortalAdapter()
 
   override def expectedParameters: List[String] = List()
+
+  override def key: String = CrowdSAPortalAdapter.PORTAL_KEY
 }
 

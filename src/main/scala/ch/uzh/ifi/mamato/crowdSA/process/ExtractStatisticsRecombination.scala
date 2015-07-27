@@ -29,16 +29,38 @@ object ExtractStatisticsRecombination {
     .generatePassableProcesses[CrowdSAQuery, List[Answer]] */
 
 
-  def recombinations = {
-
-    val collectDecide =
-      new TypedParameterVariantGenerator[CrowdSACollectDecideProcess]()
+  val collectDecide =
+    new TypedParameterVariantGenerator[CrowdSACollectDecideProcess]()
       .addVariation(CrowdSACollectDecideProcess.FORWARD_PARAMS_TO_COLLECT, List(true))
       .addVariation(CrowdSACollectDecideProcess.FORWARD_PARAMS_TO_DECIDE, List(true))
       .addVariation(CrowdSACollectDecideProcess.FORWARD_ANSWER_TO_DECIDE_PARAMETER, List(None))
       .addVariation(CrowdSACollectDecideProcess.COLLECT, createCollectionProcesses())
       .addVariation(CrowdSACollectDecideProcess.DECIDE, createVotingProcesses())
       .generatePassableProcesses()
+
+  val candidateProcessParameters = Map(
+    (
+      "discoveryProcess", new TypedParameterVariantGenerator[DiscoveryProcess]()
+      .addVariation(DiscoveryProcess.DISCOVERY_PROCESS, collectDecide)
+      .generatePassableProcesses()
+      )
+    ,
+    (
+      "assessmentProcess", new TypedParameterVariantGenerator[AssessmentProcess]()
+      .addVariation(AssessmentProcess.ASSESSMENT_PROCESS, new TypedParameterVariantGenerator[CrowdSACollection]()
+      .addVariation(CrowdSACollection.WORKER_COUNT, List(3))
+      .generatePassableProcesses())
+      .generatePassableProcesses()
+      )
+    ,
+    (
+      "missingProcess", new TypedParameterVariantGenerator[MissingProcess]()
+      .addVariation(MissingProcess.MISSING_PROCESS, createCollectionProcesses())
+      .generatePassableProcesses()
+      )
+  )
+
+  def recombinations = {
 
     /*
     val iterativeRefinement: List[PassableProcessParam[_, _]] = new TypedParameterVariantGenerator[CrowdSAIterativeRefinementProcess]()
@@ -47,27 +69,6 @@ object ExtractStatisticsRecombination {
     */
 
     // Hack to solve the .flatten problem
-    val candidateProcessParameters = Map(
-      (
-        "discoveryProcess", new TypedParameterVariantGenerator[DiscoveryProcess]()
-          .addVariation(DiscoveryProcess.DISCOVERY_PROCESS, collectDecide)
-          .generatePassableProcesses()
-      )
-    ,
-      (
-        "assessmentProcess", new TypedParameterVariantGenerator[AssessmentProcess]()
-        .addVariation(AssessmentProcess.ASSESSMENT_PROCESS, new TypedParameterVariantGenerator[CrowdSACollection]()
-          .addVariation(CrowdSACollection.WORKER_COUNT, List(3))
-          .generatePassableProcesses())
-        .generatePassableProcesses()
-      )
-    ,
-      (
-        "missingProcess", new TypedParameterVariantGenerator[MissingProcess]()
-        .addVariation(MissingProcess.MISSING_PROCESS, createCollectionProcesses())
-        .generatePassableProcesses()
-      )
-    )
 
     val candidateProcesses: Map[String, List[PassableProcessParam[_ <: ProcessStub[_, _]]]] =
       candidateProcessParameters.map {

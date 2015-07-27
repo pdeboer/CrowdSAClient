@@ -1,6 +1,5 @@
 package ch.uzh.ifi.mamato.crowdSA.process.stdlib
 
-import ch.uzh.ifi.mamato.crowdSA.model.Answer
 import ch.uzh.ifi.mamato.crowdSA.process.entities.CrowdSAPatch
 import ch.uzh.ifi.pdeboer.pplib.process.entities._
 
@@ -13,7 +12,7 @@ import scala.collection.mutable
 
 @PPLibProcess
 class CrowdSACollectDecideProcess(_params: Map[String, Any] = Map.empty)
-  extends CreateProcess[CrowdSAPatch, CrowdSAPatch](_params) with HCompPortalAccess with InstructionHandler {
+  extends CreateProcess[CrowdSAPatch, CrowdSAPatch](_params) {
 
   import ch.uzh.ifi.pdeboer.pplib.process.stdlib.CollectDecideProcess._
 

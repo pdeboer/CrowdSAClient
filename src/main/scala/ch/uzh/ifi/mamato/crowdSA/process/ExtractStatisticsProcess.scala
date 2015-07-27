@@ -6,8 +6,9 @@ import ch.uzh.ifi.mamato.crowdSA.model._
 import ch.uzh.ifi.mamato.crowdSA.persistence._
 import ch.uzh.ifi.mamato.crowdSA.process.entities.CrowdSAPatch
 import ch.uzh.ifi.mamato.crowdSA.util.{LazyLogger, PdfUtils}
-import ch.uzh.ifi.pdeboer.pplib.process.entities.ProcessStub
-import ch.uzh.ifi.pdeboer.pplib.process.recombination.{Recombinable, RecombinationVariant, SimpleRecombinationVariantXMLExporter}
+import ch.uzh.ifi.pdeboer.pplib.hcomp.{HComp, HCompPortalAdapter}
+import ch.uzh.ifi.pdeboer.pplib.process.entities.{CreateProcess, InstructionData}
+import ch.uzh.ifi.pdeboer.pplib.process.recombination._
 import ch.uzh.ifi.pdeboer.pplib.util.CollectionUtils._
 
 import scala.collection.mutable
@@ -23,14 +24,10 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 
 	/**
 	 * Runs a recombination variant. First the Discovery step is performed, and second the Assessment step.
-	 * @param v The variation to execute
+	 * @param processBlueprint The variation to execute
 	 * @return A feedback based on all the converged answers for this variant.
 	 */
-	override def runRecombinedVariant(v: RecombinationVariant): String = {
-		logger.debug("running variant " + new SimpleRecombinationVariantXMLExporter(v).xml)
-
-		// Process single variant
-		val processes = new ProcessVariant(v)
+	override def run(processBlueprint: ProcessSurfaceStructure): String = {
 
 		// Complex datastructure to store [dataset, statistical method, assumption, List[converged answers]]
 		val datasetAssumptionTested = new mutable.MutableList[(Long, String, String, mutable.MutableList[CrowdSAPatch])]
@@ -52,7 +49,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 			val paper_id = d.paperId
 
       if(d.questionType.equalsIgnoreCase("Missing")){
-        val missingMethods = v.createProcess[CrowdSAPatch, List[CrowdSAPatch]]("missingProcess").process(d)
+        val missingMethods = processBlueprint.createProcess[CrowdSAPatch, List[CrowdSAPatch]]("missingProcess").process(d)
         this.synchronized{
           var ss = ""
           missingMethods.foreach(mm => {
@@ -74,7 +71,10 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
           result = "\n* Methods which were not automatically identified: " + ss + "\n\n"
         }
       } else {
-        val datasetConverged = v.createProcess[CrowdSAPatch, CrowdSAPatch]("discoveryProcess").process(d)
+
+        new DiscoveryProcess()
+
+        val datasetConverged = processBlueprint.createProcess[CrowdSAPatch, CrowdSAPatch]("discoveryProcess").process(d)
 
         // FIXME: ugly! - used to identify the statistical method of the discovery question
         var stat_method = ""
@@ -87,7 +87,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 
         // If the dataset exists, the statistical method is NOT a false positive
         val answer = AnswersDAO.find(datasetConverged.answerId).get
-        if (answer.answer != "" && answer.is_method_used == true) {
+        if (answer.answer != "[]" && answer.is_method_used == true) {
           logger.debug("***** result DISCOVERY STEP")
           // Try to create the dataset if it doesn't yet exists!
           var datasetId: Long = -1
@@ -113,7 +113,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
               logger.info("Running assumption step")
               checkAssumption(assumption, e, paper_id, answer,
                 datasetAssumptionTested,
-                v, datasetId, stat_method)
+                processBlueprint, datasetId, stat_method)
             })
 
             // Evaluate the results once the process is ended
@@ -163,14 +163,14 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 	 * @param paper_id id of the paper
 	 * @param datasetConverged dataset identified in the previous step
 	 * @param datasetAssumptionTested map to compute the end result of the variant
-	 * @param v Recombination variant used to start the assumption process
+	 * @param processBlueprint Recombination variant used to start the assumption process
 	 * @param dataset_id id of the dataset
 	 * @param statMethod statistical method under analysis
 	 */
 	def checkAssumption(assumption: String, e: StatMethod2Assumption,
 						paper_id: Long, datasetConverged: Answer,
 						datasetAssumptionTested: mutable.MutableList[(Long, String, String, mutable.MutableList[CrowdSAPatch])],
-						v: RecombinationVariant, dataset_id: Long, statMethod: String) = {
+						processBlueprint: ProcessSurfaceStructure, dataset_id: Long, statMethod: String) = {
 		logger.debug("Analyzing paper for assumption: " + assumption)
 
 		var pdfContainsAssumption = false
@@ -204,7 +204,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 
 
 				// If a match is found for the assumption ask the question!
-				val converged = v.createProcess[CrowdSAPatch, List[CrowdSAPatch]]("assessmentProcess").process(booleanQuery)
+				val converged = processBlueprint.createProcess[CrowdSAPatch, List[CrowdSAPatch]]("assessmentProcess").process(booleanQuery)
 
 				// Add converged answer to the assumption to test
 				this.synchronized {
@@ -252,7 +252,7 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 
       pp.dataset = datasetConverged.answer
 
-			val converged = v.createProcess[CrowdSAPatch, List[CrowdSAPatch]]("assessmentProcess").process(pp)
+			val converged = processBlueprint.createProcess[CrowdSAPatch, List[CrowdSAPatch]]("assessmentProcess").process(pp)
 
 			//Update the list of assumption to test with the generic converged answer
 			this.synchronized {
@@ -273,11 +273,21 @@ class ExtractStatisticsProcess(crowdSA: CrowdSAPortalAdapter, discoveryQuestion:
 		}
 	}
 
-	def allRecombinationKeys: List[String] = List("discoveryProcess")
+  override def defineRecombinationSearchSpace = {
 
-	private class ProcessVariant(decorated: RecombinationVariant) extends RecombinationVariant(decorated.stubs) {
-		def createDiscovery = decorated.createProcess[CrowdSAPatch, CrowdSAPatch]("discoveryProcess")
-	}
+    Map(EXTRACTION_PROCESS_KEY -> RecombinationSearchSpaceDefinition[CreateProcess[_ <: List[CrowdSAPatch], _ <: List[CrowdSAPatch]]](
+      RecombinationHints.create(Map(
+        RecombinationHints.DEFAULT_HINTS -> {
+          RecombinationHints.hcompPlatform(List(HCOMP_PORTAL_TO_USE)) :::
+            RecombinationHints.instructions(List(
+              new InstructionData(actionName = "", detailedDescription = "")))
+        })
+      )
+    ))
+  }
 
-  override def requiredProcessDefinitions: Map[String, Class[_ <: ProcessStub[_, _]]] = Map.empty
+  val EXTRACTION_PROCESS_KEY: String = "extraction"
+
+  val HCOMP_PORTAL_TO_USE: HCompPortalAdapter = HComp(CrowdSAPortalAdapter.PORTAL_KEY)
+
 }

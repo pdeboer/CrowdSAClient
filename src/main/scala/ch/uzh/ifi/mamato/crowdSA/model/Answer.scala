@@ -1,6 +1,6 @@
 package ch.uzh.ifi.mamato.crowdSA.model
 
-import ch.uzh.ifi.pdeboer.pplib.hcomp.{HCompAnswer, HCompQuery}
+import ch.uzh.ifi.pdeboer.pplib.hcomp.{HCompAnswer, HCompQuery, HCompWorker}
 import ch.uzh.ifi.pdeboer.pplib.patterns.pruners.Prunable
 import org.joda.time.DateTime
 import play.api.libs.functional.syntax._
@@ -23,6 +23,7 @@ case class Answer(id: Long, answer: String, created_at: Long, is_method_used: Bo
 
   override def prunableDouble = processingTimeMillis.toDouble
 
+  override def responsibleWorkers: List[HCompWorker] = List.empty[HCompWorker]
 }
 
 
